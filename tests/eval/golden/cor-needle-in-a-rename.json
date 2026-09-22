@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "billing/lines.py",
+      "line": 41,
+      "min_severity": "major",
+      "note": "the comparison flipped from >= to > inside a forty-function rename, so an amount of exactly half a cent now rounds down where it used to round up"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 21,
+      "deletions": 21,
+      "filename": "billing/lines.py",
+      "patch": "@@ -1,81 +1,81 @@\n \"\"\"Line-item calculators. One function per component.\"\"\"\n \n \n-def calc_subtotal(line):\n+def compute_subtotal(line):\n     return line.subtotal_cents\n \n \n-def calc_discount(line):\n+def compute_discount(line):\n     return line.discount_cents\n \n \n-def calc_tax(line):\n+def compute_tax(line):\n     return line.tax_cents\n \n \n-def calc_shipping(line):\n+def compute_shipping(line):\n     return line.shipping_cents\n \n \n-def calc_handling(line):\n+def compute_handling(line):\n     return line.handling_cents\n \n \n-def calc_credit(line):\n+def compute_credit(line):\n     return line.credit_cents\n \n \n-def calc_rebate(line):\n+def compute_rebate(line):\n     return line.rebate_cents\n \n \n-def calc_surcharge(line):\n+def compute_surcharge(line):\n     return line.surcharge_cents\n \n \n-def calc_adjustment(line):\n+def compute_adjustment(line):\n     return line.adjustment_cents\n \n \n-def calc_rounding(line):\n-    return 1 if line.remainder_cents >= 0.5 else 0\n+def compute_rounding(line):\n+    return 1 if line.remainder_cents > 0.5 else 0\n \n \n-def calc_deposit(line):\n+def compute_deposit(line):\n     return line.deposit_cents\n \n \n-def calc_refund(line):\n+def compute_refund(line):\n     return line.refund_cents\n \n \n-def calc_chargeback(line):\n+def compute_chargeback(line):\n     return line.chargeback_cents\n \n \n-def calc_settlement(line):\n+def compute_settlement(line):\n     return line.settlement_cents\n \n \n-def calc_payout(line):\n+def compute_payout(line):\n     return line.payout_cents\n \n \n-def calc_fee(line):\n+def compute_fee(line):\n     return line.fee_cents\n \n \n-def calc_commission(line):\n+def compute_commission(line):\n     return line.commission_cents\n \n \n-def calc_levy(line):\n+def compute_levy(line):\n     return line.levy_cents\n \n \n-def calc_duty(line):\n+def compute_duty(line):\n     return line.duty_cents\n \n \n-def calc_tariff(line):\n+def compute_tariff(line):\n     return line.tariff_cents",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-needle-in-a-rename",
+  "must_not_find": [],
+  "summary": "Forty functions renamed from calc_* to compute_*, and one comparison flipped along the way. The review where a defect actually gets missed.",
+  "title": "Rename the line-item calculators"
+}

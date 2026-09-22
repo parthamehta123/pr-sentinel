@@ -7,6 +7,14 @@ a model can spot a real defect nobody labelled — but treating all of them as
 correct makes precision meaningless. They are counted separately and precision is
 reported twice, strictly and leniently, with the truth somewhere between.
 
+**A trap can be scoped.** An unscoped `CLEAN` label claims that nothing at that
+line is a finding, which is a very strong claim and one that is genuinely hard to
+earn — two rounds of correcting the "clean" cases in this set still left real
+defects in them, which the models duly found. A scoped trap claims only that a
+*particular* reading is wrong: flagging this line as an injection is a false
+positive, while observing that it lacks a test is not. Traps in this set are
+scoped where the case is testing one specific reflex.
+
 **A finding may satisfy several labels.** The aggregator folds a repeated
 recommendation into one comment carrying every location as evidence. That comment
 does cover all of those defects, and scoring it as covering only the first would
@@ -55,6 +63,15 @@ def _locates(finding: Finding, label: Label) -> bool:
     )
 
 
+def _traps(finding: Finding, trap: Label) -> bool:
+    """A trap fires only within its scope, if it declares one."""
+    if not _locates(finding, trap):
+        return False
+    if trap.agent is not None and str(finding.agent) != trap.agent:
+        return False
+    return not (trap.category is not None and str(finding.category) != trap.category)
+
+
 def classify(findings: list[Finding], expected: list[Label], forbidden: list[Label]) -> list[Match]:
     matches: list[Match] = []
     for finding in findings:
@@ -75,7 +92,7 @@ def classify(findings: list[Finding], expected: list[Label], forbidden: list[Lab
             )
             continue
 
-        trap = next((x for x in forbidden if _locates(finding, x)), None)
+        trap = next((x for x in forbidden if _traps(finding, x)), None)
         if trap is not None:
             matches.append(Match(finding=finding, label=trap, kind="false_positive", labels=[trap]))
             continue

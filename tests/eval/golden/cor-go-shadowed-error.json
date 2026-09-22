@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "error_handling",
+      "file_path": "internal/ledger/write.go",
+      "line": 15,
+      "min_severity": "major",
+      "note": ":= declares a new err inside the if-scope, so the outer err stays nil and a failed insert is reported as success"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 11,
+      "deletions": 0,
+      "filename": "internal/ledger/write.go",
+      "patch": "@@ -7,3 +7,14 @@\n \t_, err := db.Exec(\"INSERT INTO ledger (id, cents) VALUES ($1, $2)\", e.ID, e.Cents)\n \treturn err\n }\n+\n+func WriteSettlement(db *sql.DB, s Settlement) error {\n+\tif err := validate(s.Entry); err != nil {\n+\t\treturn err\n+\t}\n+\tif _, err := db.Exec(\"INSERT INTO settlements (id, cents) VALUES ($1, $2)\", s.ID, s.Cents); err != nil {\n+\t\tlog.Printf(\"settlement insert failed: %v\", err)\n+\t}\n+\tvar err error\n+\treturn err\n+}",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-go-shadowed-error",
+  "must_not_find": [],
+  "summary": "Go. An error shadowed inside an if-scope, so the failure is dropped.",
+  "title": "Add the settlement writer"
+}

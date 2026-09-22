@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "from clients.http import fetch\n\n\ndef sync_partner_catalogue():\n    \"\"\"The partner API returns 503 roughly one call in three during their nightly\n    window. We rely on fetch()'s default retry count to get through it; this is\n    deliberate and was the fix for INC-4471.\"\"\"\n    return fetch(\"https://partner.example.com/catalogue\")\n",
+      "path": "sync/nightly.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "clients/http.py",
+      "line": 1,
+      "min_severity": "major",
+      "note": "sync_partner_catalogue depends on the old default of 5 to survive a dependency that 503s one call in three; dropping it to 1 silently reverts the fix for INC-4471"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "clients/http.py",
+      "patch": "@@ -1,2 +1,2 @@\n-def fetch(url, retries=5, timeout=10):\n+def fetch(url, retries=1, timeout=10):\n     return _with_retries(url, retries=retries, timeout=timeout)",
+      "status": "modified"
+    }
+  ],
+  "id": "ctx-changed-default-breaks-caller",
+  "must_not_find": [],
+  "summary": "A default is lowered from 5 to 1. Reasonable in isolation; the retrieved caller relies on the old value to survive a known flaky dependency.",
+  "title": "Make retries less aggressive by default"
+}

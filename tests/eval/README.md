@@ -1,8 +1,9 @@
 # The eval set
 
-34 labelled pull requests, 37 labelled findings, 18 false-positive traps, four
-cases where the correct answer is to say nothing at all, and five multi-file
-changes. Python, TypeScript and Terraform.
+47 labelled pull requests, 47 labelled findings, 21 false-positive traps, seven
+cases where the correct answer is to say nothing at all, six multi-file changes,
+and thirteen whose defect cannot be seen without the retrieved repository context.
+Python, TypeScript, Go, SQL, Terraform and YAML.
 
 ```bash
 make eval        # offline, free, gated against a saved baseline
@@ -64,6 +65,25 @@ schema carried numeric range constraints the API rejects, so every agent call
 400'd; recall was computed over matches rather than distinct defects; and the
 duplicate-rate metric counted per label, which made co-located findings from
 different concerns look like duplication when they are not.
+
+## Traps, and scoping them
+
+A `CLEAN` marker claims a finding at that line would be a false positive. Unscoped,
+that is a very strong promise — *nothing here is worth saying* — and it is much
+harder to earn than it looks. Three rounds of correcting this set's "clean" cases
+still left real defects in them, which the models found each time: a path
+traversal in an interpolated output path, an ambiguous string concatenation in a
+cache key, a test fixture that imported nothing.
+
+So a trap may be scoped:
+
+```python
+#!CLEAN agent=security :: MD5 keys a cache here; no secret, no adversary
+```
+
+which says only that flagging this as a security problem is wrong, while noting
+that it has no test is fair. Nineteen of the twenty-one traps stay unscoped,
+because a set of only scoped traps stops testing restraint.
 
 ## The traps matter as much as the labels
 

@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "def require_owner(user, obj):\n    \"\"\"Raise Forbidden unless `user` owns `obj`. Every object read or mutation\n    of another tenant's data must go through this.\"\"\"\n    if obj.tenant_id != user.tenant_id:\n        raise Forbidden()\n",
+      "path": "api/auth.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": "api/export.py",
+      "line": 6,
+      "min_severity": "critical",
+      "note": "the per-object require_owner loop was deleted, so any authenticated caller can read another tenant's reports by id"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 3,
+      "filename": "api/export.py",
+      "patch": "@@ -1,9 +1,7 @@\n-from api.auth import current_user, require_owner\n+from api.auth import current_user\n \n \n def bulk_export(request, report_ids):\n     user = current_user(request)\n     reports = [Report.get(rid) for rid in report_ids]\n-    for report in reports:\n-        require_owner(user, report)\n     return [r.to_dict() for r in reports]",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-removed-authz-check",
+  "must_not_find": [],
+  "summary": "An ownership check deleted for performance. Critical: the control is gone.",
+  "title": "Speed up the bulk export endpoint"
+}

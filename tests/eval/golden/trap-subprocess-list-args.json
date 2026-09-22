@@ -1,0 +1,32 @@
+{
+  "context_files": [],
+  "expected": [],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 11,
+      "deletions": 1,
+      "filename": "export/archive.py",
+      "patch": "@@ -1,5 +1,15 @@\n+import re\n import subprocess\n+\n+SAFE_NAME = re.compile(\"[A-Za-z0-9_-]{1,64}\")\n \n \n def create_archive(name, directory):\n-    return subprocess.run(f\"tar -czf /exports/{name}.tar.gz {directory}\", shell=True, check=True)\n+    \"\"\"Write /exports/<name>.tar.gz from `directory`.\"\"\"\n+    if not SAFE_NAME.fullmatch(name):\n+        raise ValueError(f\"unsafe archive name: {name!r}\")\n+    return subprocess.run(\n+        [\"tar\", \"-czf\", f\"/exports/{name}.tar.gz\", \"--\", directory],\n+        shell=False,\n+        check=True,\n+    )",
+      "status": "modified"
+    },
+    {
+      "additions": 13,
+      "deletions": 0,
+      "filename": "tests/test_archive.py",
+      "patch": "@@ -0,0 +1,13 @@\n+import pytest\n+\n+from export.archive import create_archive\n+\n+\n+def test_runs_without_a_shell(spy):\n+    create_archive(\"nightly\", \"/srv/data\")\n+    assert spy.last_call.kwargs[\"shell\"] is False\n+\n+\n+def test_rejects_a_traversing_name():\n+    with pytest.raises(ValueError):\n+        create_archive(\"../../etc/passwd\", \"/srv/data\")",
+      "status": "added"
+    }
+  ],
+  "id": "trap-subprocess-list-args",
+  "must_not_find": [
+    {
+      "agent": "security",
+      "file_path": "export/archive.py",
+      "line": 11,
+      "note": "a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token, a tar option or a path escape"
+    }
+  ],
+  "summary": "A refactor away from shell=True to a list argv, with the archive name allowlisted. It reads as command execution and is in fact the fix for one.",
+  "title": "Stop shelling out for the archive step"
+}

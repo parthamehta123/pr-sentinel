@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "class Invoice:\n    \"\"\"`purchase_order` is optional: only set for customers on invoicing terms,\n    which is roughly one account in twenty.\"\"\"\n\n    purchase_order: \"str | None\"\n",
+      "path": "models/invoice.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "render/invoice.py",
+      "line": 2,
+      "min_severity": "major",
+      "note": "the None guard was removed, but purchase_order is unset for most accounts, so this raises AttributeError on them"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 4,
+      "deletions": 4,
+      "filename": "render/invoice.py",
+      "patch": "@@ -1,5 +1,5 @@\n def header_lines(invoice):\n-    lines = [f\"Invoice {invoice.number}\"]\n-    if invoice.purchase_order is not None:\n-        lines.append(f\"PO {invoice.purchase_order.upper()}\")\n-    return lines\n+    return [\n+        f\"Invoice {invoice.number}\",\n+        f\"PO {invoice.purchase_order.upper()}\",\n+    ]",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-removed-null-guard",
+  "must_not_find": [],
+  "summary": "A guard removed during cleanup, on a field that is genuinely optional.",
+  "title": "Tidy up the invoice renderer"
+}

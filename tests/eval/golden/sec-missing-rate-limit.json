@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "api/password_reset.py",
+      "line": 1,
+      "min_severity": "minor",
+      "note": "the limiter was removed, so reset emails can be sent in unlimited volume to any address; it makes enumeration and mail-bombing cheap without granting access"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 0,
+      "deletions": 4,
+      "filename": "api/password_reset.py",
+      "patch": "@@ -1,7 +1,3 @@\n-from limits import rate_limit\n-\n-\n-@rate_limit(\"5/hour\")\n def request_reset(request, email):\n     send_reset_email(email)\n     return {\"sent\": True}",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-missing-rate-limit",
+  "must_not_find": [],
+  "summary": "A rate limit removed. Real, and `major` rather than `critical`: it makes an attack cheaper without granting anyone access.",
+  "title": "Drop the limiter from the password reset endpoint"
+}

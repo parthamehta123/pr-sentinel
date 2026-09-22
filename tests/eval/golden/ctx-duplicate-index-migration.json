@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "-- Applied 2025-11-02.\nCREATE INDEX invoices_tenant_created_idx\n    ON invoices (tenant_id, created_at DESC);\n\nCREATE INDEX invoices_status_idx ON invoices (status);\n",
+      "path": "migrations/0007_invoice_indexes.sql"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "migrations/0031_reporting.sql",
+      "line": 7,
+      "min_severity": "minor",
+      "note": "migration 0007 already creates this exact index on invoices; a second copy doubles write cost and storage for no read benefit"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 3,
+      "deletions": 0,
+      "filename": "migrations/0031_reporting.sql",
+      "patch": "@@ -3,3 +3,6 @@\n     tenant_id   BIGINT NOT NULL,\n     started_at  TIMESTAMPTZ NOT NULL DEFAULT now()\n );\n+\n+CREATE INDEX invoices_tenant_created_idx2\n+    ON invoices (tenant_id, created_at DESC);",
+      "status": "modified"
+    }
+  ],
+  "id": "ctx-duplicate-index-migration",
+  "must_not_find": [],
+  "summary": "A migration that is unremarkable on its own and duplicates an index an earlier migration already created. Only the retrieved context shows it.",
+  "title": "Add an index for the tenant lookup"
+}

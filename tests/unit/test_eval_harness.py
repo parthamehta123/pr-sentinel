@@ -403,3 +403,43 @@ def test_a_run_with_one_healthy_case_is_still_scored():
         ),
     ]
     _refuse_if_everything_failed(mixed)  # does not raise
+
+
+# --- scoped traps -----------------------------------------------------------
+#
+# An unscoped CLEAN claims nothing at that line is a finding, which is a strong
+# promise and hard to earn: two rounds of correcting this set's "clean" cases
+# still left real defects that the models duly found. A scoped trap claims only
+# that one reading is wrong.
+
+
+def test_an_unscoped_trap_catches_any_finding_on_the_line():
+    trap = Label(file_path="a.py", line=10, note="nothing here")
+    assert (
+        classify([finding(agent=AgentType.DOCS, category="documentation")], [], [trap])[0].kind
+        == "false_positive"
+    )
+
+
+def test_a_scoped_trap_only_catches_the_reading_it_names():
+    trap = Label(file_path="a.py", line=10, agent="security", note="not an injection")
+    security = finding(agent=AgentType.SECURITY, category="injection")
+    tests_note = finding(agent=AgentType.TESTS, category="test_coverage", severity="minor")
+
+    assert classify([security], [], [trap])[0].kind == "false_positive"
+    # A different concern at the same line is a legitimate observation, not a trap hit.
+    assert classify([tests_note], [], [trap])[0].kind == "unlabelled"
+
+
+def test_a_category_scoped_trap_discriminates_within_one_agent():
+    trap = Label(file_path="a.py", line=10, category="crypto", note="md5 is fine here")
+    assert classify([finding(category="crypto")], [], [trap])[0].kind == "false_positive"
+    assert classify([finding(category="logic")], [], [trap])[0].kind == "unlabelled"
+
+
+def test_most_traps_in_the_set_stay_unscoped():
+    """Scoping is the exception. A set of only scoped traps stops testing restraint."""
+    cases = load_cases()
+    traps = [t for c in cases for t in c.must_not_find]
+    unscoped = [t for t in traps if t.agent is None and t.category is None]
+    assert len(unscoped) / len(traps) > 0.7

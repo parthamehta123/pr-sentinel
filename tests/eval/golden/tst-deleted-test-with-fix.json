@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "tests/test_rounding.py",
+      "line": 4,
+      "min_severity": "major",
+      "note": "test_rounds_half_to_even was deleted rather than updated, so the banker's-rounding behaviour it pinned is now unguarded"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 0,
+      "deletions": 4,
+      "filename": "tests/test_rounding.py",
+      "patch": "@@ -1,8 +1,4 @@\n from decimal import Decimal\n-\n-\n-def test_rounds_half_to_even():\n-    assert round_cents(Decimal(\"2.345\")) == Decimal(\"2.34\")\n \n \n def test_rounds_up_above_half():",
+      "status": "modified"
+    }
+  ],
+  "id": "tst-deleted-test-with-fix",
+  "must_not_find": [],
+  "summary": "The test that would have caught the change is deleted in the same commit.",
+  "title": "Fix the rounding and drop the failing test"
+}

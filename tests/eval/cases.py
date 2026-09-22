@@ -1426,3 +1426,598 @@ def get_tenant_fresh(tenant_id):
 """,
     },
 )
+
+
+# ===========================================================================
+# Third tranche — precision 0.983 and recall 1.000 meant the set had saturated
+# again. These attack the two things it could not see.
+#
+# First: defects that are invisible in the diff alone and only wrong given what
+# is elsewhere in the repository. That is what retrieval is for, and almost
+# nothing in the set was testing it.
+#
+# Second: whole cases that look alarming and are correct. Every trap so far has
+# been a clean sibling beside a real defect, which is a weaker test than a change
+# that reads as a vulnerability from top to bottom and is not one.
+# ===========================================================================
+
+
+# --- only wrong given the rest of the repository ---------------------------
+
+case(
+    id="ctx-duplicate-index-migration",
+    title="Add an index for the tenant lookup",
+    summary=(
+        "A migration that is unremarkable on its own and duplicates an index an "
+        "earlier migration already created. Only the retrieved context shows it."
+    ),
+    expected_decision=None,
+    context={
+        "migrations/0007_invoice_indexes.sql": """-- Applied 2025-11-02.
+CREATE INDEX invoices_tenant_created_idx
+    ON invoices (tenant_id, created_at DESC);
+
+CREATE INDEX invoices_status_idx ON invoices (status);
+""",
+    },
+    before={
+        "migrations/0031_reporting.sql": """CREATE TABLE report_runs (
+    id          BIGSERIAL PRIMARY KEY,
+    tenant_id   BIGINT NOT NULL,
+    started_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+""",
+    },
+    after={
+        "migrations/0031_reporting.sql": """CREATE TABLE report_runs (
+    id          BIGSERIAL PRIMARY KEY,
+    tenant_id   BIGINT NOT NULL,
+    started_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+#!EXPECT agent=correctness category=logic severity>=minor :: migration 0007 already creates this exact index on invoices; a second copy doubles write cost and storage for no read benefit
+CREATE INDEX invoices_tenant_created_idx2
+    ON invoices (tenant_id, created_at DESC);
+""",
+    },
+)
+
+case(
+    id="ctx-changed-default-breaks-caller",
+    title="Make retries less aggressive by default",
+    summary=(
+        "A default is lowered from 5 to 1. Reasonable in isolation; the retrieved "
+        "caller relies on the old value to survive a known flaky dependency."
+    ),
+    expected_decision=None,
+    context={
+        "sync/nightly.py": '''from clients.http import fetch
+
+
+def sync_partner_catalogue():
+    """The partner API returns 503 roughly one call in three during their nightly
+    window. We rely on fetch()'s default retry count to get through it; this is
+    deliberate and was the fix for INC-4471."""
+    return fetch("https://partner.example.com/catalogue")
+''',
+    },
+    before={
+        "clients/http.py": """def fetch(url, retries=5, timeout=10):
+    return _with_retries(url, retries=retries, timeout=timeout)
+""",
+    },
+    after={
+        "clients/http.py": """#!EXPECT agent=correctness category=api_contract severity>=major :: sync_partner_catalogue depends on the old default of 5 to survive a dependency that 503s one call in three; dropping it to 1 silently reverts the fix for INC-4471
+def fetch(url, retries=1, timeout=10):
+    return _with_retries(url, retries=retries, timeout=timeout)
+""",
+    },
+)
+
+
+# --- whole cases that look alarming and are correct -------------------------
+
+case(
+    id="neg-allowlisted-dynamic-sql",
+    title="Allow sorting the invoice list",
+    summary=(
+        "Dynamic SQL built by string formatting — and correct, because the only "
+        "interpolated values are literals the module owns. Documented, validated "
+        "and tested in the same change, so there is genuinely nothing to say."
+    ),
+    expected_decision="suppress",
+    before={
+        "reports/invoices.py": '''from db import execute
+
+
+def list_invoices(tenant_id, limit):
+    """Return one page of invoices for `tenant_id`, newest first."""
+    return execute(
+        "SELECT * FROM invoices WHERE tenant_id = %s ORDER BY created_at DESC LIMIT %s",
+        (tenant_id, limit),
+    )
+''',
+        "tests/test_invoices.py": """def test_lists_newest_first():
+    rows = list_invoices(tenant_id=1, limit=2)
+    assert [r["id"] for r in rows] == [20, 19]
+""",
+    },
+    after={
+        "reports/invoices.py": '''from db import execute
+
+SORTABLE = {"created_at": "created_at", "amount": "amount_cents", "status": "status"}
+DIRECTIONS = {"asc": "ASC", "desc": "DESC"}
+
+
+def list_invoices(tenant_id, limit, sort="created_at", direction="desc"):
+    """Return one page of invoices for `tenant_id`.
+
+    `sort` must be a key of SORTABLE and `direction` a key of DIRECTIONS.
+    Anything else raises ValueError before a query is built.
+    """
+    if sort not in SORTABLE or direction not in DIRECTIONS:
+        raise ValueError(f"unsortable: {sort!r} {direction!r}")
+    #!CLEAN agent=security :: both interpolated values are module-owned literals chosen by a membership test; nothing caller-controlled reaches the query
+    column, order = SORTABLE[sort], DIRECTIONS[direction]
+    return execute(
+        f"SELECT * FROM invoices WHERE tenant_id = %s ORDER BY {column} {order} LIMIT %s",
+        (tenant_id, limit),
+    )
+''',
+        "tests/test_invoices.py": """import pytest
+
+
+def test_lists_newest_first():
+    rows = list_invoices(tenant_id=1, limit=2)
+    assert [r["id"] for r in rows] == [20, 19]
+
+
+def test_sorts_by_amount_ascending():
+    rows = list_invoices(tenant_id=1, limit=2, sort="amount", direction="asc")
+    assert [r["amount_cents"] for r in rows] == [100, 250]
+
+
+def test_rejects_an_unknown_sort_key():
+    with pytest.raises(ValueError):
+        list_invoices(tenant_id=1, limit=2, sort="; DROP TABLE invoices --")
+""",
+    },
+)
+
+case(
+    id="trap-subprocess-list-args",
+    title="Stop shelling out for the archive step",
+    summary=(
+        "A refactor away from shell=True to a list argv, with the archive name "
+        "allowlisted. It reads as command execution and is in fact the fix for one."
+    ),
+    # Not a pure negative control: the reflex it tests is wrong, but other
+    # legitimate observations remain available, so the gate outcome is open.
+    expected_decision=None,
+    before={
+        "export/archive.py": """import subprocess
+
+
+def create_archive(name, directory):
+    return subprocess.run(f"tar -czf /exports/{name}.tar.gz {directory}", shell=True, check=True)
+""",
+    },
+    after={
+        "export/archive.py": '''import re
+import subprocess
+
+SAFE_NAME = re.compile("[A-Za-z0-9_-]{1,64}")
+
+
+def create_archive(name, directory):
+    """Write /exports/<name>.tar.gz from `directory`."""
+    if not SAFE_NAME.fullmatch(name):
+        raise ValueError(f"unsafe archive name: {name!r}")
+    #!CLEAN agent=security :: a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token, a tar option or a path escape
+    return subprocess.run(
+        ["tar", "-czf", f"/exports/{name}.tar.gz", "--", directory],
+        shell=False,
+        check=True,
+    )
+''',
+        "tests/test_archive.py": """import pytest
+
+from export.archive import create_archive
+
+
+def test_runs_without_a_shell(spy):
+    create_archive("nightly", "/srv/data")
+    assert spy.last_call.kwargs["shell"] is False
+
+
+def test_rejects_a_traversing_name():
+    with pytest.raises(ValueError):
+        create_archive("../../etc/passwd", "/srv/data")
+""",
+    },
+)
+
+case(
+    id="trap-md5-for-cache-key",
+    title="Key the render cache by template digest",
+    summary=(
+        "MD5, used to key a cache. Not a password, not a signature, not integrity "
+        "against an adversary. Flagging it is the reflex this case exists to catch."
+    ),
+    # Not a pure negative control: the reflex it tests is wrong, but other
+    # legitimate observations remain available, so the gate outcome is open.
+    expected_decision=None,
+    before={
+        "render/cache.py": '''_CACHE = {}
+
+
+def cached_render(template_source, context):
+    """Render `template_source` with `context`, memoised on both."""
+    key = (template_source, tuple(sorted(context.items())))
+    if key not in _CACHE:
+        _CACHE[key] = _render(template_source, context)
+    return _CACHE[key]
+''',
+        "tests/test_cache.py": """def test_identical_input_renders_once(counter):
+    cached_render("{{ a }}", {"a": 1})
+    cached_render("{{ a }}", {"a": 1})
+    assert counter.renders == 1
+""",
+    },
+    after={
+        "render/cache.py": '''import hashlib
+import json
+
+_CACHE = {}
+
+
+def cached_render(template_source, context):
+    """Render `template_source` with `context`, memoised on a digest of both."""
+    #!CLEAN agent=security :: MD5 over the template's own source and a canonical encoding of the context; no secret, no adversary, and a collision costs one re-render
+    payload = json.dumps([template_source, context], sort_keys=True)
+    key = hashlib.md5(payload.encode()).hexdigest()
+    if key not in _CACHE:
+        _CACHE[key] = _render(template_source, context)
+    return _CACHE[key]
+''',
+        "tests/test_cache.py": """def test_identical_input_renders_once(counter):
+    cached_render("{{ a }}", {"a": 1})
+    cached_render("{{ a }}", {"a": 1})
+    assert counter.renders == 1
+
+
+def test_key_is_by_value_not_by_identity(counter):
+    cached_render("{{ a }}", {"a": 1, "b": 2})
+    cached_render("{{ a }}", {"b": 2, "a": 1})
+    assert counter.renders == 1
+
+
+def test_different_context_renders_again(counter):
+    cached_render("{{ a }}", {"a": 1})
+    cached_render("{{ a }}", {"a": 2})
+    assert counter.renders == 2
+""",
+    },
+)
+
+
+# --- the severity boundary, from both sides --------------------------------
+#
+# ADR-0006 widened `critical` to cover a control removed, weakened or bypassed.
+# A widened band needs cases on both sides of it, or the set only rewards
+# rating things higher.
+
+case(
+    id="sec-removed-authz-check",
+    title="Speed up the bulk export endpoint",
+    summary="An ownership check deleted for performance. Critical: the control is gone.",
+    expected_decision="escalate",
+    context={
+        "api/auth.py": '''def require_owner(user, obj):
+    """Raise Forbidden unless `user` owns `obj`. Every object read or mutation
+    of another tenant's data must go through this."""
+    if obj.tenant_id != user.tenant_id:
+        raise Forbidden()
+''',
+    },
+    before={
+        "api/export.py": """from api.auth import current_user, require_owner
+
+
+def bulk_export(request, report_ids):
+    user = current_user(request)
+    reports = [Report.get(rid) for rid in report_ids]
+    for report in reports:
+        require_owner(user, report)
+    return [r.to_dict() for r in reports]
+""",
+    },
+    after={
+        "api/export.py": """from api.auth import current_user
+
+
+def bulk_export(request, report_ids):
+    user = current_user(request)
+    #!EXPECT agent=security category=authz severity>=critical :: the per-object require_owner loop was deleted, so any authenticated caller can read another tenant's reports by id
+    reports = [Report.get(rid) for rid in report_ids]
+    return [r.to_dict() for r in reports]
+""",
+    },
+)
+
+case(
+    id="sec-missing-rate-limit",
+    title="Drop the limiter from the password reset endpoint",
+    summary=(
+        "A rate limit removed. Real, and `major` rather than `critical`: it makes "
+        "an attack cheaper without granting anyone access."
+    ),
+    expected_decision=None,
+    before={
+        "api/password_reset.py": """from limits import rate_limit
+
+
+@rate_limit("5/hour")
+def request_reset(request, email):
+    send_reset_email(email)
+    return {"sent": True}
+""",
+    },
+    after={
+        "api/password_reset.py": """#!EXPECT agent=security category=input_validation severity>=minor :: the limiter was removed, so reset emails can be sent in unlimited volume to any address; it makes enumeration and mail-bombing cheap without granting access
+def request_reset(request, email):
+    send_reset_email(email)
+    return {"sent": True}
+""",
+    },
+)
+
+case(
+    id="sec-verbose-error-leak",
+    title="Return the exception text to help debugging",
+    summary="Internals leaked to the client. Real, and `major`, not `critical`.",
+    expected_decision=None,
+    before={
+        "api/errors.py": """import logging
+
+log = logging.getLogger(__name__)
+
+
+def handle(exc):
+    log.exception("request failed")
+    return {"error": "internal error"}, 500
+""",
+    },
+    after={
+        "api/errors.py": """import logging
+import traceback
+
+log = logging.getLogger(__name__)
+
+
+def handle(exc):
+    log.exception("request failed")
+    #!EXPECT agent=security category=input_validation severity>=minor :: the traceback goes to the caller, exposing file paths, library versions and internal structure; it helps an attacker without itself granting anything
+    return {"error": str(exc), "traceback": traceback.format_exc()}, 500
+""",
+    },
+)
+
+
+# --- other languages, and the shapes that only exist in them ----------------
+
+case(
+    id="sec-workflow-pull-request-target",
+    title="Run the size check on forked pull requests",
+    summary=(
+        "GitHub Actions. `pull_request_target` runs with repository secrets and "
+        "this checks out the fork's code before running it."
+    ),
+    expected_decision="escalate",
+    before={
+        ".github/workflows/size.yml": """name: size
+
+on:
+  pull_request:
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/measure.sh
+""",
+    },
+    after={
+        ".github/workflows/size.yml": """name: size
+
+on:
+  #!EXPECT agent=security category=authz severity>=critical :: pull_request_target runs with the base repository's secrets, and checking out the fork's head then running its script hands those secrets to anyone who opens a pull request
+  pull_request_target:
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: ./scripts/measure.sh
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+""",
+    },
+)
+
+case(
+    id="cor-go-shadowed-error",
+    title="Add the settlement writer",
+    summary="Go. An error shadowed inside an if-scope, so the failure is dropped.",
+    expected_decision=None,
+    before={
+        "internal/ledger/write.go": """package ledger
+
+func WriteEntry(db *sql.DB, e Entry) error {
+	if err := validate(e); err != nil {
+		return err
+	}
+	_, err := db.Exec("INSERT INTO ledger (id, cents) VALUES ($1, $2)", e.ID, e.Cents)
+	return err
+}
+""",
+    },
+    after={
+        "internal/ledger/write.go": """package ledger
+
+func WriteEntry(db *sql.DB, e Entry) error {
+	if err := validate(e); err != nil {
+		return err
+	}
+	_, err := db.Exec("INSERT INTO ledger (id, cents) VALUES ($1, $2)", e.ID, e.Cents)
+	return err
+}
+
+func WriteSettlement(db *sql.DB, s Settlement) error {
+	if err := validate(s.Entry); err != nil {
+		return err
+	}
+	//!EXPECT agent=correctness category=error_handling severity>=major :: := declares a new err inside the if-scope, so the outer err stays nil and a failed insert is reported as success
+	if _, err := db.Exec("INSERT INTO settlements (id, cents) VALUES ($1, $2)", s.ID, s.Cents); err != nil {
+		log.Printf("settlement insert failed: %v", err)
+	}
+	var err error
+	return err
+}
+""",
+    },
+)
+
+
+# --- deletions, and a defect buried in noise -------------------------------
+
+case(
+    id="cor-removed-null-guard",
+    title="Tidy up the invoice renderer",
+    summary="A guard removed during cleanup, on a field that is genuinely optional.",
+    expected_decision=None,
+    context={
+        "models/invoice.py": '''class Invoice:
+    """`purchase_order` is optional: only set for customers on invoicing terms,
+    which is roughly one account in twenty."""
+
+    purchase_order: "str | None"
+''',
+    },
+    before={
+        "render/invoice.py": """def header_lines(invoice):
+    lines = [f"Invoice {invoice.number}"]
+    if invoice.purchase_order is not None:
+        lines.append(f"PO {invoice.purchase_order.upper()}")
+    return lines
+""",
+    },
+    after={
+        "render/invoice.py": """def header_lines(invoice):
+    #!EXPECT agent=correctness category=logic severity>=major :: the None guard was removed, but purchase_order is unset for most accounts, so this raises AttributeError on them
+    return [
+        f"Invoice {invoice.number}",
+        f"PO {invoice.purchase_order.upper()}",
+    ]
+""",
+    },
+)
+
+case(
+    id="tst-deleted-test-with-fix",
+    title="Fix the rounding and drop the failing test",
+    summary="The test that would have caught the change is deleted in the same commit.",
+    expected_decision=None,
+    before={
+        "tests/test_rounding.py": """from decimal import Decimal
+
+
+def test_rounds_half_to_even():
+    assert round_cents(Decimal("2.345")) == Decimal("2.34")
+
+
+def test_rounds_up_above_half():
+    assert round_cents(Decimal("2.346")) == Decimal("2.35")
+""",
+    },
+    after={
+        "tests/test_rounding.py": """from decimal import Decimal
+
+
+#!EXPECT agent=tests category=test_coverage severity>=major :: test_rounds_half_to_even was deleted rather than updated, so the banker's-rounding behaviour it pinned is now unguarded
+def test_rounds_up_above_half():
+    assert round_cents(Decimal("2.346")) == Decimal("2.35")
+""",
+    },
+)
+
+
+# --- a defect buried in mechanical churn -----------------------------------
+#
+# Generated rather than typed out, because the point is the volume: forty
+# functions renamed, and one of them quietly changed as well. Every other case in
+# the set is small enough to read in one pass, which is not the review where
+# things get missed.
+
+_RENAME_FIELDS = [
+    "subtotal",
+    "discount",
+    "tax",
+    "shipping",
+    "handling",
+    "credit",
+    "rebate",
+    "surcharge",
+    "adjustment",
+    "rounding",
+    "deposit",
+    "refund",
+    "chargeback",
+    "settlement",
+    "payout",
+    "fee",
+    "commission",
+    "levy",
+    "duty",
+    "tariff",
+]
+
+
+def _rename_module(prefix: str, threshold_op: str) -> str:
+    lines = ['"""Line-item calculators. One function per component."""', "", ""]
+    for field in _RENAME_FIELDS:
+        lines.append(f"def {prefix}_{field}(line):")
+        if field == "rounding":
+            # The one function whose body changes as well as its name.
+            if threshold_op == "MARK":
+                lines.append(
+                    "    #!EXPECT agent=correctness category=logic severity>=major "
+                    ":: the comparison flipped from >= to > inside a forty-function "
+                    "rename, so an amount of exactly half a cent now rounds down "
+                    "where it used to round up"
+                )
+                op = ">"
+            else:
+                op = threshold_op
+            lines.append(f"    return 1 if line.remainder_cents {op} 0.5 else 0")
+        else:
+            lines.append(f"    return line.{field}_cents")
+        lines.extend(["", ""])
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
+case(
+    id="cor-needle-in-a-rename",
+    title="Rename the line-item calculators",
+    summary=(
+        "Forty functions renamed from calc_* to compute_*, and one comparison "
+        "flipped along the way. The review where a defect actually gets missed."
+    ),
+    expected_decision=None,
+    before={"billing/lines.py": _rename_module("calc", ">=")},
+    after={"billing/lines.py": _rename_module("compute", "MARK")},
+)

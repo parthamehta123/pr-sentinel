@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "api/errors.py",
+      "line": 9,
+      "min_severity": "minor",
+      "note": "the traceback goes to the caller, exposing file paths, library versions and internal structure; it helps an attacker without itself granting anything"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 2,
+      "deletions": 1,
+      "filename": "api/errors.py",
+      "patch": "@@ -1,8 +1,9 @@\n import logging\n+import traceback\n \n log = logging.getLogger(__name__)\n \n \n def handle(exc):\n     log.exception(\"request failed\")\n-    return {\"error\": \"internal error\"}, 500\n+    return {\"error\": str(exc), \"traceback\": traceback.format_exc()}, 500",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-verbose-error-leak",
+  "must_not_find": [],
+  "summary": "Internals leaked to the client. Real, and `major`, not `critical`.",
+  "title": "Return the exception text to help debugging"
+}

@@ -92,9 +92,13 @@ instead.
 
 ## Measuring it
 
-34 labelled pull requests live in [`tests/eval/`](tests/eval/): 37 labelled
-findings across Python, TypeScript and Terraform, **18 false-positive traps**,
-four cases where the right answer is silence, and five multi-file changes.
+47 labelled pull requests live in [`tests/eval/`](tests/eval/): 47 labelled
+findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
+false-positive traps**, seven cases where the right answer is silence, and
+thirteen whose defect is invisible without the retrieved repository context.
+
+The headline numbers below are from the 34-case set; the 47-case baseline is
+pending an API credit top-up.
 
 Sixteen of the cases put a real defect next to a plausible look-alike — a path
 join with no confinement check one function below one with `realpath`; a signature

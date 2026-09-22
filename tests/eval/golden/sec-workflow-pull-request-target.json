@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": ".github/workflows/size.yml",
+      "line": 4,
+      "min_severity": "critical",
+      "note": "pull_request_target runs with the base repository's secrets, and checking out the fork's head then running its script hands those secrets to anyone who opens a pull request"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 1,
+      "filename": ".github/workflows/size.yml",
+      "patch": "@@ -1,11 +1,15 @@\n name: size\n \n on:\n-  pull_request:\n+  pull_request_target:\n \n jobs:\n   measure:\n     runs-on: ubuntu-latest\n     steps:\n       - uses: actions/checkout@v4\n+        with:\n+          ref: ${{ github.event.pull_request.head.sha }}\n       - run: ./scripts/measure.sh\n+        env:\n+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-workflow-pull-request-target",
+  "must_not_find": [],
+  "summary": "GitHub Actions. `pull_request_target` runs with repository secrets and this checks out the fork's code before running it.",
+  "title": "Run the size check on forked pull requests"
+}

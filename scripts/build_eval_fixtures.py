@@ -67,6 +67,9 @@ def _parse_marker(m: re.Match) -> dict:
         elif "=" in token:
             key, _, value = token.partition("=")
             label[key] = value
+    if kind == "CLEAN" and ("agent" in label or "category" in label):
+        # A scoped trap: only this reading of the line is a false positive.
+        pass
     if kind == "EXPECT":
         if "agent" not in label:
             raise ValueError(f"EXPECT marker needs agent=: {m.group(0)!r}")

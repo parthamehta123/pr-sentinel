@@ -6,19 +6,19 @@
     "tests": "claude-sonnet-5",
     "docs": "claude-haiku-4-5"
   },
-  "cases": 34,
+  "cases": 47,
   "overall": {
-    "hits": 32,
-    "labels_found": 25,
-    "concerns": 35,
-    "duplicate_rate": 0.91,
+    "hits": 33,
+    "labels_found": 26,
+    "concerns": 36,
+    "duplicate_rate": 0.92,
     "false_positives": 2,
-    "unlabelled": 2,
-    "misses": 12,
-    "precision_strict": 0.889,
-    "precision_lenient": 0.941,
-    "recall": 0.676,
-    "f1": 0.768
+    "unlabelled": 4,
+    "misses": 21,
+    "precision_strict": 0.846,
+    "precision_lenient": 0.943,
+    "recall": 0.553,
+    "f1": 0.669
   },
   "by_agent": {
     "correctness": {
@@ -28,11 +28,11 @@
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 0,
-      "misses": 4,
+      "misses": 8,
       "precision_strict": 1.0,
       "precision_lenient": 1.0,
-      "recall": 0.2,
-      "f1": 0.333
+      "recall": 0.111,
+      "f1": 0.2
     },
     "docs": {
       "hits": 14,
@@ -54,24 +54,24 @@
       "duplicate_rate": 0.0,
       "false_positives": 1,
       "unlabelled": 0,
-      "misses": 2,
+      "misses": 6,
       "precision_strict": 0.5,
       "precision_lenient": 0.5,
-      "recall": 0.333,
-      "f1": 0.4
+      "recall": 0.143,
+      "f1": 0.222
     },
     "tests": {
-      "hits": 16,
-      "labels_found": 20,
+      "hits": 17,
+      "labels_found": 21,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 1,
-      "unlabelled": 1,
-      "misses": 2,
-      "precision_strict": 0.889,
-      "precision_lenient": 0.941,
-      "recall": 0.909,
-      "f1": 0.899
+      "unlabelled": 3,
+      "misses": 3,
+      "precision_strict": 0.81,
+      "precision_lenient": 0.944,
+      "recall": 0.875,
+      "f1": 0.841
     }
   },
   "calibration": {
@@ -85,10 +85,10 @@
       },
       {
         "range": "0.50-0.60",
-        "n": 18,
+        "n": 21,
         "mean_confidence": 0.55,
-        "observed_hit_rate": 0.889,
-        "gap": 0.339
+        "observed_hit_rate": 0.81,
+        "gap": 0.26
       },
       {
         "range": "0.70-0.80",
@@ -105,14 +105,14 @@
         "gap": -0.32
       }
     ],
-    "expected_calibration_error": 0.397
+    "expected_calibration_error": 0.349
   },
-  "category_agreement": 0.094,
-  "agent_attribution": 0.125,
-  "decision_accuracy": 0.75,
+  "category_agreement": 0.091,
+  "agent_attribution": 0.121,
+  "decision_accuracy": 0.6,
   "cost": {
-    "total_usd": 0.2272,
-    "per_case_usd": 0.0067
+    "total_usd": 0.3225,
+    "per_case_usd": 0.0069
   },
   "per_case": [
     {
@@ -191,6 +191,20 @@
       "findings": []
     },
     {
+      "id": "cor-go-shadowed-error",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "cor-mutable-default-arg",
       "hits": 2,
       "missed": 0,
@@ -237,6 +251,44 @@
           ],
           "cites": [
             "notify/batch.py:7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cor-needle-in-a-rename",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.022,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "unlabelled",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "billing/lines.py:4",
+          "title": "New function arrives without a test (and 7 more)",
+          "body": "No test file in this diff covers the new function.\n\nThe same gap appears at 7 other place(s) in this change:\n\n- `billing/lines.py:8` \u2014 New function arrives without a test\n- `billing/lines.py:12` \u2014 New function arrives without a test\n- `billing/lines.py:16` \u2014 New function arrives without a test\n- `billing/lines.py:20` \u2014 New function arrives without a test\n- `billing/lines.py:24` \u2014 New function arrives without a test\n- `billing/lines.py:28` \u2014 New function arrives without a test\n- `billing/lines.py:32` \u2014 New function arrives without a test\n\n_Collapsed into one comment: this is one piece of work, not 8 separate ones._",
+          "agreeing": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "billing/lines.py:4",
+            "billing/lines.py:8",
+            "billing/lines.py:12",
+            "billing/lines.py:16",
+            "billing/lines.py:20",
+            "billing/lines.py:24",
+            "billing/lines.py:28",
+            "billing/lines.py:32"
           ]
         }
       ]
@@ -291,6 +343,20 @@
           ]
         }
       ]
+    },
+    {
+      "id": "cor-removed-null-guard",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0052,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
     },
     {
       "id": "cor-resource-leak-error-path",
@@ -424,6 +490,53 @@
       "findings": []
     },
     {
+      "id": "ctx-changed-default-breaks-caller",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.0065,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "clients/http.py:1",
+          "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
+          "agreeing": [],
+          "matched_label": "clients/http.py:1",
+          "matched_labels": [
+            "clients/http.py:1"
+          ],
+          "cites": [
+            "clients/http.py:1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctx-duplicate-index-migration",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0051,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "doc-misleading-name",
       "hits": 2,
       "missed": 0,
@@ -529,6 +642,37 @@
           "matched_labels": [],
           "cites": [
             "api/listing.py:1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neg-allowlisted-dynamic-sql",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "escalate",
+      "expected_decision": "suppress",
+      "confidence": 0.55,
+      "cost_usd": 0.0114,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "unlabelled",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "reports/invoices.py:7",
+          "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
+          "agreeing": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "reports/invoices.py:7"
           ]
         }
       ]
@@ -809,6 +953,20 @@
       ]
     },
     {
+      "id": "sec-missing-rate-limit",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0045,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "sec-path-traversal",
       "hits": 2,
       "missed": 0,
@@ -858,6 +1016,20 @@
           ]
         }
       ]
+    },
+    {
+      "id": "sec-removed-authz-check",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0055,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
     },
     {
       "id": "sec-sql-injection-fstring",
@@ -1009,6 +1181,20 @@
       ]
     },
     {
+      "id": "sec-verbose-error-leak",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0046,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "sec-weak-password-hash",
       "hits": 4,
       "missed": 0,
@@ -1096,6 +1282,48 @@
       ]
     },
     {
+      "id": "sec-workflow-pull-request-target",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "trap-md5-for-cache-key",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0081,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "trap-subprocess-list-args",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0076,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "tst-assertion-free-test",
       "hits": 2,
       "missed": 0,
@@ -1146,6 +1374,20 @@
           ]
         }
       ]
+    },
+    {
+      "id": "tst-deleted-test-with-fix",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0044,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
     },
     {
       "id": "tst-mock-patches-wrong-target",

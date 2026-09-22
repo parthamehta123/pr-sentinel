@@ -139,6 +139,81 @@ a real result — only a total outage is refused.
 
 ---
 
+## Third tranche — and how hard it is to write a clean case
+
+Precision 0.983 and recall 1.000 meant the set had saturated again. Thirteen more
+cases, attacking the two things it could not see.
+
+**Defects invisible in the diff alone.** A migration that duplicates an index an
+earlier migration already created; a retry default lowered from 5 to 1 where the
+retrieved caller depends on the old value to survive a dependency that 503s one
+call in three. Thirteen of the forty-seven cases now carry repository context that
+the finding depends on, which is what retrieval is for and what almost nothing in
+the set was testing.
+
+**Whole cases that look alarming and are correct.** Dynamic SQL built by string
+formatting from a closed allowlist. A refactor from `shell=True` to a list argv.
+MD5 used to key a render cache. Every earlier trap was a clean sibling beside a
+real defect, which is a weaker test than a change that reads as a vulnerability
+from top to bottom and is not one.
+
+Plus the severity boundary from both sides after ADR-0006 widened `critical` — a
+deleted authorisation check against a removed rate limit and a leaked stack trace;
+Go, SQL and a GitHub Actions workflow using `pull_request_target`; deletions, where
+the defect is a guard that is gone rather than a line that is wrong; and one
+defect buried in a forty-function mechanical rename.
+
+| | before | after |
+|---|---|---|
+| cases | 34 | **47** |
+| labelled findings | 37 | **47** |
+| false-positive traps | 18 | **21** |
+| cases needing repository context | ~3 | **13** |
+| languages | 5 | **8** (adds Go, SQL, YAML) |
+
+### The part worth reading
+
+Writing a case with a planted bug is easy. Writing one that is genuinely clean is
+much harder, and three rounds of trying failed:
+
+- Round 1, eight trap hits. Inspection: *"directory passed to tar without `--`,
+  allowing option injection"* — correct, a directory beginning with `-` is read by
+  tar as an option. *"unknown sort raises KeyError instead of being rejected"* —
+  correct, a 500 where a 400 belongs.
+- Round 2, four. *"`f"/exports/{name}.tar.gz"` is still interpolated without
+  validation"* — correct, a genuine path traversal I had left in.
+  *"template and context concatenated without a delimiter"* — correct, `"ab"+"c"`
+  and `"a"+"bc"` collide.
+- Round 3, one. *"Test module never imports create_archive; both tests error"* at
+  confidence 0.96 — simply true of the fixture I had written.
+
+Each round the models were right and the label was wrong. Two conclusions came out
+of it, and both are now in the harness.
+
+**Traps can be scoped.** `#!CLEAN agent=security` claims only that flagging this
+line as a security problem is a false positive, while observing that it has no
+test is a legitimate thing to say. An unscoped `CLEAN` still claims that nothing
+at all is a finding — 19 of the 21 traps keep that stronger promise, because a set
+of only scoped traps stops testing restraint.
+
+**Two of the negative controls were relabelled rather than defended.** They are
+`trap-` rather than `neg-` now, with no gate expectation, because they are not
+"nothing to find" cases: they test one specific reflex — MD5 is not always weak
+crypto, `shell=False` is not command execution — while leaving other legitimate
+observations available.
+
+On the thirteen new cases, one run: precision 0.778 strict and 0.955 lenient,
+recall 1.000. The gap between the two numbers is the design working — the
+unlabelled findings behind it are, on inspection, mostly real.
+
+**The full 47-case baseline is not recorded yet.** The API credit balance ran out
+mid-run. The runner refused to score it, saved nothing, and left the previous
+baseline intact — which is the guard added after the last time this happened
+doing its job. The committed `baselines/anthropic-3run.json` is therefore the
+34-case one, and the numbers at the top of this file are its numbers.
+
+---
+
 ## How the set grew
 
 | | before | after |

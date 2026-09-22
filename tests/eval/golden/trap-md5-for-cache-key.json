@@ -1,0 +1,32 @@
+{
+  "context_files": [],
+  "expected": [],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 2,
+      "filename": "render/cache.py",
+      "patch": "@@ -1,9 +1,13 @@\n+import hashlib\n+import json\n+\n _CACHE = {}\n \n \n def cached_render(template_source, context):\n-    \"\"\"Render `template_source` with `context`, memoised on both.\"\"\"\n-    key = (template_source, tuple(sorted(context.items())))\n+    \"\"\"Render `template_source` with `context`, memoised on a digest of both.\"\"\"\n+    payload = json.dumps([template_source, context], sort_keys=True)\n+    key = hashlib.md5(payload.encode()).hexdigest()\n     if key not in _CACHE:\n         _CACHE[key] = _render(template_source, context)\n     return _CACHE[key]",
+      "status": "modified"
+    },
+    {
+      "additions": 12,
+      "deletions": 0,
+      "filename": "tests/test_cache.py",
+      "patch": "@@ -2,3 +2,15 @@\n     cached_render(\"{{ a }}\", {\"a\": 1})\n     cached_render(\"{{ a }}\", {\"a\": 1})\n     assert counter.renders == 1\n+\n+\n+def test_key_is_by_value_not_by_identity(counter):\n+    cached_render(\"{{ a }}\", {\"a\": 1, \"b\": 2})\n+    cached_render(\"{{ a }}\", {\"b\": 2, \"a\": 1})\n+    assert counter.renders == 1\n+\n+\n+def test_different_context_renders_again(counter):\n+    cached_render(\"{{ a }}\", {\"a\": 1})\n+    cached_render(\"{{ a }}\", {\"a\": 2})\n+    assert counter.renders == 2",
+      "status": "modified"
+    }
+  ],
+  "id": "trap-md5-for-cache-key",
+  "must_not_find": [
+    {
+      "agent": "security",
+      "file_path": "render/cache.py",
+      "line": 9,
+      "note": "MD5 over the template's own source and a canonical encoding of the context; no secret, no adversary, and a collision costs one re-render"
+    }
+  ],
+  "summary": "MD5, used to key a cache. Not a password, not a signature, not integrity against an adversary. Flagging it is the reflex this case exists to catch.",
+  "title": "Key the render cache by template digest"
+}
