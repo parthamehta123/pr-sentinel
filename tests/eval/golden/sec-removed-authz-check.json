@@ -32,7 +32,7 @@
       "category": "error_handling",
       "file_path": "api/export.py",
       "line": 6,
-      "note": "an unknown report id used to fail inside require_owner; now None reaches to_dict and surfaces as AttributeError / 500"
+      "note": "an unknown report id makes Report.get return None, which reaches to_dict and raises. Worth noticing, but NOT introduced here \u2014 before this diff the same None hit obj.tenant_id inside require_owner and raised there. The failure moves lines; the outcome does not change."
     }
   ],
   "must_not_find": [],

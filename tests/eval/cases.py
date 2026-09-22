@@ -806,7 +806,7 @@ def verify_stripe(secret, body, header):
 def verify_acmepay(secret, body, header):
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     #!EXPECT agent=security category=crypto severity>=major :: == on a signature is not constant time and leaks the expected value a byte at a time, unlike the compare_digest call above
-    #!ALLOW agent=correctness category=api_contract :: == and compare_digest also diverge on edge inputs — None or bytes raises TypeError from compare_digest and quietly returns False from ==
+    #!ALLOW agent=correctness category=api_contract :: == returns False for a None or bytes header where compare_digest would raise TypeError. This is a property of the replacement, not a defect in the code under review, so it is a fair remark and a weak one.
     return expected == header
 """,
     },
@@ -1762,7 +1762,7 @@ def bulk_export(request, report_ids):
 def bulk_export(request, report_ids):
     user = current_user(request)
     #!EXPECT agent=security category=authz severity>=critical :: the per-object require_owner loop was deleted, so any authenticated caller can read another tenant's reports by id
-    #!ALLOW agent=correctness category=error_handling :: an unknown report id used to fail inside require_owner; now None reaches to_dict and surfaces as AttributeError / 500
+    #!ALLOW agent=correctness category=error_handling :: an unknown report id makes Report.get return None, which reaches to_dict and raises. Worth noticing, but NOT introduced here — before this diff the same None hit obj.tenant_id inside require_owner and raised there. The failure moves lines; the outcome does not change.
     reports = [Report.get(rid) for rid in report_ids]
     return [r.to_dict() for r in reports]
 """,
@@ -2375,7 +2375,7 @@ case(
             if header in request.headers:
                 #!EXPECT agent=security category=secrets severity>=major :: notebook URLs carry the auth token as a query parameter, so the browser puts it in the Referer and this writes a live credential into the log on every 5xx
                 #!ALLOW agent=correctness category=logic :: same defect under a correctness reading — Referer is logged unscrubbed
-                #!ALLOW agent=correctness category=api_contract :: extra_param_keys was consumed only by the deleted _scrub_uri call, so callers still pass it and silently get no effect
+                #!ALLOW agent=correctness category=api_contract :: the deleted _scrub_uri call was the only use of extra_param_keys in this fragment, leaving it unread. Whether callers still pass it cannot be told from this diff — no enclosing signature is in view — so the dead-parameter reading is plausible, not established.
                 headers[header] = request.headers[header]
         log_method(json.dumps(headers, indent=2))
 """,

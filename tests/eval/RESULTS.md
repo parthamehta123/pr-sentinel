@@ -848,3 +848,46 @@ the baseline" quietly compare against post-hoc relabelling.
 The file is restored, and `scripts/rescore.py` now refuses to write over its own
 input, with a test. Rescoring is a derived view of a measurement; it does not get
 to edit the measurement.
+
+### Auditing the 22 labels line by line
+
+Every label from the labelling pass was checked against the case source rather
+than against the note that came with it. **19 of 22 hold as written.** The
+strongest are precise about mechanism rather than gesturing at one:
+
+- `intro-urllib3-util-refactor` — the authority parser ends at `/` only and
+  splits on the *first* `@`. Both halves check out and both flip the host:
+  `http://evil.com?x=@good.com` has no `/`, so `?x=@good.com` stays in the
+  authority and the `@` split yields `good.com` as the host, while a real parser
+  sees `evil.com`; and `a@b@real.com` yields `b@real.com` where RFC 3986 takes
+  userinfo to the last `@`. A host used for allow/deny decisions can be flipped
+  either way.
+- `trap-md5-for-cache-key` — `json.dumps(..., sort_keys=True)` narrows values
+  from hashable to JSON-serialisable *and* coerces integer keys to strings, so
+  `{1: "a"}` and `{"1": "a"}` collide, and mixed-type keys raise on comparison.
+- `intro-requests-poolmanager` — `verify`, `cert`, `timeout`, `prefetch`,
+  `return_response` and `config` are in `request()`'s signature and never
+  assigned to the `Request` or passed to `send`.
+
+**Three asserted more than the code supports.** The labels stay — each is still
+something a reviewer could fairly say — but the notes were wrong and are now
+corrected, because the note is the record of why the label exists:
+
+- `sec-removed-authz-check` claimed an unknown report id "used to fail inside
+  `require_owner`; now surfaces as AttributeError". It surfaced as AttributeError
+  *before* too — `None.tenant_id` inside `require_owner`. The failure moves lines;
+  the outcome is unchanged. The note said a non-change was a change.
+- `cve-jupyter-referer-token-log` claimed "callers still pass it and silently get
+  no effect" about `extra_param_keys`. The case is a fragment with no enclosing
+  signature in view, so caller behaviour cannot be read off this diff. The
+  dead-parameter reading is plausible, not established.
+- `sec-timing-unsafe-compare` observed that `==` and `compare_digest` diverge on
+  `None`/bytes inputs. True, but it is a property of the *replacement*, not a
+  defect in the code under review.
+
+None of the three changes a score — an `ALLOW` counts the same whatever its note
+says. That is the point worth keeping: **the scores could not have caught this.**
+A label with sound reasoning and a label with unsound reasoning are numerically
+identical, so the only thing standing between a justified `ALLOW` and a rubber
+stamp is somebody reading the source. Two passes, by two different models, both
+produced notes that asserted more than the diff showed.

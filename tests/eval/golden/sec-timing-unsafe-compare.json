@@ -27,7 +27,7 @@
       "category": "api_contract",
       "file_path": "webhooks/verify.py",
       "line": 12,
-      "note": "== and compare_digest also diverge on edge inputs \u2014 None or bytes raises TypeError from compare_digest and quietly returns False from =="
+      "note": "== returns False for a None or bytes header where compare_digest would raise TypeError. This is a property of the replacement, not a defect in the code under review, so it is a fair remark and a weak one."
     }
   ],
   "must_not_find": [
