@@ -696,3 +696,733 @@ def usable_width(name):
 ''',
     },
 )
+
+
+# ===========================================================================
+# Second tranche — added because precision saturated at 1.000 on the first.
+#
+# A set where every labelled defect is obvious stops discriminating once a model
+# gets good. These cases are built to be harder in three specific ways: a real
+# defect sits next to a plausible look-alike that must NOT be flagged; several are
+# in languages other than Python; and more of them have nothing wrong at all.
+# ===========================================================================
+
+
+# --- security --------------------------------------------------------------
+
+case(
+    id="sec-path-traversal",
+    title="Serve export files by name",
+    summary="One handler normalises and confines the path; the one added next to it does not.",
+    expected_decision="escalate",
+    before={
+        "exports/serve.py": """import os
+
+EXPORT_ROOT = "/srv/exports"
+
+
+def _confined(name):
+    path = os.path.realpath(os.path.join(EXPORT_ROOT, name))
+    if not path.startswith(EXPORT_ROOT + os.sep):
+        raise PermissionError(name)
+    return path
+
+
+def read_export(name):
+    path = _confined(name)
+    with open(path, "rb") as fh:
+        return fh.read()
+""",
+    },
+    after={
+        "exports/serve.py": """import os
+
+EXPORT_ROOT = "/srv/exports"
+
+
+def _confined(name):
+    path = os.path.realpath(os.path.join(EXPORT_ROOT, name))
+    if not path.startswith(EXPORT_ROOT + os.sep):
+        raise PermissionError(name)
+    return path
+
+
+def read_export(name):
+    #!CLEAN :: routes through the confinement helper; this one is correct
+    path = _confined(name)
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def read_export_preview(name, limit=4096):
+    #!EXPECT agent=security category=injection severity>=critical :: joins the caller's name with no realpath and no confinement check, so ../ escapes EXPORT_ROOT
+    path = os.path.join(EXPORT_ROOT, name)
+    with open(path, "rb") as fh:
+        return fh.read(limit)
+""",
+    },
+)
+
+case(
+    id="sec-timing-unsafe-compare",
+    title="Add a second webhook provider",
+    summary="A signature compared with ==, one line below one compared with compare_digest.",
+    # Labelled >=major, so the gate's critical-security rule cannot fire and the
+    # outcome turns on the model's severity rating. Not structurally determined.
+    expected_decision=None,
+    before={
+        "webhooks/verify.py": """import hashlib
+import hmac
+
+
+def verify_stripe(secret, body, header):
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, header)
+""",
+    },
+    after={
+        "webhooks/verify.py": """import hashlib
+import hmac
+
+
+def verify_stripe(secret, body, header):
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    #!CLEAN :: constant-time comparison, which is the correct form
+    return hmac.compare_digest(expected, header)
+
+
+def verify_acmepay(secret, body, header):
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    #!EXPECT agent=security category=crypto severity>=major :: == on a signature is not constant time and leaks the expected value a byte at a time, unlike the compare_digest call above
+    return expected == header
+""",
+    },
+)
+
+case(
+    id="sec-jwt-unverified",
+    title="Read the tenant id straight from the token",
+    summary="Signature verification disabled to avoid a key lookup.",
+    expected_decision="escalate",
+    before={
+        "auth/tokens.py": """import jwt
+
+from auth.keys import public_key
+
+
+def claims_for(token):
+    return jwt.decode(token, public_key(), algorithms=["RS256"])
+""",
+    },
+    after={
+        "auth/tokens.py": """import jwt
+
+from auth.keys import public_key
+
+
+def claims_for(token):
+    return jwt.decode(token, public_key(), algorithms=["RS256"])
+
+
+def tenant_of(token):
+    #!EXPECT agent=security category=authz severity>=critical :: signature verification disabled, so any caller can forge a tenant id and the value is then trusted
+    unverified = jwt.decode(token, options={"verify_signature": False})
+    return unverified["tenant_id"]
+""",
+    },
+)
+
+case(
+    id="sec-terraform-public-bucket",
+    title="Add the public assets bucket",
+    summary="Terraform, not Python. One bucket is deliberately public; the next is not meant to be.",
+    expected_decision="escalate",
+    before={
+        "infra/storage.tf": """resource "aws_s3_bucket" "assets" {
+  bucket = "acme-public-assets"
+}
+
+resource "aws_s3_bucket_public_access_block" "assets" {
+  bucket                  = aws_s3_bucket.assets.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+""",
+    },
+    after={
+        "infra/storage.tf": """resource "aws_s3_bucket" "assets" {
+  bucket = "acme-public-assets"
+}
+
+resource "aws_s3_bucket_public_access_block" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  #!CLEAN :: a bucket named public-assets, intentionally public; this is the design
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket" "invoices" {
+  bucket = "acme-customer-invoices"
+}
+
+resource "aws_s3_bucket_public_access_block" "invoices" {
+  bucket = aws_s3_bucket.invoices.id
+  #!EXPECT agent=security category=authz severity>=critical :: customer invoices made world-readable by copying the public-assets block
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+""",
+    },
+)
+
+case(
+    id="sec-cors-wildcard-credentials",
+    title="Open CORS for the new dashboard",
+    summary="TypeScript. Wildcard origin combined with credentials.",
+    expected_decision="escalate",
+    before={
+        "api/src/cors.ts": """import cors from "cors";
+
+const ALLOWED = ["https://app.acme.com", "https://admin.acme.com"];
+
+export const corsMiddleware = cors({
+  origin: ALLOWED,
+  credentials: true,
+});
+""",
+    },
+    after={
+        "api/src/cors.ts": """import cors from "cors";
+
+const ALLOWED = ["https://app.acme.com", "https://admin.acme.com"];
+
+export const corsMiddleware = cors({
+  origin: ALLOWED,
+  credentials: true,
+});
+
+//!EXPECT agent=security category=authz severity>=critical :: a wildcard origin together with credentials lets any site read authenticated responses
+export const dashboardCors = cors({
+  origin: "*",
+  credentials: true,
+});
+""",
+    },
+)
+
+
+# --- correctness -----------------------------------------------------------
+
+case(
+    id="cor-async-blocking-call",
+    title="Fetch the tenant plan during request handling",
+    summary="A synchronous HTTP call inside an async handler, beside an awaited one.",
+    expected_decision=None,
+    before={
+        "api/plans.py": """import httpx
+
+
+async def fetch_plan(client: httpx.AsyncClient, tenant_id):
+    response = await client.get(f"/plans/{tenant_id}")
+    return response.json()
+""",
+    },
+    after={
+        "api/plans.py": """import httpx
+import requests
+
+
+async def fetch_plan(client: httpx.AsyncClient, tenant_id):
+    #!CLEAN :: awaited async client, which is the correct form here
+    response = await client.get(f"/plans/{tenant_id}")
+    return response.json()
+
+
+async def fetch_plan_limits(tenant_id):
+    #!EXPECT agent=correctness category=concurrency severity>=major :: a synchronous request inside a coroutine blocks the whole event loop for the duration of the call
+    response = requests.get(f"https://billing.internal/limits/{tenant_id}", timeout=5)
+    return response.json()
+""",
+    },
+)
+
+case(
+    id="cor-mutable-default-arg",
+    title="Add batch helpers to the notifier",
+    summary="A mutable default argument next to a correct None default.",
+    expected_decision=None,
+    before={
+        "notify/batch.py": """def send(recipients, extra_headers=None):
+    headers = dict(extra_headers or {})
+    headers["X-Batch"] = "1"
+    return _dispatch(recipients, headers)
+""",
+    },
+    after={
+        "notify/batch.py": """def send(recipients, extra_headers=None):
+    #!CLEAN :: None sentinel with a fresh dict per call; this is the correct pattern
+    headers = dict(extra_headers or {})
+    headers["X-Batch"] = "1"
+    return _dispatch(recipients, headers)
+
+
+#!EXPECT agent=correctness category=logic severity>=major :: the default list is created once at import and shared by every call, so failures accumulate across calls
+def send_with_retries(recipients, attempted=[]):
+    for recipient in recipients:
+        if not _dispatch([recipient], {}):
+            attempted.append(recipient)
+    return attempted
+""",
+    },
+)
+
+case(
+    id="cor-retry-non-idempotent",
+    title="Retry flaky gateway calls",
+    summary="A retry decorator applied to a charge, and correctly applied to a read.",
+    expected_decision=None,
+    context={
+        "billing/gateway.py": '''def charge(card_token, amount_cents):
+    """POST /charges. NOT idempotent: each call creates a new charge.
+
+    The gateway supports an Idempotency-Key header; pass one to make retries safe.
+    """
+    return _post("/charges", {"card": card_token, "amount": amount_cents})
+
+
+def get_charge(charge_id):
+    """GET /charges/{id}. Safe to repeat."""
+    return _get(f"/charges/{charge_id}")
+''',
+    },
+    before={
+        "billing/resilient.py": """from billing.gateway import get_charge
+from reliability import retry
+
+
+@retry(attempts=3)
+def fetch_charge(charge_id):
+    return get_charge(charge_id)
+""",
+    },
+    after={
+        "billing/resilient.py": """from billing.gateway import charge, get_charge
+from reliability import retry
+
+
+@retry(attempts=3)
+def fetch_charge(charge_id):
+    #!CLEAN :: a GET, safe to repeat; retrying this is correct
+    return get_charge(charge_id)
+
+
+@retry(attempts=3)
+#!EXPECT agent=correctness category=logic severity>=critical :: charge() is not idempotent and no Idempotency-Key is passed, so a timeout followed by a retry bills the customer twice
+def charge_card(card_token, amount_cents):
+    return charge(card_token, amount_cents)
+""",
+    },
+)
+
+case(
+    id="cor-timezone-naive-comparison",
+    title="Expire stale invitations",
+    summary="A naive datetime compared against an aware one.",
+    expected_decision=None,
+    context={
+        "models/invite.py": '''class Invite:
+    """`expires_at` is stored as a timezone-aware UTC datetime."""
+
+    expires_at: "datetime"  # always tz-aware, set from datetime.now(timezone.utc)
+''',
+    },
+    before={
+        "invites/expiry.py": """from datetime import datetime, timezone
+
+
+def is_expired(invite):
+    return invite.expires_at < datetime.now(timezone.utc)
+""",
+    },
+    after={
+        "invites/expiry.py": """from datetime import datetime, timezone
+
+
+def is_expired(invite):
+    #!CLEAN :: aware-to-aware comparison, which is correct
+    return invite.expires_at < datetime.now(timezone.utc)
+
+
+def expires_within(invite, hours):
+    #!EXPECT agent=correctness category=logic severity>=major :: datetime.now() is naive while expires_at is tz-aware, so this raises TypeError at runtime
+    cutoff = datetime.now().replace(microsecond=0)
+    delta = invite.expires_at - cutoff
+    return delta.total_seconds() < hours * 3600
+""",
+    },
+)
+
+case(
+    id="cor-typescript-null-deref",
+    title="Simplify the account banner",
+    summary="TypeScript. Optional chaining removed from a value that is genuinely optional.",
+    expected_decision=None,
+    context={
+        "web/src/types.ts": """export interface Account {
+  id: string;
+  /** Absent until the customer completes onboarding. */
+  billingContact?: { name: string; email: string };
+}
+""",
+    },
+    before={
+        "web/src/banner.ts": """import type { Account } from "./types";
+
+export function bannerFor(account: Account): string {
+  return account.billingContact?.name ?? "No billing contact";
+}
+""",
+    },
+    after={
+        "web/src/banner.ts": """import type { Account } from "./types";
+
+export function bannerFor(account: Account): string {
+  return account.billingContact?.name ?? "No billing contact";
+}
+
+export function contactEmail(account: Account): string {
+  //!EXPECT agent=correctness category=logic severity>=major :: billingContact is optional and absent before onboarding, so this throws on any account that has not completed it
+  return account.billingContact.email.toLowerCase();
+}
+""",
+    },
+)
+
+
+# --- tests and documentation ----------------------------------------------
+
+case(
+    id="tst-mock-patches-wrong-target",
+    title="Test the notification retry path",
+    summary=(
+        "A test that patches where the symbol is defined rather than where it is "
+        "looked up, so the real function still runs and the test proves nothing."
+    ),
+    expected_decision=None,
+    context={
+        "notify/sender.py": '''from notify.transport import deliver
+
+
+def send_with_retry(message, attempts=3):
+    """Note the `from ... import`: `deliver` is bound into this module's namespace
+    at import time, so patching `notify.transport.deliver` does not affect it."""
+    for _ in range(attempts):
+        if deliver(message):
+            return True
+    return False
+''',
+    },
+    before={
+        "tests/test_sender.py": """def test_send_returns_true_on_first_success(mocker):
+    mocker.patch("notify.sender.deliver", return_value=True)
+    assert send_with_retry("hello") is True
+""",
+    },
+    after={
+        "tests/test_sender.py": """def test_send_returns_true_on_first_success(mocker):
+    #!CLEAN :: patches the lookup site, notify.sender.deliver, which is correct
+    mocker.patch("notify.sender.deliver", return_value=True)
+    assert send_with_retry("hello") is True
+
+
+def test_send_gives_up_after_three_failures(mocker):
+    #!EXPECT agent=tests category=test_quality severity>=major :: patches notify.transport.deliver, but sender imported the name at module load, so the real deliver still runs and this asserts nothing about retries
+    mocker.patch("notify.transport.deliver", return_value=False)
+    assert send_with_retry("hello", attempts=3) is False
+""",
+    },
+)
+
+case(
+    id="tst-time-dependent-flaky",
+    title="Test the token expiry window",
+    summary="A test that will fail at a midnight boundary and pass every other time.",
+    expected_decision=None,
+    before={
+        "tests/test_tokens.py": """from datetime import datetime, timedelta, timezone
+
+
+def test_token_expires_after_an_hour():
+    issued = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    assert is_expired(issued + timedelta(hours=2), now=issued + timedelta(hours=1, seconds=1))
+""",
+    },
+    after={
+        "tests/test_tokens.py": """from datetime import datetime, timedelta, timezone
+
+
+def test_token_expires_after_an_hour():
+    #!CLEAN :: a frozen instant passed in explicitly; deterministic
+    issued = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    assert is_expired(issued + timedelta(hours=2), now=issued + timedelta(hours=1, seconds=1))
+
+
+def test_token_issued_today_is_valid():
+    #!EXPECT agent=tests category=test_quality severity>=minor :: reads the wall clock and asserts on today's date, so it fails when the run crosses midnight
+    token = issue_token()
+    assert token.issued_at.date() == datetime.now(timezone.utc).date()
+    assert not is_expired(token.expires_at)
+""",
+    },
+)
+
+case(
+    id="doc-wrong-parameter-name",
+    title="Rename the pagination parameter",
+    summary="The parameter is renamed; the docstring documenting it is not.",
+    expected_decision=None,
+    before={
+        "api/listing.py": '''def list_invoices(tenant_id, page_size=50, cursor=None):
+    """List invoices for a tenant.
+
+    Args:
+        tenant_id: the tenant to list for.
+        page_size: how many invoices to return.
+        cursor: opaque continuation token from a previous call.
+    """
+    return _query(tenant_id, page_size, cursor)
+''',
+    },
+    after={
+        "api/listing.py": '''def list_invoices(tenant_id, limit=50, cursor=None):
+    """List invoices for a tenant.
+
+    Args:
+        tenant_id: the tenant to list for.
+    #!EXPECT agent=docs category=documentation severity>=minor :: documents `page_size`, which no longer exists; the parameter is now `limit`
+        page_size: how many invoices to return.
+        cursor: opaque continuation token from a previous call.
+    """
+    return _query(tenant_id, limit, cursor)
+''',
+    },
+)
+
+
+# --- negative controls -----------------------------------------------------
+#
+# Three of the first sixteen cases had nothing wrong in them. That is too few to
+# stop a set rewarding volume, and a reviewer's credibility is spent mostly on
+# pull requests where the right answer is to say nothing.
+
+case(
+    id="neg-tests-only-addition",
+    title="Add tests for the discount rules",
+    summary=(
+        "A pull request that only adds good tests to existing, unchanged code. "
+        "Every agent should be silent; the tests agent especially."
+    ),
+    expected_decision="suppress",
+    context={
+        "billing/discounts.py": '''def discount_for(tier, subtotal):
+    """Return the discount for `tier` on `subtotal`, as a Decimal."""
+    return {"gold": Decimal("0.10"), "silver": Decimal("0.05")}.get(tier, Decimal("0")) * subtotal
+''',
+    },
+    before={
+        "tests/test_discounts.py": """from decimal import Decimal
+
+
+def test_gold_tier():
+    assert discount_for("gold", Decimal("100")) == Decimal("10")
+""",
+    },
+    after={
+        "tests/test_discounts.py": """from decimal import Decimal
+
+
+def test_gold_tier():
+    assert discount_for("gold", Decimal("100")) == Decimal("10")
+
+
+#!CLEAN :: a real assertion on real behaviour, covering a previously untested branch
+def test_silver_tier():
+    assert discount_for("silver", Decimal("100")) == Decimal("5")
+
+
+def test_unknown_tier_gets_nothing():
+    assert discount_for("bronze", Decimal("100")) == Decimal("0")
+
+
+def test_zero_subtotal_is_zero_discount():
+    assert discount_for("gold", Decimal("0")) == Decimal("0")
+""",
+    },
+)
+
+case(
+    id="neg-typescript-type-narrowing",
+    title="Narrow the event union",
+    summary=(
+        "TypeScript. A discriminated-union refactor that removes a cast and makes "
+        "the code safer. Any finding here is a false positive."
+    ),
+    expected_decision="suppress",
+    before={
+        "web/src/events.ts": """type Event =
+  | { kind: "click"; x: number; y: number }
+  | { kind: "key"; code: string };
+
+export function describe(event: Event): string {
+  if (event.kind === "click") {
+    return `click at ${(event as { x: number; y: number }).x}`;
+  }
+  return `key ${(event as { code: string }).code}`;
+}
+""",
+    },
+    after={
+        "web/src/events.ts": """type Event =
+  | { kind: "click"; x: number; y: number }
+  | { kind: "key"; code: string };
+
+//!CLEAN :: the discriminant narrows the union, so the casts are no longer needed
+export function describe(event: Event): string {
+  switch (event.kind) {
+    case "click":
+      return `click at ${event.x}, ${event.y}`;
+    case "key":
+      return `key ${event.code}`;
+  }
+}
+""",
+    },
+)
+
+case(
+    id="neg-dependency-bump",
+    title="Bump httpx and record it",
+    summary=(
+        "A routine dependency bump with a changelog entry. Nothing to review, and "
+        "the docs agent in particular should not invent something."
+    ),
+    expected_decision="suppress",
+    before={
+        "pyproject.toml": """[project]
+name = "acme-api"
+dependencies = [
+  "fastapi>=0.115",
+  "httpx>=0.27",
+]
+""",
+        "CHANGELOG.md": """# Changelog
+
+## Unreleased
+""",
+    },
+    after={
+        "pyproject.toml": """[project]
+name = "acme-api"
+dependencies = [
+  "fastapi>=0.115",
+  #!CLEAN :: a routine version bump; there is nothing here to find
+  "httpx>=0.28",
+]
+""",
+        "CHANGELOG.md": """# Changelog
+
+## Unreleased
+
+- Bump httpx to 0.28 for the connection-pool fix in 0.28.0.
+""",
+    },
+)
+
+
+case(
+    id="doc-readme-flag-renamed",
+    title="Rename the --workers flag",
+    summary="The CLI flag is renamed; the README still documents the old one.",
+    expected_decision=None,
+    before={
+        "cli.py": """import argparse
+
+
+def parser():
+    p = argparse.ArgumentParser()
+    p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--verbose", action="store_true")
+    return p
+""",
+        "README.md": """# acme-runner
+
+## Usage
+
+    acme-runner --workers 8 --verbose
+
+- `--workers` — how many worker processes to start.
+- `--verbose` — log every task.
+""",
+    },
+    after={
+        "cli.py": """import argparse
+
+
+def parser():
+    p = argparse.ArgumentParser()
+    p.add_argument("--concurrency", type=int, default=4)
+    p.add_argument("--verbose", action="store_true")
+    return p
+""",
+        "README.md": """# acme-runner
+
+## Usage
+
+    acme-runner --workers 8 --verbose
+
+#!EXPECT agent=docs category=documentation severity>=major :: the flag is now --concurrency, so the documented invocation above fails outright
+- `--workers` — how many worker processes to start.
+- `--verbose` — log every task.
+- Set `ACME_LOG_FORMAT=json` for structured logs.
+""",
+    },
+)
+
+case(
+    id="doc-misleading-name",
+    title="Add a cached lookup helper",
+    summary="A get_* that mutates, alongside a get_* that does not.",
+    expected_decision=None,
+    before={
+        "cache/lookup.py": """_CACHE = {}
+
+
+def get_tenant(tenant_id):
+    return _CACHE.get(tenant_id)
+""",
+    },
+    after={
+        "cache/lookup.py": """_CACHE = {}
+
+
+def get_tenant(tenant_id):
+    #!CLEAN :: a pure read, which is what the name promises
+    return _CACHE.get(tenant_id)
+
+
+#!EXPECT agent=docs category=readability severity>=minor :: named get_, but it writes to the shared cache and evicts entries; a caller will not expect a read to mutate
+def get_tenant_fresh(tenant_id):
+    tenant = _fetch(tenant_id)
+    _CACHE[tenant_id] = tenant
+    if len(_CACHE) > 1000:
+        _CACHE.clear()
+    return tenant
+""",
+    },
+)

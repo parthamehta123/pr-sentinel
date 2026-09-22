@@ -1,8 +1,8 @@
 # The eval set
 
-16 labelled pull requests, 22 labelled findings, 5 false-positive traps, one case
-where the correct answer is to say nothing at all, and one multi-file change where
-the correct answer is to say it once.
+34 labelled pull requests, 37 labelled findings, 18 false-positive traps, four
+cases where the correct answer is to say nothing at all, and five multi-file
+changes. Python, TypeScript and Terraform.
 
 ```bash
 make eval        # offline, free, gated against a saved baseline
@@ -51,11 +51,12 @@ the specialist that should have found it), gate-decision match, and cost per cas
 
 ## Measured
 
-Against `claude-opus-5` / `claude-sonnet-5` / `claude-haiku-4-5`: precision 0.886
-strict and 0.975 lenient, recall 0.933 (14 of 15 defects), calibration error
-0.110, gate decision match 1.000, $0.07 per review. Recorded in
-`baselines/anthropic-3run.json`, which carries every individual finding so a run can be
-diagnosed without paying to reproduce it.
+Mean over three runs: precision 0.980 strict / 0.992 lenient, recall 0.892,
+calibration error 0.177, gate decision match 0.861, $0.066 per review. Recorded in
+`baselines/anthropic-3run.json`, which carries every individual finding — with the
+labels it matched and the locations it cited — so a run can be diagnosed without
+paying to reproduce it. Full tables and the story of each change in
+[RESULTS.md](RESULTS.md).
 
 Three bugs the live runs found that no offline test could: the structured-output
 schema carried numeric range constraints the API rejects, so every agent call
@@ -94,7 +95,7 @@ the spread has not been demonstrated.
 - **Retrieval is not measured.** Context files are injected directly rather than
   indexed, so what is scored is whether the agents *use* context they were given.
   Retrieval quality needs its own harness and its own labels.
-- **22 labelled findings across 16 cases is small.** Measured run-to-run spread on
+- **37 labelled findings across 34 cases is still small.** Measured run-to-run spread on
   an unchanged configuration is around ±0.015 overall precision and ±0.09 for a
   single agent. That is wider than most changes worth making, which is the real
   argument for growing the set.

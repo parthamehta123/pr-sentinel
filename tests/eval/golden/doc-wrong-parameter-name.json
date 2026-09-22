@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "api/listing.py",
+      "line": 6,
+      "min_severity": "minor",
+      "note": "documents `page_size`, which no longer exists; the parameter is now `limit`"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 2,
+      "deletions": 2,
+      "filename": "api/listing.py",
+      "patch": "@@ -1,4 +1,4 @@\n-def list_invoices(tenant_id, page_size=50, cursor=None):\n+def list_invoices(tenant_id, limit=50, cursor=None):\n     \"\"\"List invoices for a tenant.\n \n     Args:\n@@ -6,4 +6,4 @@\n         page_size: how many invoices to return.\n         cursor: opaque continuation token from a previous call.\n     \"\"\"\n-    return _query(tenant_id, page_size, cursor)\n+    return _query(tenant_id, limit, cursor)",
+      "status": "modified"
+    }
+  ],
+  "id": "doc-wrong-parameter-name",
+  "must_not_find": [],
+  "summary": "The parameter is renamed; the docstring documenting it is not.",
+  "title": "Rename the pagination parameter"
+}

@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "docs",
+      "category": "readability",
+      "file_path": "cache/lookup.py",
+      "line": 8,
+      "min_severity": "minor",
+      "note": "named get_, but it writes to the shared cache and evicts entries; a caller will not expect a read to mutate"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 8,
+      "deletions": 0,
+      "filename": "cache/lookup.py",
+      "patch": "@@ -3,3 +3,11 @@\n \n def get_tenant(tenant_id):\n     return _CACHE.get(tenant_id)\n+\n+\n+def get_tenant_fresh(tenant_id):\n+    tenant = _fetch(tenant_id)\n+    _CACHE[tenant_id] = tenant\n+    if len(_CACHE) > 1000:\n+        _CACHE.clear()\n+    return tenant",
+      "status": "modified"
+    }
+  ],
+  "id": "doc-misleading-name",
+  "must_not_find": [
+    {
+      "file_path": "cache/lookup.py",
+      "line": 5,
+      "note": "a pure read, which is what the name promises"
+    }
+  ],
+  "summary": "A get_* that mutates, alongside a get_* that does not.",
+  "title": "Add a cached lookup helper"
+}

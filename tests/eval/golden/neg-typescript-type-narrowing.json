@@ -1,0 +1,24 @@
+{
+  "context_files": [],
+  "expected": [],
+  "expected_decision": "suppress",
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 3,
+      "filename": "web/src/events.ts",
+      "patch": "@@ -3,8 +3,10 @@\n   | { kind: \"key\"; code: string };\n \n export function describe(event: Event): string {\n-  if (event.kind === \"click\") {\n-    return `click at ${(event as { x: number; y: number }).x}`;\n+  switch (event.kind) {\n+    case \"click\":\n+      return `click at ${event.x}, ${event.y}`;\n+    case \"key\":\n+      return `key ${event.code}`;\n   }\n-  return `key ${(event as { code: string }).code}`;\n }",
+      "status": "modified"
+    }
+  ],
+  "id": "neg-typescript-type-narrowing",
+  "must_not_find": [
+    {
+      "file_path": "web/src/events.ts",
+      "line": 5,
+      "note": "the discriminant narrows the union, so the casts are no longer needed"
+    }
+  ],
+  "summary": "TypeScript. A discriminated-union refactor that removes a cast and makes the code safer. Any finding here is a false positive.",
+  "title": "Narrow the event union"
+}

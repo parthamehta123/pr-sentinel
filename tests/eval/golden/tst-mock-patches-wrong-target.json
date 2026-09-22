@@ -1,0 +1,38 @@
+{
+  "context_files": [
+    {
+      "content": "from notify.transport import deliver\n\n\ndef send_with_retry(message, attempts=3):\n    \"\"\"Note the `from ... import`: `deliver` is bound into this module's namespace\n    at import time, so patching `notify.transport.deliver` does not affect it.\"\"\"\n    for _ in range(attempts):\n        if deliver(message):\n            return True\n    return False\n",
+      "path": "notify/sender.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "tests",
+      "category": "test_quality",
+      "file_path": "tests/test_sender.py",
+      "line": 7,
+      "min_severity": "major",
+      "note": "patches notify.transport.deliver, but sender imported the name at module load, so the real deliver still runs and this asserts nothing about retries"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 0,
+      "filename": "tests/test_sender.py",
+      "patch": "@@ -1,3 +1,8 @@\n def test_send_returns_true_on_first_success(mocker):\n     mocker.patch(\"notify.sender.deliver\", return_value=True)\n     assert send_with_retry(\"hello\") is True\n+\n+\n+def test_send_gives_up_after_three_failures(mocker):\n+    mocker.patch(\"notify.transport.deliver\", return_value=False)\n+    assert send_with_retry(\"hello\", attempts=3) is False",
+      "status": "modified"
+    }
+  ],
+  "id": "tst-mock-patches-wrong-target",
+  "must_not_find": [
+    {
+      "file_path": "tests/test_sender.py",
+      "line": 2,
+      "note": "patches the lookup site, notify.sender.deliver, which is correct"
+    }
+  ],
+  "summary": "A test that patches where the symbol is defined rather than where it is looked up, so the real function still runs and the test proves nothing.",
+  "title": "Test the notification retry path"
+}

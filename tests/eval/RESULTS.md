@@ -9,39 +9,49 @@ python scripts/compare_arms.py baseline.json arm.json  # which differences are r
 ```
 
 Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 16 cases, 22 labelled findings, 5 false-positive traps.
+`claude-haiku-4-5` (docs). 34 cases, 37 labelled findings, 18 false-positive traps.
 
 ---
 
 ## Current
 
-Mean over three runs, 16 cases, 22 labelled findings:
+Mean over three runs of the 34-case set:
 
 ```
-                      mean     range
-  precision strict   1.000    1.000 - 1.000
-  precision lenient  1.000    1.000 - 1.000
-  recall             0.939    0.818 - 1.000
-  calibration error  0.186    0.179 - 0.192
-  cost per review   $0.071   $0.070 - $0.071
+                        mean      min      max   spread
+  precision strict     0.980    0.963    0.988   +0.025
+  precision lenient    0.992    0.987    1.000   +0.013
+  recall               0.892    0.892    0.892   +0.000
+  f1                   0.934    0.926    0.938   +0.012
+  calibration error    0.177    0.172    0.186   +0.014
+  gate decision match  0.861    0.833    0.917   +0.084
+  cost per case       $0.066   $0.065   $0.068   +0.003
 ```
 
-**Precision has saturated.** 1.000 across three runs means the set can no longer
-distinguish a good change from a great one, and further tuning against it is
-fitting to noise.
+On the previous 16-case set precision was 1.000 in all three runs — the set had
+stopped discriminating. It measures again.
 
-**Recall now carries all the signal**, and its range is wide — 0.818 to 1.000 —
-driven entirely by the one multi-file case, where the consolidated coverage
-comment names between two and six of six locations depending on the run.
+**Three findings that reproduce in every run**, none of which the smaller set
+could see:
 
-Recorded in `baselines/anthropic-3run.json`, which carries every individual finding so
-a run can be diagnosed without paying to reproduce it.
+1. **A consolidated coverage comment names only one file's worth of locations.**
+   All four missed labels, in all three runs, are `tst-repeated-coverage-gap`: the
+   tests agent correctly files one comment for six untested functions across three
+   files, and then lists only the ones in `csv_export.py`. A reviewer acting on
+   that comment fixes a third of the problem. Recall spread is exactly 0.000, so
+   this is a property of the system rather than a bad run.
 
-**Calibration** is the number to watch, because every threshold in the gate
-assumes a stated 0.8 means roughly 80%. The models come out mildly
-*under*confident in the middle of the range and slightly over at the top — the
-opposite of the usual worry, and the reason to measure rather than assume. The
-auto-post threshold of 0.70 is therefore conservative rather than reckless.
+2. **Wildcard CORS with credentials is not rated `critical`.** Every run finds the
+   defect and rates it below critical, so the gate's never-post-critical-security
+   rule does not fire and the review is auto-posted. Whether that is wrong is a
+   judgement call — but it is a reproducible one, and it is the sort of severity
+   boundary that was invisible when every security case was an obvious injection.
+
+3. **A clean TypeScript refactor draws a false positive** in two runs of three:
+   the tests agent asks for a test of a pure type-narrowing change. Negative
+   controls are how that becomes visible.
+
+---
 
 ---
 
@@ -225,6 +235,35 @@ in six months.
 - **The set's first multi-file case.** Fifteen of sixteen cases touch one or two
   files. Whole classes of behaviour — repetition, truncation, cross-file
   reasoning — were simply invisible.
+
+---
+
+## How the set grew
+
+| | before | after |
+|---|---|---|
+| cases | 16 | **34** |
+| labelled findings | 22 | **37** |
+| false-positive traps | 5 | **18** |
+| multi-file changes | 1 | **5** |
+| cases where the answer is silence | 1 | **4** |
+| languages | Python | Python, TypeScript, Terraform, TOML, Markdown |
+
+The second tranche was written to be harder in three specific ways, because a set
+where every labelled defect is obvious stops discriminating once a model gets good:
+
+- **A real defect sits next to a plausible look-alike.** A path join with no
+  confinement check, one function below one with `realpath` and a prefix test. A
+  signature compared with `==`, one line below one compared with `compare_digest`.
+  A mutable default argument beside a correct `None` sentinel. A retry decorator
+  on a charge, beside a retry decorator on a read. Sixteen of the thirty-four
+  cases now carry at least one trap.
+- **Not everything is Python.** A Terraform bucket made world-readable by copying
+  the public-assets block above it; wildcard CORS with credentials in TypeScript;
+  a null dereference on a genuinely optional field.
+- **More of them have nothing wrong.** Four negative controls, including a pull
+  request that only adds good tests and a routine dependency bump — the shapes
+  where a reviewer's credibility is actually spent.
 
 ---
 

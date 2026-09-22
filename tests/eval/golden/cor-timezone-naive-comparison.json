@@ -1,0 +1,38 @@
+{
+  "context_files": [
+    {
+      "content": "class Invite:\n    \"\"\"`expires_at` is stored as a timezone-aware UTC datetime.\"\"\"\n\n    expires_at: \"datetime\"  # always tz-aware, set from datetime.now(timezone.utc)\n",
+      "path": "models/invite.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "invites/expiry.py",
+      "line": 9,
+      "min_severity": "major",
+      "note": "datetime.now() is naive while expires_at is tz-aware, so this raises TypeError at runtime"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "invites/expiry.py",
+      "patch": "@@ -3,3 +3,9 @@\n \n def is_expired(invite):\n     return invite.expires_at < datetime.now(timezone.utc)\n+\n+\n+def expires_within(invite, hours):\n+    cutoff = datetime.now().replace(microsecond=0)\n+    delta = invite.expires_at - cutoff\n+    return delta.total_seconds() < hours * 3600",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-timezone-naive-comparison",
+  "must_not_find": [
+    {
+      "file_path": "invites/expiry.py",
+      "line": 5,
+      "note": "aware-to-aware comparison, which is correct"
+    }
+  ],
+  "summary": "A naive datetime compared against an aware one.",
+  "title": "Expire stale invitations"
+}

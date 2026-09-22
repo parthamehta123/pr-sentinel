@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "concurrency",
+      "file_path": "api/plans.py",
+      "line": 11,
+      "min_severity": "major",
+      "note": "a synchronous request inside a coroutine blocks the whole event loop for the duration of the call"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "api/plans.py",
+      "patch": "@@ -1,6 +1,12 @@\n import httpx\n+import requests\n \n \n async def fetch_plan(client: httpx.AsyncClient, tenant_id):\n     response = await client.get(f\"/plans/{tenant_id}\")\n     return response.json()\n+\n+\n+async def fetch_plan_limits(tenant_id):\n+    response = requests.get(f\"https://billing.internal/limits/{tenant_id}\", timeout=5)\n+    return response.json()",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-async-blocking-call",
+  "must_not_find": [
+    {
+      "file_path": "api/plans.py",
+      "line": 6,
+      "note": "awaited async client, which is the correct form here"
+    }
+  ],
+  "summary": "A synchronous HTTP call inside an async handler, beside an awaited one.",
+  "title": "Fetch the tenant plan during request handling"
+}

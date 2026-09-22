@@ -92,9 +92,14 @@ instead.
 
 ## Measuring it
 
-16 labelled pull requests live in [`tests/eval/`](tests/eval/): 22 labelled
-findings, 5 false-positive traps, one case where the right answer is silence, and
-one multi-file change where the right answer is to say it once.
+34 labelled pull requests live in [`tests/eval/`](tests/eval/): 37 labelled
+findings across Python, TypeScript and Terraform, **18 false-positive traps**,
+four cases where the right answer is silence, and five multi-file changes.
+
+Sixteen of the cases put a real defect next to a plausible look-alike — a path
+join with no confinement check one function below one with `realpath`; a signature
+compared with `==` one line below one compared with `compare_digest` — because a
+set where every defect is obvious stops discriminating once a model gets good.
 
 ```bash
 make eval         # offline, free, gated against a saved baseline
@@ -109,18 +114,20 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 (tests) and `claude-haiku-4-5` (docs):
 
 ```
-                      mean     range over 3 runs
-  precision strict   1.000    1.000 - 1.000
-  precision lenient  1.000    1.000 - 1.000
-  recall             0.939    0.818 - 1.000
-  calibration error  0.186    0.179 - 0.192
-  cost per review    $0.071   $0.070 - $0.071
+                        mean      min      max
+  precision strict     0.980    0.963    0.988
+  precision lenient    0.992    0.987    1.000
+  recall               0.892    0.892    0.892
+  calibration error    0.177    0.172    0.186
+  gate decision match  0.861    0.833    0.917
+  cost per review     $0.066   $0.065   $0.068
 ```
 
-Precision has saturated: at 1.000 across three runs the set can no longer tell a
-good change from a great one, and further tuning against it is fitting to noise.
-Recall now carries all the signal, and its range is wide because of a single
-multi-file case. More cases is the only thing that unblocks the rest.
+Three things reproduce in every run, and none of them was visible on the smaller
+set: a consolidated coverage comment names only one file's worth of the locations
+it covers; wildcard CORS with credentials is found but not rated `critical`, so it
+auto-posts instead of escalating; and a clean TypeScript refactor draws a false
+positive two runs in three.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the

@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "export interface Account {\n  id: string;\n  /** Absent until the customer completes onboarding. */\n  billingContact?: { name: string; email: string };\n}\n",
+      "path": "web/src/types.ts"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "web/src/banner.ts",
+      "line": 8,
+      "min_severity": "major",
+      "note": "billingContact is optional and absent before onboarding, so this throws on any account that has not completed it"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 4,
+      "deletions": 0,
+      "filename": "web/src/banner.ts",
+      "patch": "@@ -3,3 +3,7 @@\n export function bannerFor(account: Account): string {\n   return account.billingContact?.name ?? \"No billing contact\";\n }\n+\n+export function contactEmail(account: Account): string {\n+  return account.billingContact.email.toLowerCase();\n+}",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-typescript-null-deref",
+  "must_not_find": [],
+  "summary": "TypeScript. Optional chaining removed from a value that is genuinely optional.",
+  "title": "Simplify the account banner"
+}

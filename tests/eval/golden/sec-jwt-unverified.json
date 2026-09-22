@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": "auth/tokens.py",
+      "line": 11,
+      "min_severity": "critical",
+      "note": "signature verification disabled, so any caller can forge a tenant id and the value is then trusted"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 0,
+      "filename": "auth/tokens.py",
+      "patch": "@@ -5,3 +5,8 @@\n \n def claims_for(token):\n     return jwt.decode(token, public_key(), algorithms=[\"RS256\"])\n+\n+\n+def tenant_of(token):\n+    unverified = jwt.decode(token, options={\"verify_signature\": False})\n+    return unverified[\"tenant_id\"]",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-jwt-unverified",
+  "must_not_find": [],
+  "summary": "Signature verification disabled to avoid a key lookup.",
+  "title": "Read the tenant id straight from the token"
+}

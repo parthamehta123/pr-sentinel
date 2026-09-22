@@ -1,0 +1,38 @@
+{
+  "context_files": [
+    {
+      "content": "def charge(card_token, amount_cents):\n    \"\"\"POST /charges. NOT idempotent: each call creates a new charge.\n\n    The gateway supports an Idempotency-Key header; pass one to make retries safe.\n    \"\"\"\n    return _post(\"/charges\", {\"card\": card_token, \"amount\": amount_cents})\n\n\ndef get_charge(charge_id):\n    \"\"\"GET /charges/{id}. Safe to repeat.\"\"\"\n    return _get(f\"/charges/{charge_id}\")\n",
+      "path": "billing/gateway.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "billing/resilient.py",
+      "line": 11,
+      "min_severity": "critical",
+      "note": "charge() is not idempotent and no Idempotency-Key is passed, so a timeout followed by a retry bills the customer twice"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 1,
+      "filename": "billing/resilient.py",
+      "patch": "@@ -1,7 +1,12 @@\n-from billing.gateway import get_charge\n+from billing.gateway import charge, get_charge\n from reliability import retry\n \n \n @retry(attempts=3)\n def fetch_charge(charge_id):\n     return get_charge(charge_id)\n+\n+\n+@retry(attempts=3)\n+def charge_card(card_token, amount_cents):\n+    return charge(card_token, amount_cents)",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-retry-non-idempotent",
+  "must_not_find": [
+    {
+      "file_path": "billing/resilient.py",
+      "line": 7,
+      "note": "a GET, safe to repeat; retrying this is correct"
+    }
+  ],
+  "summary": "A retry decorator applied to a charge, and correctly applied to a read.",
+  "title": "Retry flaky gateway calls"
+}

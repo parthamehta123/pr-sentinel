@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "tests",
+      "category": "test_quality",
+      "file_path": "tests/test_tokens.py",
+      "line": 10,
+      "min_severity": "minor",
+      "note": "reads the wall clock and asserts on today's date, so it fails when the run crosses midnight"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "tests/test_tokens.py",
+      "patch": "@@ -4,3 +4,9 @@\n def test_token_expires_after_an_hour():\n     issued = datetime(2026, 1, 1, tzinfo=timezone.utc)\n     assert is_expired(issued + timedelta(hours=2), now=issued + timedelta(hours=1, seconds=1))\n+\n+\n+def test_token_issued_today_is_valid():\n+    token = issue_token()\n+    assert token.issued_at.date() == datetime.now(timezone.utc).date()\n+    assert not is_expired(token.expires_at)",
+      "status": "modified"
+    }
+  ],
+  "id": "tst-time-dependent-flaky",
+  "must_not_find": [
+    {
+      "file_path": "tests/test_tokens.py",
+      "line": 5,
+      "note": "a frozen instant passed in explicitly; deterministic"
+    }
+  ],
+  "summary": "A test that will fail at a midnight boundary and pass every other time.",
+  "title": "Test the token expiry window"
+}

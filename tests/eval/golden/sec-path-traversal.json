@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "injection",
+      "file_path": "exports/serve.py",
+      "line": 20,
+      "min_severity": "critical",
+      "note": "joins the caller's name with no realpath and no confinement check, so ../ escapes EXPORT_ROOT"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "exports/serve.py",
+      "patch": "@@ -14,3 +14,9 @@\n     path = _confined(name)\n     with open(path, \"rb\") as fh:\n         return fh.read()\n+\n+\n+def read_export_preview(name, limit=4096):\n+    path = os.path.join(EXPORT_ROOT, name)\n+    with open(path, \"rb\") as fh:\n+        return fh.read(limit)",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-path-traversal",
+  "must_not_find": [
+    {
+      "file_path": "exports/serve.py",
+      "line": 14,
+      "note": "routes through the confinement helper; this one is correct"
+    }
+  ],
+  "summary": "One handler normalises and confines the path; the one added next to it does not.",
+  "title": "Serve export files by name"
+}

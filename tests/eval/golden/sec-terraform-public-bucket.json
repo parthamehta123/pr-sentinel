@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": "infra/storage.tf",
+      "line": 19,
+      "min_severity": "critical",
+      "note": "customer invoices made world-readable by copying the public-assets block"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 13,
+      "deletions": 1,
+      "filename": "infra/storage.tf",
+      "patch": "@@ -3,9 +3,21 @@\n }\n \n resource \"aws_s3_bucket_public_access_block\" \"assets\" {\n-  bucket                  = aws_s3_bucket.assets.id\n+  bucket = aws_s3_bucket.assets.id\n   block_public_acls       = false\n   block_public_policy     = false\n   ignore_public_acls      = false\n   restrict_public_buckets = false\n }\n+\n+resource \"aws_s3_bucket\" \"invoices\" {\n+  bucket = \"acme-customer-invoices\"\n+}\n+\n+resource \"aws_s3_bucket_public_access_block\" \"invoices\" {\n+  bucket = aws_s3_bucket.invoices.id\n+  block_public_acls       = false\n+  block_public_policy     = false\n+  ignore_public_acls      = false\n+  restrict_public_buckets = false\n+}",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-terraform-public-bucket",
+  "must_not_find": [
+    {
+      "file_path": "infra/storage.tf",
+      "line": 7,
+      "note": "a bucket named public-assets, intentionally public; this is the design"
+    }
+  ],
+  "summary": "Terraform, not Python. One bucket is deliberately public; the next is not meant to be.",
+  "title": "Add the public assets bucket"
+}

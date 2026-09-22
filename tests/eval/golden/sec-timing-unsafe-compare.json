@@ -1,0 +1,33 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "crypto",
+      "file_path": "webhooks/verify.py",
+      "line": 12,
+      "min_severity": "major",
+      "note": "== on a signature is not constant time and leaks the expected value a byte at a time, unlike the compare_digest call above"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 0,
+      "filename": "webhooks/verify.py",
+      "patch": "@@ -5,3 +5,8 @@\n def verify_stripe(secret, body, header):\n     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()\n     return hmac.compare_digest(expected, header)\n+\n+\n+def verify_acmepay(secret, body, header):\n+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()\n+    return expected == header",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-timing-unsafe-compare",
+  "must_not_find": [
+    {
+      "file_path": "webhooks/verify.py",
+      "line": 7,
+      "note": "constant-time comparison, which is the correct form"
+    }
+  ],
+  "summary": "A signature compared with ==, one line below one compared with compare_digest.",
+  "title": "Add a second webhook provider"
+}

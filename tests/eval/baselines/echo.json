@@ -6,19 +6,19 @@
     "tests": "claude-sonnet-5",
     "docs": "claude-haiku-4-5"
   },
-  "cases": 16,
+  "cases": 34,
   "overall": {
-    "hits": 19,
-    "labels_found": 17,
-    "concerns": 22,
-    "duplicate_rate": 0.86,
+    "hits": 32,
+    "labels_found": 25,
+    "concerns": 35,
+    "duplicate_rate": 0.91,
     "false_positives": 2,
-    "unlabelled": 1,
-    "misses": 5,
-    "precision_strict": 0.864,
-    "precision_lenient": 0.905,
-    "recall": 0.773,
-    "f1": 0.816
+    "unlabelled": 2,
+    "misses": 12,
+    "precision_strict": 0.889,
+    "precision_lenient": 0.941,
+    "recall": 0.676,
+    "f1": 0.768
   },
   "by_agent": {
     "correctness": {
@@ -28,24 +28,24 @@
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 0,
-      "misses": 2,
+      "misses": 4,
       "precision_strict": 1.0,
       "precision_lenient": 1.0,
-      "recall": 0.333,
-      "f1": 0.5
+      "recall": 0.2,
+      "f1": 0.333
     },
     "docs": {
-      "hits": 8,
-      "labels_found": 7,
+      "hits": 14,
+      "labels_found": 13,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 1,
-      "misses": 2,
-      "precision_strict": 0.889,
+      "misses": 4,
+      "precision_strict": 0.933,
       "precision_lenient": 1.0,
-      "recall": 0.778,
-      "f1": 0.83
+      "recall": 0.765,
+      "f1": 0.841
     },
     "security": {
       "hits": 1,
@@ -54,41 +54,41 @@
       "duplicate_rate": 0.0,
       "false_positives": 1,
       "unlabelled": 0,
-      "misses": 0,
+      "misses": 2,
       "precision_strict": 0.5,
       "precision_lenient": 0.5,
-      "recall": 1.0,
-      "f1": 0.667
+      "recall": 0.333,
+      "f1": 0.4
     },
     "tests": {
-      "hits": 9,
-      "labels_found": 13,
+      "hits": 16,
+      "labels_found": 20,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 1,
-      "unlabelled": 0,
-      "misses": 1,
-      "precision_strict": 0.9,
-      "precision_lenient": 0.9,
-      "recall": 0.929,
-      "f1": 0.914
+      "unlabelled": 1,
+      "misses": 2,
+      "precision_strict": 0.889,
+      "precision_lenient": 0.941,
+      "recall": 0.909,
+      "f1": 0.899
     }
   },
   "calibration": {
     "bins": [
       {
         "range": "0.00-0.50",
-        "n": 9,
+        "n": 15,
         "mean_confidence": 0.45,
-        "observed_hit_rate": 0.889,
-        "gap": 0.439
+        "observed_hit_rate": 0.933,
+        "gap": 0.483
       },
       {
         "range": "0.50-0.60",
-        "n": 10,
+        "n": 18,
         "mean_confidence": 0.55,
-        "observed_hit_rate": 0.9,
-        "gap": 0.35
+        "observed_hit_rate": 0.889,
+        "gap": 0.339
       },
       {
         "range": "0.70-0.80",
@@ -105,16 +105,30 @@
         "gap": -0.32
       }
     ],
-    "expected_calibration_error": 0.381
+    "expected_calibration_error": 0.397
   },
-  "category_agreement": 0.158,
-  "agent_attribution": 0.158,
-  "decision_accuracy": 0.8,
+  "category_agreement": 0.094,
+  "agent_attribution": 0.125,
+  "decision_accuracy": 0.75,
   "cost": {
-    "total_usd": 0.1218,
-    "per_case_usd": 0.0076
+    "total_usd": 0.2272,
+    "per_case_usd": 0.0067
   },
   "per_case": [
+    {
+      "id": "cor-async-blocking-call",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.005,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
     {
       "id": "cor-bare-except",
       "hits": 1,
@@ -174,6 +188,55 @@
       "failed_agents": [],
       "error": null,
       "findings": []
+    },
+    {
+      "id": "cor-mutable-default-arg",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.523,
+      "cost_usd": 0.0066,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "notify/batch.py:7",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "notify/batch.py:7",
+          "matched_labels": [
+            "notify/batch.py:7"
+          ],
+          "cites": [
+            "notify/batch.py:7"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "notify/batch.py:7",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "notify/batch.py:7",
+          "matched_labels": [
+            "notify/batch.py:7"
+          ],
+          "cites": [
+            "notify/batch.py:7"
+          ]
+        }
+      ]
     },
     {
       "id": "cor-off-by-one-pagination",
@@ -274,6 +337,147 @@
       ]
     },
     {
+      "id": "cor-retry-non-idempotent",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.0073,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "billing/resilient.py:11",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "billing/resilient.py:11",
+          "matched_labels": [
+            "billing/resilient.py:11"
+          ],
+          "cites": [
+            "billing/resilient.py:11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cor-timezone-naive-comparison",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.0062,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "invites/expiry.py:8",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "invites/expiry.py:9",
+          "matched_labels": [
+            "invites/expiry.py:9"
+          ],
+          "cites": [
+            "invites/expiry.py:8"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cor-typescript-null-deref",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0049,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "doc-misleading-name",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.523,
+      "cost_usd": 0.0063,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "cache/lookup.py:8",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "cache/lookup.py:8",
+          "matched_labels": [
+            "cache/lookup.py:8"
+          ],
+          "cites": [
+            "cache/lookup.py:8"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "cache/lookup.py:8",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "cache/lookup.py:8",
+          "matched_labels": [
+            "cache/lookup.py:8"
+          ],
+          "cites": [
+            "cache/lookup.py:8"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "doc-readme-flag-renamed",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0051,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "doc-stale-docstring",
       "hits": 0,
       "missed": 1,
@@ -286,6 +490,36 @@
       "failed_agents": [],
       "error": null,
       "findings": []
+    },
+    {
+      "id": "doc-wrong-parameter-name",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.0063,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "unlabelled",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "api/listing.py:1",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "api/listing.py:1"
+          ]
+        }
+      ]
     },
     {
       "id": "neg-clean-extract-method",
@@ -318,6 +552,48 @@
           ]
         }
       ]
+    },
+    {
+      "id": "neg-dependency-bump",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0048,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "neg-tests-only-addition",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.006,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
     },
     {
       "id": "sec-command-injection",
@@ -369,6 +645,20 @@
       ]
     },
     {
+      "id": "sec-cors-wildcard-credentials",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0041,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "sec-hardcoded-credential",
       "hits": 1,
       "missed": 0,
@@ -418,6 +708,55 @@
       ]
     },
     {
+      "id": "sec-jwt-unverified",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0062,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "auth/tokens.py:10",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "auth/tokens.py:11",
+          "matched_labels": [
+            "auth/tokens.py:11"
+          ],
+          "cites": [
+            "auth/tokens.py:10"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "auth/tokens.py:10",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "auth/tokens.py:11",
+          "matched_labels": [
+            "auth/tokens.py:11"
+          ],
+          "cites": [
+            "auth/tokens.py:10"
+          ]
+        }
+      ]
+    },
+    {
       "id": "sec-missing-authz",
       "hits": 1,
       "missed": 0,
@@ -445,6 +784,55 @@
           ],
           "cites": [
             "api/payment_methods.py:10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-path-traversal",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0064,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "exports/serve.py:19",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "exports/serve.py:20",
+          "matched_labels": [
+            "exports/serve.py:20"
+          ],
+          "cites": [
+            "exports/serve.py:19"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "exports/serve.py:19",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "exports/serve.py:20",
+          "matched_labels": [
+            "exports/serve.py:20"
+          ],
+          "cites": [
+            "exports/serve.py:19"
           ]
         }
       ]
@@ -526,6 +914,69 @@
           ],
           "cites": [
             "integrations/webhooks.py:13"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-terraform-public-bucket",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0062,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "sec-timing-unsafe-compare",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.523,
+      "cost_usd": 0.0067,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "webhooks/verify.py:10",
+          "title": "New function arrives without a test",
+          "agreeing": [],
+          "matched_label": "webhooks/verify.py:12",
+          "matched_labels": [
+            "webhooks/verify.py:12"
+          ],
+          "cites": [
+            "webhooks/verify.py:10"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "webhooks/verify.py:10",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "webhooks/verify.py:12",
+          "matched_labels": [
+            "webhooks/verify.py:12"
+          ],
+          "cites": [
+            "webhooks/verify.py:10"
           ]
         }
       ]
@@ -664,6 +1115,20 @@
       ]
     },
     {
+      "id": "tst-mock-patches-wrong-target",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0061,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
       "id": "tst-repeated-coverage-gap",
       "hits": 1,
       "missed": 0,
@@ -701,6 +1166,38 @@
             "reports/json_export.py:14",
             "reports/pdf_export.py:5",
             "reports/pdf_export.py:11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tst-time-dependent-flaky",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.45,
+      "cost_usd": 0.0057,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.45,
+          "where": "tests/test_tokens.py:9",
+          "title": "Public definition has no docstring",
+          "agreeing": [],
+          "matched_label": "tests/test_tokens.py:10",
+          "matched_labels": [
+            "tests/test_tokens.py:10"
+          ],
+          "cites": [
+            "tests/test_tokens.py:9"
           ]
         }
       ]
