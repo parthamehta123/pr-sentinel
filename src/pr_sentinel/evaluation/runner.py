@@ -59,7 +59,15 @@ async def run_eval(
     engine_name: str | None = None,
     concurrency: int = 3,
     budget_cap_usd: float | None = None,
-) -> EvalReport:
+    repeat: int = 1,
+) -> list[EvalReport]:
+    """Run the set `repeat` times and return one report per run.
+
+    Repetition is not optional rigour on a set this small. Two runs of an
+    identical prompt were measured at 5 and 9 findings from the same agent, and
+    0.80 vs 0.89 precision — a spread wider than most changes worth making. A
+    single run cannot tell a real improvement from the model having a good day.
+    """
     cases = load_cases(only=only)
     settings = get_settings()
     semaphore = asyncio.Semaphore(concurrency)
@@ -69,9 +77,16 @@ async def run_eval(
             log.info("eval.case", id=case.id)
             return await run_case(case, engine_name, budget_cap_usd)
 
-    results = await asyncio.gather(*(guarded(c) for c in cases))
-    return score(
-        list(results),
-        provider=get_provider().name,
-        models={str(a): settings.model_for(str(a)) for a in ALL_AGENTS},
-    )
+    reports: list[EvalReport] = []
+    for run in range(repeat):
+        if repeat > 1:
+            log.info("eval.run", run=run + 1, of=repeat)
+        results = await asyncio.gather(*(guarded(c) for c in cases))
+        reports.append(
+            score(
+                list(results),
+                provider=get_provider().name,
+                models={str(a): settings.model_for(str(a)) for a in ALL_AGENTS},
+            )
+        )
+    return reports

@@ -7,6 +7,14 @@
   ],
   "expected": [
     {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "users/lookup.py",
+      "line": 2,
+      "min_severity": "minor",
+      "note": "the docstring still promises a 2-tuple; the function now returns a dict"
+    },
+    {
       "agent": "correctness",
       "category": "api_contract",
       "file_path": "users/lookup.py",
@@ -27,6 +35,6 @@
   ],
   "id": "cor-contract-break-return-shape",
   "must_not_find": [],
-  "summary": "Return type changes from a tuple to a dict; an existing caller still unpacks it.",
+  "summary": "Return type changes from a tuple to a dict. An existing caller still unpacks it, and the docstring above still describes the old shape.",
   "title": "Return richer data from lookup_user"
 }

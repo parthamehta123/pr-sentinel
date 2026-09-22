@@ -92,7 +92,7 @@ instead.
 
 ## Measuring it
 
-15 labelled pull requests live in [`tests/eval/`](tests/eval/): 15 labelled
+15 labelled pull requests live in [`tests/eval/`](tests/eval/): 16 labelled
 findings, 5 false-positive traps, and one case where the right answer is silence.
 
 ```bash
@@ -109,25 +109,31 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
 CALIBRATION   does a confidence of X turn out right X of the time?
-  expected calibration error : 0.110   (lower is better; <0.10 is good)
+  expected calibration error : 0.118   (lower is better; <0.10 is good)
 
   confidence        n    stated   observed      gap
-  0.50-0.60         1      0.50       1.00    +0.50
-  0.70-0.80        14      0.73       0.79    +0.05
-  0.80-0.90        13      0.83       1.00    +0.17
-  0.90-1.01        16      0.96       0.88    -0.09
+  0.50-0.60         4      0.54       0.50    -0.04
+  0.60-0.70         4      0.63       1.00    +0.37
+  0.70-0.80        12      0.74       0.92    +0.18
+  0.80-0.90         7      0.84       1.00    +0.16
+  0.90-1.01        17      0.96       0.94    -0.02
 
 ACCURACY
-  precision (strict)  : 0.886   unlabelled findings count against
-  precision (lenient) : 0.975   only labelled traps count against
-  recall              : 0.933   over distinct labels, not matches
-  14 of 15 defects found by 39 finding(s) · 1 false positive · 4 unlabelled
+  precision (strict)  : 0.909   unlabelled findings count against
+  precision (lenient) : 0.976   only labelled traps count against
+  recall              : 0.938   over distinct labels, not matches
+  15 of 16 defects found by 40 finding(s) · 1 false positive · 3 unlabelled
   findings per concern: 1.05
   gate decision match : 1.000
 
 COST
-  per case  : $0.0702   ($1.05 for the set)
+  per case  : $0.0708   ($1.06 for the set)
 ```
+
+Single runs on 15 cases are noisy. Two runs of an *identical* configuration were
+measured at 0.909 and 0.923 strict precision, and one agent produced 5 findings in
+one and 9 in the other. `--repeat N` reports mean and spread, and a change smaller
+than the spread has not been demonstrated.
 
 The models are mildly **under**confident in the middle of the range and slightly
 over at the top — the opposite of the usual worry, and the reason to measure

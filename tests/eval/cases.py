@@ -284,7 +284,10 @@ def verify_endpoint(url):
 case(
     id="cor-contract-break-return-shape",
     title="Return richer data from lookup_user",
-    summary="Return type changes from a tuple to a dict; an existing caller still unpacks it.",
+    summary=(
+        "Return type changes from a tuple to a dict. An existing caller still unpacks it, "
+        "and the docstring above still describes the old shape."
+    ),
     expected_decision=None,  # depends on model confidence, not on the case
     context={
         "reports/weekly.py": '''from users.lookup import lookup_user
@@ -305,6 +308,7 @@ def render_row(user_id):
     },
     after={
         "users/lookup.py": '''def lookup_user(user_id):
+    #!EXPECT agent=docs category=documentation severity>=minor :: the docstring still promises a 2-tuple; the function now returns a dict
     """Return (name, email) for a user."""
     row = _db.fetch_one(
         "SELECT name, email, tier FROM users WHERE id = %s", (user_id,)

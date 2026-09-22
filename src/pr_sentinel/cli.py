@@ -369,6 +369,13 @@ def eval(
     provider: str = typer.Option("", help="override LLM_PROVIDER for this run"),
     engine: str = typer.Option("", help="'local' to bypass LangGraph"),
     concurrency: int = typer.Option(3, help="cases in flight at once"),
+    repeat: int = typer.Option(
+        1,
+        help=(
+            "run the set N times and report mean and spread. On a set this small "
+            "a single run cannot separate a real change from model variance."
+        ),
+    ),
     budget: float = typer.Option(0.0, help="per-case cost cap in USD; 0 disables"),
     save: Path = typer.Option(None, help="write the JSON report here"),
     baseline: Path = typer.Option(None, help="compare against a saved report and fail on regression"),
@@ -394,21 +401,32 @@ def eval(
         get_settings.cache_clear()
 
     async def _go():
-        from .evaluation.report import compare, render
+        from .evaluation.report import compare, render, stability
         from .evaluation.runner import run_eval
 
-        report = await run_eval(
+        reports = await run_eval(
             only=list(only) if only else None,
             engine_name=engine or None,
             concurrency=concurrency,
             budget_cap_usd=budget or None,
+            repeat=repeat,
         )
+        report = reports[-1]
         payload = report.as_dict()
+        if len(reports) > 1:
+            payload["stability"] = {
+                "runs": len(reports),
+                "precision_strict": [round(r.overall.precision_strict, 3) for r in reports],
+                "recall": [round(r.overall.recall, 3) for r in reports],
+                "calibration_error": [round(r.ece, 3) for r in reports],
+                "cost_per_case_usd": [round(r.cost_per_case_usd, 4) for r in reports],
+            }
 
         if as_json:
             typer.echo(json.dumps(payload, indent=2))
         else:
             typer.echo(render(report, verbose=verbose))
+            typer.echo(stability(reports))
 
         if save:
             save.parent.mkdir(parents=True, exist_ok=True)

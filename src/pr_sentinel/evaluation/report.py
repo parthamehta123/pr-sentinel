@@ -175,3 +175,45 @@ def compare(current: EvalReport, baseline: dict) -> tuple[str, bool]:
         out.append(f"  {name:<22}{before:>10.3f}{after:>10.3f}{delta:>+10.3f}{mark}")
     out.append("")
     return "\n".join(out), regressed
+
+
+def stability(reports: list[EvalReport]) -> str:
+    """Mean and spread across repeated runs of the same configuration.
+
+    The spread is the number that matters: a change smaller than it has not been
+    demonstrated, however good the headline looks.
+    """
+    if len(reports) < 2:
+        return ""
+
+    metrics: list[tuple[str, list[float]]] = [
+        ("precision (strict)", [r.overall.precision_strict for r in reports]),
+        ("precision (lenient)", [r.overall.precision_lenient for r in reports]),
+        ("recall", [r.overall.recall for r in reports]),
+        ("f1", [r.overall.f1 for r in reports]),
+        ("calibration error", [r.ece for r in reports]),
+        ("findings per concern", [r.overall.duplicate_rate for r in reports]),
+        (
+            "findings produced",
+            [float(r.overall.hits + r.overall.unlabelled + r.overall.false_positives) for r in reports],
+        ),
+        ("cost per case ($)", [r.cost_per_case_usd for r in reports]),
+    ]
+
+    out = [
+        "",
+        f"STABILITY over {len(reports)} runs of the same configuration",
+        f"  {'metric':<22}{'mean':>9}{'min':>9}{'max':>9}{'spread':>9}",
+    ]
+    for name, values in metrics:
+        mean = sum(values) / len(values)
+        lo, hi = min(values), max(values)
+        out.append(f"  {name:<22}{mean:>9.3f}{lo:>9.3f}{hi:>9.3f}{hi - lo:>+9.3f}")
+    out += [
+        "",
+        "  A change smaller than the spread above has not been demonstrated.",
+        "  If the spread is uncomfortably wide, the set is too small — add cases",
+        "  before tuning against it.",
+        "",
+    ]
+    return "\n".join(out)

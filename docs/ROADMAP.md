@@ -26,16 +26,22 @@ that recur in review — clean, unambiguous, and easier than reality. Mining
 labelled cases from real merged pull requests is what turns a regression gate into
 a measurement. Thirty to fifty, split train/test, is the target.
 
-Two things the first live runs already showed, both of which need more data
-before acting on them:
+**The set is too small to settle the questions it raises.** Two runs of an
+identical configuration measured 0.909 and 0.923 strict precision, and the docs
+agent produced 5 findings in one and 9 in the other. Most changes worth making
+are smaller than that spread. `--repeat N` now reports mean and spread; the fix
+is more cases, not more repetitions.
 
-- **The docs agent is the weakest link.** Precision 0.73, three unlabelled
-  findings — it is the one generating noise, exactly as its prompt predicted it
-  would. Either the prompt needs to be harsher about staying quiet, or
-  `claude-haiku-4-5` is the wrong model for it.
-- **The one consistent miss** is an assertion-free test. The tests agent finds
-  the *missing* test every time and misses the test that cannot fail. That is a
-  prompt gap, and the harness can now score a fix for it.
+Two open questions the current data cannot answer:
+
+- **Is the rewritten docs prompt better, or did it just have a good run?** What
+  held across every post-fix run is that it stopped straying into other agents'
+  territory, and that its missing-documentation notes are now rated `info` rather
+  than `minor` — so the gate's severity floor withholds them. The precision
+  number itself moved less than the noise.
+- **The one consistent miss** is an assertion-free test. The tests agent finds the
+  *missing* test every time and misses the test that cannot fail. That gap held in
+  all four live runs, which makes it the one signal here strong enough to act on.
 
 ## 2. Learning from recorded disputes
 

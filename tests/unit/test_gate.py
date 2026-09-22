@@ -131,3 +131,53 @@ def test_threshold_boundary_is_inclusive_upward(confidence):
     result = evaluate([finding(confidence=0.9)], healthy_panel(), confidence)
     expected = Decision.AUTO_POST if confidence >= get_settings().auto_post_confidence else Decision.ESCALATE
     assert result.decision is expected
+
+
+# --- severity floor ---------------------------------------------------------
+#
+# From the live runs: the docs agent, once it stopped inflating severities,
+# produced correct `info` findings at confidence 0.72 — comfortably over the
+# confidence threshold and still not worth a reviewer's attention. Confidence
+# answers "is this real"; severity answers "does it matter". Both must pass.
+
+
+def test_an_info_finding_is_not_posted_however_confident_it_is():
+    result = evaluate([finding(severity="info", confidence=0.99)], healthy_panel(), 0.99)
+    assert result.decision is Decision.SUPPRESS
+    assert result.postable == []
+
+
+def test_a_minor_finding_still_posts():
+    result = evaluate([finding(severity="minor", confidence=0.9)], healthy_panel(), 0.9)
+    assert result.decision is Decision.AUTO_POST
+    assert len(result.postable) == 1
+
+
+def test_info_findings_are_filtered_out_of_a_mixed_review():
+    strong = finding(severity="major", confidence=0.9)
+    trivial = finding(severity="info", confidence=0.95, line=40)
+    result = evaluate([strong, trivial], healthy_panel(), 0.9)
+    assert result.postable == [strong]
+    assert "below minor severity" in result.explanation
+
+
+def test_the_two_hold_back_reasons_are_reported_separately():
+    """An operator reading the summary should know which bar each finding failed."""
+    result = evaluate(
+        [
+            finding(severity="major", confidence=0.95),
+            finding(severity="major", confidence=0.1, line=40),
+            finding(severity="info", confidence=0.95, line=80),
+        ],
+        healthy_panel(),
+        0.9,
+    )
+    assert "below the confidence threshold" in result.explanation
+    assert "below minor severity" in result.explanation
+
+
+def test_the_floor_is_configurable(monkeypatch):
+    monkeypatch.setenv("POST_MIN_SEVERITY", "info")
+    get_settings.cache_clear()
+    result = evaluate([finding(severity="info", confidence=0.9)], healthy_panel(), 0.9)
+    assert result.decision is Decision.AUTO_POST

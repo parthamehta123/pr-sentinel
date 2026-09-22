@@ -14,13 +14,19 @@ Rules, in precedence order, and the order is deliberate:
                                 vulnerability on a public PR is a disclosure.
   4. Overall confidence low  -> escalate.
   5. Otherwise               -> post, but only the findings that individually
-                                clear the posting threshold.
+                                clear both the confidence and the severity floor.
+
+A finding has to clear two independent bars to be posted, because they answer
+different questions. Confidence is "is this real". Severity is "does it matter".
+An `info` finding at confidence 0.95 is very probably true and still not worth
+interrupting anyone for — measured, that is exactly what the docs agent produces
+when it is being honest.
 """
 
 from __future__ import annotations
 
 from ..config import get_settings
-from ..domain.enums import Decision, EscalationReason, Severity
+from ..domain.enums import SEVERITY_ORDER, Decision, EscalationReason, Severity
 from ..domain.models import AgentVerdict, Finding
 
 
@@ -92,7 +98,12 @@ def evaluate(
             f"{settings.auto_post_confidence:.2f} auto-post threshold.",
         )
 
-    postable = [f for f in findings if f.confidence >= settings.finding_post_confidence]
+    floor = SEVERITY_ORDER.index(Severity(settings.post_min_severity))
+    postable = [
+        f
+        for f in findings
+        if f.confidence >= settings.finding_post_confidence and SEVERITY_ORDER.index(f.severity) >= floor
+    ]
     if not postable:
         return GateResult(
             Decision.SUPPRESS,
@@ -102,14 +113,25 @@ def evaluate(
             "Nothing cleared the per-finding posting threshold. Staying quiet.",
         )
 
-    held = len(findings) - len(postable)
+    # Two bars, reported separately: an operator reading this should know which
+    # one each withheld finding failed, because they mean different things.
+    held_low_confidence = sum(1 for f in findings if f.confidence < settings.finding_post_confidence)
+    held_low_severity = sum(
+        1
+        for f in findings
+        if f.confidence >= settings.finding_post_confidence and SEVERITY_ORDER.index(f.severity) < floor
+    )
+    reasons = []
+    if held_low_confidence:
+        reasons.append(f"{held_low_confidence} below the confidence threshold")
+    if held_low_severity:
+        reasons.append(f"{held_low_severity} below {settings.post_min_severity} severity")
     return GateResult(
         Decision.AUTO_POST,
         None,
         postable,
         100,
-        f"Posting {len(postable)} finding(s)"
-        + (f"; {held} held back below the individual threshold." if held else "."),
+        f"Posting {len(postable)} finding(s)" + (f"; held back: {', '.join(reasons)}." if reasons else "."),
     )
 
 

@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     auto_post_confidence: float = Field(0.70, ge=0.0, le=1.0)
     finding_post_confidence: float = Field(0.60, ge=0.0, le=1.0)
     escalate_critical_security: bool = True
+    # Severity floor for posting. Confidence answers "is this real"; severity
+    # answers "does it matter". A correct, high-confidence, trivial observation
+    # clears every confidence check and is still not worth a reviewer's attention.
+    post_min_severity: Literal["info", "minor", "major", "critical"] = "minor"
 
     # --- Budget ---
     daily_cost_cap_usd: float = 25.0

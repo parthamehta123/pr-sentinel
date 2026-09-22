@@ -72,6 +72,18 @@ refactor where any finding is a false positive.
 A set that only rewards recall optimises straight into noise. The offline echo
 provider falls into two of these traps, which is the traps working.
 
+## Run it more than once
+
+```bash
+.venv/bin/pr-sentinel eval --provider anthropic --repeat 3
+```
+
+Two runs of an identical configuration were measured at 0.909 and 0.923 strict
+precision, with one agent producing 5 findings in one run and 9 in the other. A
+single run cannot separate a real improvement from the model having a good day.
+`--repeat` reports mean and spread, and the rule is simple: a change smaller than
+the spread has not been demonstrated.
+
 ## Honest limits
 
 - **Hand-authored, not mined.** The cases come from patterns that recur in review,
@@ -81,8 +93,10 @@ provider falls into two of these traps, which is the traps working.
 - **Retrieval is not measured.** Context files are injected directly rather than
   indexed, so what is scored is whether the agents *use* context they were given.
   Retrieval quality needs its own harness and its own labels.
-- **15 cases is small.** Enough to catch a regression, not enough for a confident
-  absolute number. Treat deltas as signal and absolutes as indicative.
+- **16 labelled findings across 15 cases is small.** Measured run-to-run spread on
+  an unchanged configuration is around ±0.015 overall precision and ±0.09 for a
+  single agent. That is wider than most changes worth making, which is the real
+  argument for growing the set.
 - **The offline numbers mean nothing about review quality.** The `echo` provider is
   a regex matcher. Running `make eval` proves the harness works; only
   `make eval-live` says anything about the reviewer.
