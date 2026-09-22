@@ -37,16 +37,21 @@ arm and is real — six fewer posted comments per pull request at identical reca
 Two further claims made from single runs turned out to be coincidence. Tables in
 [tests/eval/RESULTS.md](../tests/eval/RESULTS.md).
 
-## 2. Refresh the full-set baseline
+## 2. Decide whether the gate's severity rule is right
 
-Done and measured since: the evidence list was capped at five entries, so a
-finding covering six locations lost one silently, and the shared prompt never
-asked for complete citations. Both fixed; on the affected case, locations cited
-went from 1, 1, 3 to 6, 6, 6 and recall from 0.555 to 1.000 with zero spread.
+Baseline refreshed: recall 1.000 across three runs, all 37 defects found.
 
-What remains is bookkeeping: the committed 34-case baseline predates that change,
-because the API credit balance ran out mid-refresh. One `--repeat 3` run (about
-$6.60 at current prices) brings it current.
+The one thing that disagrees in every run recorded so far is
+`sec-cors-wildcard-credentials`. The model finds it, rates it below `critical`,
+and the review auto-posts instead of escalating. Six consistent samples, so this
+is a real property and not variance.
+
+Two defensible readings, and the data cannot pick between them. Either the model
+is under-rating a genuine critical — a wildcard origin with credentials lets any
+site read authenticated responses — or the label is wrong and this belongs in the
+`major` band, where auto-posting is correct. Deciding it is a judgement call about
+what the gate is for, and the answer should be written down in ADR-0006 either
+way.
 
 ## 2. Learning from recorded disputes
 

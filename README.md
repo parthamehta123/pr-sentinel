@@ -115,21 +115,21 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
                         mean      min      max
-  precision strict     0.980    0.963    0.988
-  precision lenient    0.992    0.987    1.000
-  recall               0.892    0.892    0.892
-  calibration error    0.177    0.172    0.186
-  gate decision match  0.861    0.833    0.917
-  cost per review     $0.066   $0.065   $0.068
+  precision strict     0.987    0.973    1.000
+  precision lenient    1.000    1.000    1.000
+  recall               1.000    1.000    1.000
+  calibration error    0.182    0.157    0.201
+  gate decision match  0.917    0.917    0.917
+  cost per review     $0.070   $0.067   $0.075
 ```
 
-These figures predate the evidence-citation fix described in
-[RESULTS.md](tests/eval/RESULTS.md); a refreshed full-set baseline is pending.
+All 37 labelled defects found in every run. One disagreement survives every run
+recorded so far: wildcard CORS with credentials is found and rated below
+`critical`, so the never-post-critical-security rule does not fire and the review
+auto-posts. Six consistent samples make that the strongest open signal.
 
-Two things still reproduce in every run, neither visible on the smaller set:
-wildcard CORS with credentials is found but not rated `critical`, so it auto-posts
-instead of escalating; and a clean TypeScript refactor draws a false positive two
-runs in three.
+With precision at 0.987 and recall at 1.000 the set is close to saturated again —
+still a working regression gate, no longer able to rank two good configurations.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the
