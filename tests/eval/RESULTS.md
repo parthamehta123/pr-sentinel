@@ -1148,3 +1148,47 @@ scores as well as it does while receiving a third of the context it asks for
 suggests the agents are leaning on the diff far more than on retrieved context —
 which is worth knowing, and is testable by running the eval with retrieval
 disabled entirely and seeing whether any number moves.
+
+### The ablation: the eval cannot see retrieval at all
+
+Before running it, a discovery that matters more than the result. `run_case`
+builds its `ReviewContext` directly from each case's hand-authored
+`context_files`. **The eval has never called `build_context` and has never
+exercised retrieval.** Twenty of the 63 cases supply context; all of it was
+written by hand to be exactly relevant. Every panel number in this file was
+therefore measured under an assumption of perfect retrieval, while production
+runs on retrieval that recalls 0.337.
+
+The ablation — `--no-context`, the same 20 cases, three runs each, $4.26:
+
+| | with context (hand-authored) | no context |
+|---|---|---|
+| recall | 1.000 *(spread 0.000)* | 1.000 *(spread 0.000)* |
+| labels missed | 0.0 | 0.0 |
+| unlabelled / run | 0.0 | 1.0 |
+| false positives | 0.0 | 0.0 |
+| cost | $1.43 | $1.42 |
+
+**Nothing moved.** Not one label was lost. Per case, every one of the twenty
+scores identically in both arms — including `ctx-changed-default-breaks-caller`
+and `ctx-duplicate-index-migration`, the two cases written specifically to
+*require* repository context to solve.
+
+That last part is the finding. This is not evidence that retrieval is worthless;
+it is evidence that **the eval cannot measure whether retrieval is worth
+anything**, because even the cases designed to depend on context do not depend on
+it. The diff alone is sufficient everywhere, so removing context costs nothing
+and adding perfect context buys nothing. Two cases were built to close exactly
+this gap and neither does.
+
+So the state of knowledge on retrieval is: it recalls a third of what a diff
+calls for, the vector half of its "hybrid" search is a hashing embedder rather
+than a semantic one, and this eval is structurally incapable of telling anyone
+whether either of those facts costs a review anything.
+
+Fixing that means cases whose defect is genuinely invisible in the diff — where
+the changed code is correct on its face and only wrong against a contract, a
+caller or an invariant defined in a file the diff does not touch. Writing one
+that survives is harder than it sounds: the four negative controls in this file
+all failed on the first attempt, and a context-dependent case has the same
+failure mode in reverse.

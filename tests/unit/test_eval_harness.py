@@ -801,7 +801,7 @@ def _run_eval_with_outage_on(run_number: int, *, repeat: int, monkeypatch):
         if seen["n"] == run_number:
             raise R.EvalRunFailed("simulated outage")
 
-    async def fake_run_case(case, engine_name, budget_cap_usd):
+    async def fake_run_case(case, engine_name, budget_cap_usd, **kwargs):
         return object()
 
     monkeypatch.setattr(R, "_refuse_if_everything_failed", fake_guard)

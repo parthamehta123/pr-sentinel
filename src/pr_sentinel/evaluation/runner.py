@@ -28,11 +28,22 @@ from .metrics import EvalReport, score, score_case
 log = get_logger(__name__)
 
 
-async def run_case(case: EvalCase, engine_name: str | None, budget_cap_usd: float | None):
+async def run_case(
+    case: EvalCase,
+    engine_name: str | None,
+    budget_cap_usd: float | None,
+    no_context: bool = False,
+):
     settings = get_settings()
     pr = case.pull_request()
     diff_text, truncated = render_for_prompt(pr.files, settings.max_diff_bytes)
-    ctx = ReviewContext(pr=pr, diff_text=diff_text, chunks=case.context_chunks, truncated=truncated)
+    # The eval feeds the panel each case's hand-authored context_files rather
+    # than anything retrieval produced — so these numbers have always assumed
+    # perfect retrieval. `no_context` is the other end of that bracket: what
+    # the panel scores with no repository context at all. Real retrieval sits
+    # between the two, and at recall@12 0.337 it sits nearer this end.
+    chunks = [] if no_context else case.context_chunks
+    ctx = ReviewContext(pr=pr, diff_text=diff_text, chunks=chunks, truncated=truncated)
 
     review_id = uuid.uuid4()
     budget = BudgetGuard(review_id=review_id, enabled=budget_cap_usd is not None)
@@ -60,6 +71,7 @@ async def run_eval(
     concurrency: int = 3,
     budget_cap_usd: float | None = None,
     repeat: int = 1,
+    no_context: bool = False,
 ) -> list[EvalReport]:
     """Run the set `repeat` times and return one report per run.
 
@@ -75,7 +87,7 @@ async def run_eval(
     async def guarded(case: EvalCase):
         async with semaphore:
             log.info("eval.case", id=case.id)
-            return await run_case(case, engine_name, budget_cap_usd)
+            return await run_case(case, engine_name, budget_cap_usd, no_context=no_context)
 
     reports: list[EvalReport] = []
 
