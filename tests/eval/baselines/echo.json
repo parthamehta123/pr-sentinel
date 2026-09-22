@@ -6,19 +6,19 @@
     "tests": "claude-sonnet-5",
     "docs": "claude-haiku-4-5"
   },
-  "cases": 15,
+  "cases": 16,
   "overall": {
-    "hits": 18,
-    "labels_found": 10,
-    "concerns": 15,
-    "duplicate_rate": 1.2,
+    "hits": 19,
+    "labels_found": 17,
+    "concerns": 22,
+    "duplicate_rate": 0.86,
     "false_positives": 2,
     "unlabelled": 1,
-    "misses": 6,
-    "precision_strict": 0.857,
-    "precision_lenient": 0.9,
-    "recall": 0.625,
-    "f1": 0.723
+    "misses": 5,
+    "precision_strict": 0.864,
+    "precision_lenient": 0.905,
+    "recall": 0.773,
+    "f1": 0.816
   },
   "by_agent": {
     "correctness": {
@@ -36,7 +36,7 @@
     },
     "docs": {
       "hits": 8,
-      "labels_found": 6,
+      "labels_found": 7,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 0,
@@ -44,8 +44,8 @@
       "misses": 2,
       "precision_strict": 0.889,
       "precision_lenient": 1.0,
-      "recall": 0.75,
-      "f1": 0.814
+      "recall": 0.778,
+      "f1": 0.83
     },
     "security": {
       "hits": 1,
@@ -61,17 +61,17 @@
       "f1": 0.667
     },
     "tests": {
-      "hits": 8,
-      "labels_found": 7,
+      "hits": 9,
+      "labels_found": 13,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 1,
       "unlabelled": 0,
-      "misses": 2,
-      "precision_strict": 0.889,
-      "precision_lenient": 0.889,
-      "recall": 0.778,
-      "f1": 0.83
+      "misses": 1,
+      "precision_strict": 0.9,
+      "precision_lenient": 0.9,
+      "recall": 0.929,
+      "f1": 0.914
     }
   },
   "calibration": {
@@ -85,10 +85,10 @@
       },
       {
         "range": "0.50-0.60",
-        "n": 9,
+        "n": 10,
         "mean_confidence": 0.55,
-        "observed_hit_rate": 0.889,
-        "gap": 0.339
+        "observed_hit_rate": 0.9,
+        "gap": 0.35
       },
       {
         "range": "0.70-0.80",
@@ -105,14 +105,14 @@
         "gap": -0.32
       }
     ],
-    "expected_calibration_error": 0.378
+    "expected_calibration_error": 0.381
   },
-  "category_agreement": 0.111,
-  "agent_attribution": 0.111,
+  "category_agreement": 0.158,
+  "agent_attribution": 0.158,
   "decision_accuracy": 0.8,
   "cost": {
-    "total_usd": 0.1048,
-    "per_case_usd": 0.007
+    "total_usd": 0.1218,
+    "per_case_usd": 0.0076
   },
   "per_case": [
     {
@@ -137,7 +137,13 @@
           "where": "telemetry/push.py:4",
           "title": "Bare except swallows control-flow exceptions",
           "agreeing": [],
-          "matched_label": "telemetry/push.py:4"
+          "matched_label": "telemetry/push.py:4",
+          "matched_labels": [
+            "telemetry/push.py:4"
+          ],
+          "cites": [
+            "telemetry/push.py:4"
+          ]
         }
       ]
     },
@@ -191,7 +197,13 @@
           "where": "export/pages.py:9",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "export/pages.py:12"
+          "matched_label": "export/pages.py:12",
+          "matched_labels": [
+            "export/pages.py:12"
+          ],
+          "cites": [
+            "export/pages.py:9"
+          ]
         },
         {
           "match": "hit",
@@ -202,7 +214,13 @@
           "where": "export/pages.py:9",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "export/pages.py:12"
+          "matched_label": "export/pages.py:12",
+          "matched_labels": [
+            "export/pages.py:12"
+          ],
+          "cites": [
+            "export/pages.py:9"
+          ]
         }
       ]
     },
@@ -228,7 +246,13 @@
           "where": "importer/csv_import.py:9",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "importer/csv_import.py:10"
+          "matched_label": "importer/csv_import.py:10",
+          "matched_labels": [
+            "importer/csv_import.py:10"
+          ],
+          "cites": [
+            "importer/csv_import.py:9"
+          ]
         },
         {
           "match": "hit",
@@ -239,7 +263,13 @@
           "where": "importer/csv_import.py:9",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "importer/csv_import.py:10"
+          "matched_label": "importer/csv_import.py:10",
+          "matched_labels": [
+            "importer/csv_import.py:10"
+          ],
+          "cites": [
+            "importer/csv_import.py:9"
+          ]
         }
       ]
     },
@@ -279,7 +309,13 @@
           "where": "billing/totals.py:1",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "billing/totals.py:1"
+          "matched_label": "billing/totals.py:1",
+          "matched_labels": [
+            "billing/totals.py:1"
+          ],
+          "cites": [
+            "billing/totals.py:1"
+          ]
         }
       ]
     },
@@ -305,7 +341,13 @@
           "where": "export/archive.py:8",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "export/archive.py:9"
+          "matched_label": "export/archive.py:9",
+          "matched_labels": [
+            "export/archive.py:9"
+          ],
+          "cites": [
+            "export/archive.py:8"
+          ]
         },
         {
           "match": "hit",
@@ -316,7 +358,13 @@
           "where": "export/archive.py:8",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "export/archive.py:9"
+          "matched_label": "export/archive.py:9",
+          "matched_labels": [
+            "export/archive.py:9"
+          ],
+          "cites": [
+            "export/archive.py:8"
+          ]
         }
       ]
     },
@@ -342,7 +390,13 @@
           "where": "billing/acmepay_client.py:4",
           "title": "Credential literal committed to the repository",
           "agreeing": [],
-          "matched_label": "billing/acmepay_client.py:4"
+          "matched_label": "billing/acmepay_client.py:4",
+          "matched_labels": [
+            "billing/acmepay_client.py:4"
+          ],
+          "cites": [
+            "billing/acmepay_client.py:4"
+          ]
         },
         {
           "match": "false_positive",
@@ -353,7 +407,13 @@
           "where": "tests/fixtures/acmepay.py:3",
           "title": "Credential literal committed to the repository",
           "agreeing": [],
-          "matched_label": "tests/fixtures/acmepay.py:3"
+          "matched_label": "tests/fixtures/acmepay.py:3",
+          "matched_labels": [
+            "tests/fixtures/acmepay.py:3"
+          ],
+          "cites": [
+            "tests/fixtures/acmepay.py:3"
+          ]
         }
       ]
     },
@@ -379,7 +439,13 @@
           "where": "api/payment_methods.py:10",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "api/payment_methods.py:12"
+          "matched_label": "api/payment_methods.py:12",
+          "matched_labels": [
+            "api/payment_methods.py:12"
+          ],
+          "cites": [
+            "api/payment_methods.py:10"
+          ]
         }
       ]
     },
@@ -405,7 +471,13 @@
           "where": "billing/queries.py:8",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "billing/queries.py:9"
+          "matched_label": "billing/queries.py:9",
+          "matched_labels": [
+            "billing/queries.py:9"
+          ],
+          "cites": [
+            "billing/queries.py:8"
+          ]
         }
       ]
     },
@@ -431,7 +503,13 @@
           "where": "integrations/webhooks.py:13",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "integrations/webhooks.py:14"
+          "matched_label": "integrations/webhooks.py:14",
+          "matched_labels": [
+            "integrations/webhooks.py:14"
+          ],
+          "cites": [
+            "integrations/webhooks.py:13"
+          ]
         },
         {
           "match": "hit",
@@ -442,7 +520,13 @@
           "where": "integrations/webhooks.py:13",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "integrations/webhooks.py:14"
+          "matched_label": "integrations/webhooks.py:14",
+          "matched_labels": [
+            "integrations/webhooks.py:14"
+          ],
+          "cites": [
+            "integrations/webhooks.py:13"
+          ]
         }
       ]
     },
@@ -468,7 +552,13 @@
           "where": "auth/passwords.py:10",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
+          "matched_label": "auth/passwords.py:11",
+          "matched_labels": [
+            "auth/passwords.py:11"
+          ],
+          "cites": [
+            "auth/passwords.py:10"
+          ]
         },
         {
           "match": "hit",
@@ -479,7 +569,13 @@
           "where": "auth/passwords.py:14",
           "title": "New function arrives without a test",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
+          "matched_label": "auth/passwords.py:11",
+          "matched_labels": [
+            "auth/passwords.py:11"
+          ],
+          "cites": [
+            "auth/passwords.py:14"
+          ]
         },
         {
           "match": "hit",
@@ -490,7 +586,13 @@
           "where": "auth/passwords.py:10",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
+          "matched_label": "auth/passwords.py:11",
+          "matched_labels": [
+            "auth/passwords.py:11"
+          ],
+          "cites": [
+            "auth/passwords.py:10"
+          ]
         },
         {
           "match": "hit",
@@ -501,14 +603,20 @@
           "where": "auth/passwords.py:14",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
+          "matched_label": "auth/passwords.py:11",
+          "matched_labels": [
+            "auth/passwords.py:11"
+          ],
+          "cites": [
+            "auth/passwords.py:14"
+          ]
         }
       ]
     },
     {
       "id": "tst-assertion-free-test",
       "hits": 2,
-      "missed": 1,
+      "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
@@ -527,7 +635,13 @@
           "where": "tests/test_invoice.py:5",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "tests/test_invoice.py:8"
+          "matched_label": "tests/test_invoice.py:8",
+          "matched_labels": [
+            "tests/test_invoice.py:8"
+          ],
+          "cites": [
+            "tests/test_invoice.py:5"
+          ]
         },
         {
           "match": "hit",
@@ -538,7 +652,56 @@
           "where": "tests/test_invoice.py:11",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": "tests/test_invoice.py:8"
+          "matched_label": "tests/test_invoice.py:8",
+          "matched_labels": [
+            "tests/test_invoice.py:8",
+            "tests/test_invoice.py:12"
+          ],
+          "cites": [
+            "tests/test_invoice.py:11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tst-repeated-coverage-gap",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.55,
+      "cost_usd": 0.0171,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "reports/csv_export.py:5",
+          "title": "New function arrives without a test (and 5 more)",
+          "agreeing": [],
+          "matched_label": "reports/csv_export.py:5",
+          "matched_labels": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10",
+            "reports/json_export.py:8",
+            "reports/json_export.py:14",
+            "reports/pdf_export.py:5",
+            "reports/pdf_export.py:11"
+          ],
+          "cites": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10",
+            "reports/json_export.py:8",
+            "reports/json_export.py:14",
+            "reports/pdf_export.py:5",
+            "reports/pdf_export.py:11"
+          ]
         }
       ]
     },
@@ -564,7 +727,11 @@
           "where": "billing/coupons.py:1",
           "title": "Public definition has no docstring",
           "agreeing": [],
-          "matched_label": null
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "billing/coupons.py:1"
+          ]
         }
       ]
     }

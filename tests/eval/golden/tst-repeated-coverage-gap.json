@@ -1,0 +1,86 @@
+{
+  "context_files": [
+    {
+      "content": "\"\"\"The only existing exporter test in the repository.\"\"\"\n\n\ndef test_csv_header_matches_columns():\n    assert csv_header([\"a\", \"b\"]) == \"a,b\"\n",
+      "path": "reports/tests/test_csv.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/csv_export.py",
+      "line": 5,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/csv_export.py",
+      "line": 10,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/json_export.py",
+      "line": 8,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/json_export.py",
+      "line": 14,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/pdf_export.py",
+      "line": 5,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "reports/pdf_export.py",
+      "line": 11,
+      "min_severity": "minor",
+      "note": "new public function with no test in this change"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 12,
+      "deletions": 0,
+      "filename": "reports/csv_export.py",
+      "patch": "@@ -1,2 +1,14 @@\n def csv_header(columns):\n     return \",\".join(columns)\n+\n+\n+def csv_rows(rows, columns):\n+    \"\"\"Render `rows` as CSV lines, in `columns` order.\"\"\"\n+    return [\",\".join(str(r.get(c, \"\")) for c in columns) for r in rows]\n+\n+\n+def csv_escape(value):\n+    \"\"\"Quote a value that contains a comma or a quote.\"\"\"\n+    if \",\" in value or '\"' in value:\n+        return '\"' + value.replace('\"', '\"\"') + '\"'\n+    return value",
+      "status": "modified"
+    },
+    {
+      "additions": 11,
+      "deletions": 0,
+      "filename": "reports/json_export.py",
+      "patch": "@@ -3,3 +3,14 @@\n \n def dump(rows):\n     return json.dumps(rows)\n+\n+\n+def dump_streaming(rows, chunk_size=100):\n+    \"\"\"Yield `rows` as JSON arrays of at most `chunk_size` elements.\"\"\"\n+    for i in range(0, len(rows), chunk_size):\n+        yield json.dumps(rows[i : i + chunk_size])\n+\n+\n+def dump_pretty(rows, indent=2):\n+    \"\"\"Render `rows` as indented JSON.\"\"\"\n+    return json.dumps(rows, indent=indent, sort_keys=True)",
+      "status": "modified"
+    },
+    {
+      "additions": 12,
+      "deletions": 0,
+      "filename": "reports/pdf_export.py",
+      "patch": "@@ -1,2 +1,14 @@\n def page_size(name):\n     return {\"a4\": (595, 842)}[name]\n+\n+\n+def margins_for(name):\n+    \"\"\"Return (top, right, bottom, left) margins in points for a page size.\"\"\"\n+    width, height = page_size(name)\n+    return (height // 20, width // 20, height // 20, width // 20)\n+\n+\n+def usable_width(name):\n+    \"\"\"Return the drawable width in points after margins.\"\"\"\n+    width, _ = page_size(name)\n+    return width - 2 * (width // 20)",
+      "status": "modified"
+    }
+  ],
+  "id": "tst-repeated-coverage-gap",
+  "must_not_find": [],
+  "summary": "Six new public functions across three files, none tested. One comment naming the gap is the right review; six comments is the failure mode.",
+  "title": "Add the reporting exporters"
+}

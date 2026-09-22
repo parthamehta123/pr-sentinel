@@ -203,6 +203,14 @@ class EvalReport:
                             "title": m.finding.title,
                             "agreeing": m.finding.agreeing,
                             "matched_label": (f"{m.label.file_path}:{m.label.line}" if m.label else None),
+                            "matched_labels": [f"{lab.file_path}:{lab.line}" for lab in m.labels],
+                            # A consolidated finding covers what it cites, so the
+                            # citations have to stay inspectable after the fact.
+                            "cites": [
+                                f"{e.file_path}:{e.line_start}"
+                                for e in m.finding.evidence
+                                if e.line_start is not None
+                            ],
                         }
                         for m in c.matches
                     ],
@@ -237,17 +245,20 @@ def score(results: list[CaseResult], provider: str, models: dict[str, str]) -> E
             if match.kind == "hit":
                 overall.hits += 1
                 bucket.hits += 1
-                if id(match.label) not in seen_labels:
-                    seen_labels.add(id(match.label))
-                    overall.labels_found += 1
-                concern = (id(match.label), family_of(match.finding.category))
-                if concern not in seen_concerns:
-                    seen_concerns.add(concern)
-                    overall.concerns += 1
+                # A collapsed finding covers every label it carries, not just
+                # the first — otherwise consolidation would score as lost recall.
                 agent_seen = seen_per_agent.setdefault(agent, set())
-                if id(match.label) not in agent_seen:
-                    agent_seen.add(id(match.label))
-                    bucket.labels_found += 1
+                for lab in match.labels:
+                    if id(lab) not in seen_labels:
+                        seen_labels.add(id(lab))
+                        overall.labels_found += 1
+                    concern = (id(lab), family_of(match.finding.category))
+                    if concern not in seen_concerns:
+                        seen_concerns.add(concern)
+                        overall.concerns += 1
+                    if id(lab) not in agent_seen:
+                        agent_seen.add(id(lab))
+                        bucket.labels_found += 1
             elif match.kind == "false_positive":
                 overall.false_positives += 1
                 bucket.false_positives += 1

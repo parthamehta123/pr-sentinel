@@ -107,3 +107,15 @@ class ReviewStatus(StrEnum):
     POSTED = "posted"
     SUPPRESSED = "suppressed"
     FAILED = "failed"
+
+
+# Categories where several findings are the *same recommendation* at different
+# places rather than distinct defects, and so belong in one comment.
+#
+# `test_coverage` qualifies: "add a test for this" is one ask however many
+# functions it applies to. `documentation` deliberately does not, because the
+# category covers both "document this" (a repeated ask) and "this docstring is
+# now wrong" (a distinct defect at each site), and collapsing the second would
+# bury real problems. Security and correctness categories never qualify — two SQL
+# injections in two files are two things to fix.
+COLLAPSIBLE_CATEGORIES = frozenset({Category.TEST_COVERAGE})

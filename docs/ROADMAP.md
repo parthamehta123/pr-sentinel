@@ -13,7 +13,7 @@ agent attribution, gate-decision match and cost.
 ## 1. Grow the eval set
 
 Run against real models: precision 0.886/0.975, recall 0.933, calibration error
-0.110, $0.07 per review. Recorded in `tests/eval/baselines/anthropic.json`.
+0.110, $0.07 per review. Recorded in `tests/eval/baselines/anthropic-3run.json`.
 
 Calibration came out better than feared and in an unexpected direction — the
 models are mildly *under*confident in the middle of the range rather than over.
@@ -37,17 +37,19 @@ arm and is real — six fewer posted comments per pull request at identical reca
 Two further claims made from single runs turned out to be coincidence. Tables in
 [tests/eval/RESULTS.md](../tests/eval/RESULTS.md).
 
-## 2. Collapse coverage findings structurally, not by asking
+## 2. Make a consolidated comment name everything it consolidates
 
-The tests agent files one "no test covers X" comment per changed function — around
-13 per pull request. Two prompt rewrites have failed to change that; the count is
-unchanged across three runs per arm.
+Built and measured: the tests agent already files *one* coverage comment for six
+untested functions across three files. The structural collapse written to fix the
+repetition has never fired, because the repetition does not happen. Written up as
+a negative result in [tests/eval/RESULTS.md](../tests/eval/RESULTS.md).
 
-The next attempt should not be textual. The aggregator already merges findings
-that overlap within a family of concern; extending it to collapse *same-agent
-coverage findings across a whole pull request* into one comment does not depend on
-the model complying with an instruction. Prompt changes are the right tool for
-what a model looks for; they are a poor tool for how many times it says it.
+The real gap is one level down. That single comment names an inconsistent subset
+of what it covers — six locations, then four, then two, across three runs of an
+identical configuration. A reviewer reading the two-location version is told about
+two of six untested functions. It is now the largest source of missed labels in
+the set, and it is a prompt problem with a clear shape: name every location you
+are consolidating.
 
 ## 2. Learning from recorded disputes
 

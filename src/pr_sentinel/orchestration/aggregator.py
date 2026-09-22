@@ -12,8 +12,16 @@ specialist made, and then nobody owns it.
 
 from __future__ import annotations
 
-from ..domain.enums import SEVERITY_ORDER, AgentType, Category, Severity, family_of
-from ..domain.models import AgentVerdict, Finding
+from ..config import get_settings
+from ..domain.enums import (
+    COLLAPSIBLE_CATEGORIES,
+    SEVERITY_ORDER,
+    AgentType,
+    Category,
+    Severity,
+    family_of,
+)
+from ..domain.models import AgentVerdict, Evidence, Finding
 from ..logging import get_logger
 
 log = get_logger(__name__)
@@ -24,7 +32,7 @@ TITLE_SIMILARITY_THRESHOLD = 0.45
 def aggregate(verdicts: list[AgentVerdict]) -> tuple[list[Finding], float]:
     """Return (merged findings, overall confidence)."""
     findings = [f for v in verdicts if v.ok for f in v.findings]
-    merged = _merge(findings)
+    merged = _collapse_repeated(_merge(findings))
     merged.sort(key=lambda f: (-SEVERITY_ORDER.index(f.severity), -f.confidence, f.file_path))
     return merged, overall_confidence(merged, verdicts)
 
@@ -131,6 +139,80 @@ def _dedupe_evidence(cluster: list[Finding]) -> list:
                 seen.add(key)
                 out.append(e)
     return out[:6]
+
+
+def _collapse_repeated(findings: list[Finding]) -> list[Finding]:
+    """Fold a repeated recommendation into one finding, across the whole diff.
+
+    `_merge` only joins findings that overlap on the same lines, which is right
+    for two agents describing one defect and useless for one agent making the
+    same request about eight different functions. A human reviewer says "this
+    needs tests" once and lists what; this does the same.
+
+    Only categories in COLLAPSIBLE_CATEGORIES take part, and only above a
+    configured count — one or two specific asks are more useful left in place,
+    anchored where the work is.
+    """
+    threshold = get_settings().collapse_repeated_after
+    groups: dict[tuple[AgentType, Category], list[Finding]] = {}
+    passthrough: list[Finding] = []
+
+    for finding in findings:
+        if finding.category in COLLAPSIBLE_CATEGORIES:
+            groups.setdefault((finding.agent, finding.category), []).append(finding)
+        else:
+            passthrough.append(finding)
+
+    out = passthrough
+    for group in groups.values():
+        if len(group) < threshold:
+            out.extend(group)
+            continue
+        out.append(_fold(group))
+    return out
+
+
+def _fold(group: list[Finding]) -> Finding:
+    """One finding standing for several, with every location kept as evidence."""
+    primary = max(group, key=lambda f: (SEVERITY_ORDER.index(f.severity), f.confidence))
+    others = [f for f in group if f.id != primary.id]
+
+    listing = "\n".join(
+        f"- `{f.file_path}:{f.line_start}` — {f.title}"
+        for f in sorted(others, key=lambda f: (f.file_path, f.line_start))
+    )
+    body = (
+        f"{primary.body}\n\n"
+        f"The same gap appears at {len(others)} other place(s) in this change:\n\n{listing}\n\n"
+        "_Collapsed into one comment: this is one piece of work, not "
+        f"{len(group)} separate ones._"
+    )
+
+    # Every folded location travels as evidence, so nothing is lost — the detail
+    # is in the comment and in the database, just not in eight separate threads.
+    evidence = list(primary.evidence)
+    for f in others:
+        evidence.append(
+            Evidence(
+                kind="diff",
+                file_path=f.file_path,
+                line_start=f.line_start,
+                line_end=f.line_end,
+                excerpt=f.title[:200],
+            )
+        )
+
+    for f in others:
+        f.merged_into = primary.id
+
+    return primary.model_copy(
+        update={
+            "body": body,
+            "evidence": evidence[:12],
+            "confidence": max(f.confidence for f in group),
+            "title": f"{primary.title} (and {len(others)} more)",
+        }
+    )
 
 
 def overall_confidence(findings: list[Finding], verdicts: list[AgentVerdict]) -> float:

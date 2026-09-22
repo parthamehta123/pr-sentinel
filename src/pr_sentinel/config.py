@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     # answers "does it matter". A correct, high-confidence, trivial observation
     # clears every confidence check and is still not worth a reviewer's attention.
     post_min_severity: Literal["info", "minor", "major", "critical"] = "minor"
+    # A reviewer who needs to add tests needs one comment naming what is
+    # uncovered, not one per function. Above this many repeats of the same
+    # recommendation from one agent, they collapse into a single finding.
+    collapse_repeated_after: int = 3
 
     # --- Budget ---
     daily_cost_cap_usd: float = 25.0

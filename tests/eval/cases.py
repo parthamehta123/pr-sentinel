@@ -594,3 +594,105 @@ def test_standard_customers_get_nothing():
 """,
     },
 )
+
+
+# ---------------------------------------------------------------------------
+# Repetition — the shape the other fourteen cases do not have
+# ---------------------------------------------------------------------------
+#
+# Every other case touches one or two files, so no agent ever has the chance to
+# make the same request several times. Measured across three runs, the tests
+# agent produced almost exactly one finding per case — which meant the set could
+# not see the failure mode it was supposed to be catching. This case gives it
+# somewhere to happen: six new public functions across three files, none covered.
+#
+# All six are labelled. One consolidated comment citing all six locations scores
+# the same recall as six separate comments, and a sixth of the posted count — so
+# the set rewards saying it once rather than rewarding volume.
+
+case(
+    id="tst-repeated-coverage-gap",
+    title="Add the reporting exporters",
+    summary=(
+        "Six new public functions across three files, none tested. One comment "
+        "naming the gap is the right review; six comments is the failure mode."
+    ),
+    expected_decision=None,
+    context={
+        "reports/tests/test_csv.py": '''"""The only existing exporter test in the repository."""
+
+
+def test_csv_header_matches_columns():
+    assert csv_header(["a", "b"]) == "a,b"
+''',
+    },
+    before={
+        "reports/csv_export.py": """def csv_header(columns):
+    return ",".join(columns)
+""",
+        "reports/json_export.py": """import json
+
+
+def dump(rows):
+    return json.dumps(rows)
+""",
+        "reports/pdf_export.py": """def page_size(name):
+    return {"a4": (595, 842)}[name]
+""",
+    },
+    after={
+        "reports/csv_export.py": '''def csv_header(columns):
+    return ",".join(columns)
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def csv_rows(rows, columns):
+    """Render `rows` as CSV lines, in `columns` order."""
+    return [",".join(str(r.get(c, "")) for c in columns) for r in rows]
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def csv_escape(value):
+    """Quote a value that contains a comma or a quote."""
+    if "," in value or \'"\' in value:
+        return \'"\' + value.replace(\'"\', \'""\') + \'"\'
+    return value
+''',
+        "reports/json_export.py": '''import json
+
+
+def dump(rows):
+    return json.dumps(rows)
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def dump_streaming(rows, chunk_size=100):
+    """Yield `rows` as JSON arrays of at most `chunk_size` elements."""
+    for i in range(0, len(rows), chunk_size):
+        yield json.dumps(rows[i : i + chunk_size])
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def dump_pretty(rows, indent=2):
+    """Render `rows` as indented JSON."""
+    return json.dumps(rows, indent=indent, sort_keys=True)
+''',
+        "reports/pdf_export.py": '''def page_size(name):
+    return {"a4": (595, 842)}[name]
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def margins_for(name):
+    """Return (top, right, bottom, left) margins in points for a page size."""
+    width, height = page_size(name)
+    return (height // 20, width // 20, height // 20, width // 20)
+
+
+#!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+def usable_width(name):
+    """Return the drawable width in points after margins."""
+    width, _ = page_size(name)
+    return width - 2 * (width // 20)
+''',
+    },
+)

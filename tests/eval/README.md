@@ -1,7 +1,8 @@
 # The eval set
 
-15 labelled pull requests, 15 labelled findings, 5 false-positive traps, and one
-case where the correct answer is to say nothing at all.
+16 labelled pull requests, 22 labelled findings, 5 false-positive traps, one case
+where the correct answer is to say nothing at all, and one multi-file change where
+the correct answer is to say it once.
 
 ```bash
 make eval        # offline, free, gated against a saved baseline
@@ -53,7 +54,7 @@ the specialist that should have found it), gate-decision match, and cost per cas
 Against `claude-opus-5` / `claude-sonnet-5` / `claude-haiku-4-5`: precision 0.886
 strict and 0.975 lenient, recall 0.933 (14 of 15 defects), calibration error
 0.110, gate decision match 1.000, $0.07 per review. Recorded in
-`baselines/anthropic.json`, which carries every individual finding so a run can be
+`baselines/anthropic-3run.json`, which carries every individual finding so a run can be
 diagnosed without paying to reproduce it.
 
 Three bugs the live runs found that no offline test could: the structured-output
@@ -93,7 +94,7 @@ the spread has not been demonstrated.
 - **Retrieval is not measured.** Context files are injected directly rather than
   indexed, so what is scored is whether the agents *use* context they were given.
   Retrieval quality needs its own harness and its own labels.
-- **16 labelled findings across 15 cases is small.** Measured run-to-run spread on
+- **22 labelled findings across 16 cases is small.** Measured run-to-run spread on
   an unchanged configuration is around ±0.015 overall precision and ±0.09 for a
   single agent. That is wider than most changes worth making, which is the real
   argument for growing the set.

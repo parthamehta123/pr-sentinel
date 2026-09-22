@@ -92,8 +92,9 @@ instead.
 
 ## Measuring it
 
-15 labelled pull requests live in [`tests/eval/`](tests/eval/): 16 labelled
-findings, 5 false-positive traps, and one case where the right answer is silence.
+16 labelled pull requests live in [`tests/eval/`](tests/eval/): 22 labelled
+findings, 5 false-positive traps, one case where the right answer is silence, and
+one multi-file change where the right answer is to say it once.
 
 ```bash
 make eval         # offline, free, gated against a saved baseline
@@ -109,21 +110,23 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
                       mean     range over 3 runs
-  precision strict   0.992    0.976 - 1.000
+  precision strict   1.000    1.000 - 1.000
   precision lenient  1.000    1.000 - 1.000
-  recall             0.938    15 of 16 labelled defects
-  calibration error  0.179    0.165 - 0.190
-  findings/concern   1.02
-  cost per review    $0.073   $0.070 - $0.078
+  recall             0.939    0.818 - 1.000
+  calibration error  0.186    0.179 - 0.192
+  cost per review    $0.071   $0.070 - $0.071
 ```
 
-Reported as a mean over three runs, because a single run on 15 cases is not a
-measurement — an identical configuration has been seen to vary by 0.04 in
-precision. Read the calibration error next to the precision, never alone: above
-~0.95 precision it mostly measures how far a stated confidence sits below an
-observed accuracy near 1.0, which is underconfidence rather than miscalibration.
+Precision has saturated: at 1.000 across three runs the set can no longer tell a
+good change from a great one, and further tuning against it is fitting to noise.
+Recall now carries all the signal, and its range is wide because of a single
+multi-file case. More cases is the only thing that unblocks the rest.
 
-Single runs on 15 cases are noisy, so changes are measured over repeats:
+Always a mean over repeats, never a single run: an identical configuration has
+been seen to vary by 0.18 in recall. And read the calibration error next to the
+precision, never alone — above ~0.95 precision it mostly measures how far a stated
+confidence sits below an observed accuracy near 1.0, which is underconfidence
+rather than miscalibration.
 
 ```bash
 pr-sentinel eval --provider anthropic --repeat 3 --save arm.json
@@ -132,8 +135,10 @@ python scripts/compare_arms.py baseline.json arm.json
 
 That comparison is what settled whether rewriting the docs-agent prompt helped.
 It did — a reviewer receives **six fewer comments per pull request at identical
-recall** — and it also showed that two other claims from single runs were
-coincidence. Full tables in [tests/eval/RESULTS.md](tests/eval/RESULTS.md).
+recall**. It also showed that several claims made from single runs were
+coincidence, and that one fix built from a confident diagnosis addressed a problem
+that does not occur. Both are written up, including the reasoning failures, in
+[tests/eval/RESULTS.md](tests/eval/RESULTS.md).
 
 On calibration — the number the whole gate rests on — the models come out mildly
 **under**confident in the middle of the range and slightly over at the top. That

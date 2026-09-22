@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from pr_sentinel.config import get_settings
 from pr_sentinel.domain.enums import AgentType, Severity, VerdictStatus
 from pr_sentinel.domain.models import AgentVerdict, Finding
 from pr_sentinel.orchestration import aggregator
@@ -380,3 +381,161 @@ def test_the_other_category_does_not_act_as_a_universal_solvent():
         ]
     )
     assert len(merged2) == 2  # other + a real family does not merge
+
+
+# --- collapsing a repeated recommendation -----------------------------------
+#
+# `_merge` only joins findings that overlap on the same lines, which does nothing
+# for one agent making the same request about eight different functions. A human
+# reviewer says "this needs tests" once and lists what.
+
+
+def coverage(agent=AgentType.TESTS, path="a.py", line=10, confidence=0.8, severity="major"):
+    return Finding(
+        agent=agent,
+        category="test_coverage",
+        severity=severity,
+        file_path=path,
+        line_start=line,
+        line_end=line,
+        title=f"No test covers {path}:{line}",
+        body="add one",
+        rationale=f"nothing exercises {path}:{line}",
+        confidence=confidence,
+    )
+
+
+def test_a_repeated_coverage_ask_becomes_one_finding():
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(AgentType.TESTS, [coverage(path=f"m{i}.py", line=10 + i) for i in range(6)]),
+        ]
+    )
+    assert len(merged) == 1
+    assert "and 5 more" in merged[0].title
+
+
+def test_every_folded_location_survives_as_evidence():
+    """Consolidation must not lose information, only threads."""
+    findings = [coverage(path=f"m{i}.py", line=10 + i) for i in range(5)]
+    merged, _ = aggregator.aggregate([verdict(AgentType.TESTS, findings)])
+    cited = {(e.file_path, e.line_start) for e in merged[0].evidence}
+    for f in findings:
+        assert (f.file_path, f.line_start) in cited or f.file_path == merged[0].file_path
+
+
+def test_the_body_lists_the_other_places():
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(AgentType.TESTS, [coverage(path=f"m{i}.py", line=10 + i) for i in range(4)]),
+        ]
+    )
+    assert "m1.py:11" in merged[0].body
+    assert "one piece of work" in merged[0].body
+
+
+def test_a_couple_of_asks_are_left_where_the_work_is():
+    """Below the threshold, specific anchoring is more useful than consolidation."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(AgentType.TESTS, [coverage(path="a.py", line=10), coverage(path="b.py", line=20)]),
+        ]
+    )
+    assert len(merged) == 2
+
+
+def test_the_threshold_is_configurable(monkeypatch):
+    monkeypatch.setenv("COLLAPSE_REPEATED_AFTER", "2")
+    get_settings.cache_clear()
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(AgentType.TESTS, [coverage(path="a.py", line=10), coverage(path="b.py", line=20)]),
+        ]
+    )
+    assert len(merged) == 1
+
+
+def test_distinct_defects_are_never_collapsed():
+    """Two SQL injections in two files are two things to fix, not one comment."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [
+                    finding(
+                        AgentType.SECURITY,
+                        category="injection",
+                        path=f"m{i}.py",
+                        line=10 + i,
+                        title=f"SQL injection in m{i}",
+                    )
+                    for i in range(5)
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 5
+
+
+def test_test_quality_findings_are_not_collapsed():
+    """`this test cannot fail` is a distinct defect per test, with a distinct fix."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.TESTS,
+                [
+                    finding(
+                        AgentType.TESTS,
+                        category="test_quality",
+                        severity="major",
+                        path="t.py",
+                        line=10 + i * 10,
+                        title=f"Test {i} has no assertion",
+                    )
+                    for i in range(5)
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 5
+
+
+def test_collapsing_keeps_the_most_severe_and_the_highest_confidence():
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.TESTS,
+                [
+                    coverage(path="a.py", line=10, severity="minor", confidence=0.6),
+                    coverage(path="b.py", line=20, severity="major", confidence=0.7),
+                    coverage(path="c.py", line=30, severity="minor", confidence=0.95),
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 1
+    assert str(merged[0].severity) == "major"
+    assert merged[0].confidence == pytest.approx(0.95)
+
+
+def test_each_agent_collapses_its_own_asks_separately():
+    """Grouping is per agent: two agents asking for tests give two comments.
+
+    Note the distinct line ranges. Findings from two agents on the *same* lines
+    are the cross-agent agreement case and are joined by `_merge` first, which is
+    correct and is a different mechanism from this one.
+    """
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.TESTS,
+                [coverage(agent=AgentType.TESTS, path=f"m{i}.py", line=10 + i) for i in range(4)],
+            ),
+            verdict(
+                AgentType.DOCS,
+                [coverage(agent=AgentType.DOCS, path=f"d{i}.py", line=50 + i) for i in range(4)],
+            ),
+        ]
+    )
+    assert len(merged) == 2
+    assert {tuple(f.agreeing) or (str(f.agent),) for f in merged} == {("tests",), ("docs",)}

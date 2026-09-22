@@ -9,19 +9,32 @@ python scripts/compare_arms.py baseline.json arm.json  # which differences are r
 ```
 
 Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 15 cases, 16 labelled findings, 5 false-positive traps.
+`claude-haiku-4-5` (docs). 16 cases, 22 labelled findings, 5 false-positive traps.
 
 ---
 
 ## Current
 
+Mean over three runs, 16 cases, 22 labelled findings:
+
 ```
-precision 0.948 strict / 0.973 lenient      recall 0.938  (15 of 16 defects)
-calibration error 0.122                     findings per concern 1.05
-gate decision match 1.000                   $0.072 per review
+                      mean     range
+  precision strict   1.000    1.000 - 1.000
+  precision lenient  1.000    1.000 - 1.000
+  recall             0.939    0.818 - 1.000
+  calibration error  0.186    0.179 - 0.192
+  cost per review   $0.071   $0.070 - $0.071
 ```
 
-Recorded in `baselines/anthropic.json`, which carries every individual finding so
+**Precision has saturated.** 1.000 across three runs means the set can no longer
+distinguish a good change from a great one, and further tuning against it is
+fitting to noise.
+
+**Recall now carries all the signal**, and its range is wide — 0.818 to 1.000 —
+driven entirely by the one multi-file case, where the consolidated coverage
+comment names between two and six of six locations depending on the run.
+
+Recorded in `baselines/anthropic-3run.json`, which carries every individual finding so
 a run can be diagnosed without paying to reproduce it.
 
 **Calibration** is the number to watch, because every threshold in the gate
@@ -157,6 +170,61 @@ agent — 5.7 → 13.3. The heuristic matched phrases like "has no", which is th
 agent generating noise and the tests agent *doing its job* ("has no test covering
 the race"). The script applied a docs-specific phrase list to every agent. It is
 now per-agent, and undefined metrics are omitted rather than scored.
+
+---
+
+## The aggregator collapse: a negative result
+
+Built to fix a problem that does not exist. Recorded because the reasoning
+failure is worth more than the code.
+
+**The claim.** "The tests agent files one coverage comment per changed function —
+around 13 per pull request." I wrote that after reading three runs.
+
+**The mistake.** It was 13 findings across *fifteen separate pull requests* —
+about one each. Every eval case touches one or two files, so no agent ever had the
+chance to repeat itself. The "13 per PR" figure was an extrapolation to a 31-file
+pull request, presented as a measurement.
+
+**The fix, built anyway.** `_collapse_repeated` folds several findings of the same
+collapsible category from one agent into a single comment carrying every location
+as evidence, above a configurable threshold. Only `test_coverage` qualifies:
+"add a test for this" is one ask however many functions it covers, whereas two SQL
+injections in two files are two things to fix. Nine unit tests pin the behaviour.
+
+**The measurement.** A new case — `tst-repeated-coverage-gap`, six new public
+functions across three files, none tested — gave the failure mode somewhere to
+happen. It didn't:
+
+| run | coverage findings | locations named (of 6) |
+|---|---|---|
+| 1 | 1 | 6 |
+| 2 | 1 | 4 |
+| 3 | 1 | 2 |
+
+**One consolidated finding, every run.** The agent already says it once. The
+collapse has never fired against a real model. It is kept as a guard — the failure
+mode is plausible for other models or much larger diffs, and the threshold makes
+it a no-op until it isn't — but it should be deleted if it has still never fired
+in six months.
+
+### What the exercise did produce
+
+- **A matcher fix.** A consolidated finding citing six locations covers six
+  defects; the matcher counted only the first, so the system scored 2 of 6 for
+  doing exactly the right thing. Findings now match every label their own range
+  *or* their cited evidence covers. Recall figures from before this change are not
+  comparable with figures after it.
+- **A real weakness, newly measurable.** The consolidated comment names an
+  inconsistent subset of the locations it is consolidating — six, then four, then
+  two, across three runs of an identical configuration. A reviewer reading the
+  two-location version is told about two of six untested functions. That is a
+  prompt gap ("name every location you are consolidating"), it is the single
+  largest source of missed labels in the set, and it did not exist as a measurable
+  thing before this case was added.
+- **The set's first multi-file case.** Fifteen of sixteen cases touch one or two
+  files. Whole classes of behaviour — repetition, truncation, cross-file
+  reasoning — were simply invisible.
 
 ---
 
