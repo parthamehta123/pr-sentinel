@@ -1082,3 +1082,69 @@ from 7 to 5.
 The lesson generalises past this script: an independent checker starved of
 context does not fail safely, it fails *loudly*, and its extra findings look
 exactly like diligence.
+
+---
+
+## Retrieval, measured for the first time
+
+Every other component had a number and retrieval never did. It now does, and it
+is the weakest thing in the system.
+
+### What is measured, and why this ground truth
+
+"Relevant context" is a judgement, and a relevance set chosen by whoever also
+reads the results is worth about as much as a negative control written by whoever
+writes the labels — which this repository has been burned by four times. So the
+ground truth is mechanical: **for a diff, take the identifiers the added lines
+call but do not define, and find where the repository defines them.** Those
+definitions are what a reviewer has to look up, they are derivable by grep rather
+than by opinion, and supplying them is the entire point of repository retrieval.
+
+Commits are sampled by taking every Nth Python-touching commit in each
+repository's history, so which diffs are measured cannot be steered either.
+`scripts/eval_retrieval.py` does both. It costs nothing to run: local embedder,
+local database, no API calls.
+
+### The result
+
+| repo | cases | recall@12 | MRR | precision | definitions needed / case |
+|---|---|---|---|---|---|
+| tornadoweb/tornado | 5 | 0.296 | 0.344 | 0.092 | 7.0 |
+| urllib3/urllib3 | 6 | 0.517 | 0.210 | 0.115 | 3.3 |
+| psf/requests | 5 | 0.342 | 0.164 | 0.172 | 5.0 |
+| scrapy/scrapy | 5 | 0.158 | 0.142 | 0.062 | 18.8 |
+| **all** | **21** | **0.337** | **0.215** | **0.110** | 8.3 |
+
+**Retrieval surfaces about a third of the definitions a diff calls, and the first
+useful result sits around rank 5 of 12.** Against the reviewer's numbers — recall
+1.000, precision 0.982 — this is not in the same class.
+
+### Before this is quoted anywhere
+
+- **The vector half is not semantic.** No OpenAI key is configured, so
+  `get_embedder()` returns `HashingEmbedder`, which the module's own docstring
+  describes as capturing "lexical overlap, not meaning". Hybrid search is
+  advertised as vector kNN fused with full-text; as actually deployed here it is
+  two lexical signals fused with each other, and reciprocal-rank fusion of two
+  correlated signals buys much less than fusion of two independent ones. This is
+  the largest confound in the table and the obvious next experiment: the same
+  script against `text-embedding-3-small` needs only a key.
+- **Precision is bounded low by construction** and should not be read as a
+  quality signal: `top_k` is 12 per changed file while a typical diff needs ~8
+  definitions, so the ceiling is low whatever the ranking does.
+- **Large diffs are treated harshly.** Scrapy's worst case needs 58 definitions
+  and can retrieve at most 12; scoring recall over that is close to meaningless,
+  and scrapy's 0.158 is mostly that effect rather than worse retrieval.
+- **Roughly half the sampled commits were skipped** because no called identifier
+  resolved to a definition outside the changed files. The measured cases are
+  therefore the ones where retrieval had something to find, which is the right
+  population but a smaller one than the sample suggests.
+
+### What this changes
+
+The honest summary of the project shifts. The panel and the gate are measured and
+good; retrieval is measured and poor, and it feeds the panel. That the reviewer
+scores as well as it does while receiving a third of the context it asks for
+suggests the agents are leaning on the diff far more than on retrieved context —
+which is worth knowing, and is testable by running the eval with retrieval
+disabled entirely and seeing whether any number moves.
