@@ -1,0 +1,504 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 4,
+  "overall": {
+    "hits": 5,
+    "allowed": 9,
+    "labels_found": 4,
+    "concerns": 4,
+    "duplicate_rate": 1.25,
+    "false_positives": 0,
+    "unlabelled": 2,
+    "misses": 0,
+    "precision_strict": 0.714,
+    "precision_lenient": 1.0,
+    "recall": 1.0,
+    "f1": 0.833
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 3,
+      "allowed": 2,
+      "labels_found": 3,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "misses": 0,
+      "precision_strict": 0.75,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 0.857
+    },
+    "docs": {
+      "hits": 2,
+      "allowed": 3,
+      "labels_found": 2,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "security": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 4,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.75,
+        "observed_hit_rate": 1.0,
+        "gap": 0.25
+      },
+      {
+        "range": "0.90-1.01",
+        "n": 4,
+        "mean_confidence": 0.952,
+        "observed_hit_rate": 1.0,
+        "gap": 0.048
+      }
+    ],
+    "expected_calibration_error": 0.088
+  },
+  "category_agreement": 1.0,
+  "agent_attribution": 0.8,
+  "decision_accuracy": null,
+  "cost": {
+    "total_usd": 0.6193,
+    "per_case_usd": 0.1548
+  },
+  "per_case": [
+    {
+      "id": "intro-requests-poolmanager",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.826,
+      "cost_usd": 0.2025,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "critical",
+          "confidence": 0.9,
+          "where": "requests/sessions.py:22",
+          "title": "`from adapters import HTTPAdapter` is not a relative import",
+          "body": "Every other intra-package import in this module is relative (`from .utils import ...`, `from .packages.urllib3.poolmanager import ...`). `from adapters import HTTPAdapter` is an absolute import of a top-level module named `adapters`, which does not exist on `sys.path`; on Python 3 (and on Python 2 with `absolute_import`) this raises `ImportError` at module import time, breaking `import requests` entirely. It should be `from .adapters import HTTPAdapter`.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "requests/sessions.py:22",
+          "matched_labels": [
+            "requests/sessions.py:22"
+          ],
+          "cites": [
+            "requests/sessions.py:22",
+            "requests/sessions.py:18"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.958,
+          "where": "requests/sessions.py:134-167",
+          "title": "New `request()` silently ignores timeout, verify, cert, prefetch and session state",
+          "body": "The new `request()` keeps the full public signature but only forwards `method, url, headers, files, data, params, auth, cookies, allow_redirects, proxies, hooks` onto the `Request`. `timeout`, `verify`, `cert`, `prefetch`, `config` and `return_response` are accepted and then dropped on the floor \u2014 a caller passing `timeout=5` or `verify=False` now gets the default behaviour with no error, which is the worst failure mode (wrong result, no signal). Equally, the session's own `self.headers`, `self.cookies`, `self.auth`, `self.params` and `self.config` are no longer merged into the request, so per-session defaults stop applying. Either thread these through to `prepare()`/`send()` or raise on the unsupported ones while the refactor is in progress.\n\n_Also raised by the security agent:_ New request() silently drops verify/cert (and timeout) before send",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "api_contract",
+            "crypto"
+          ],
+          "matched_label": "requests/sessions.py:132",
+          "matched_labels": [
+            "requests/sessions.py:132"
+          ],
+          "cites": [
+            "requests/sessions.py:141",
+            "requests/sessions.py:151",
+            "requests/sessions.py:365",
+            "requests/sessions.py:141",
+            "requests/sessions.py:151"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "resource_leak",
+          "severity": "major",
+          "confidence": 0.85,
+          "where": "requests/sessions.py:132",
+          "title": "Connection pooling and `close()` semantics silently dropped",
+          "body": "`init_poolmanager()` and `self.poolmanager` are gone, `close()` is now `pass`, and `send()` constructs a fresh `HTTPAdapter()` on every call. Consequences: (1) the `Session` context manager and `close()` no longer release any connections, so pooled sockets leak for the lifetime of the process; (2) a new adapter per request means a new pool per request, so `pool_connections`/`pool_maxsize`/`support_http0.9` config is now inert and connections are never reused; (3) subclasses that overrode `init_poolmanager()` (the documented hook for customising pooling) or touched `session.poolmanager` break with `AttributeError`. The adapter should be created once and owned by the session, and `close()` should delegate to it.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "requests/sessions.py:132",
+          "matched_labels": [
+            "requests/sessions.py:132"
+          ],
+          "cites": [
+            "requests/sessions.py:131",
+            "requests/sessions.py:365",
+            "requests/sessions.py:129"
+          ]
+        },
+        {
+          "match": "unlabelled",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.8,
+          "where": "requests/sessions.py:292",
+          "title": "`_send_request` deleted but still called from `old_request`",
+          "body": "The `_send_request` helper was removed in this hunk, yet the surviving code path (now `old_request`) still ends with `return self._send_request(r, **args)`. Any call into `old_request` \u2014 or any subclass/third-party code that overrode or invoked `_send_request`, which was the documented extension point for sending \u2014 now raises `AttributeError`. Either restore the method or finish removing `old_request` and its callers.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "requests/sessions.py:291",
+            "requests/sessions.py:172"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "requests/sessions.py:363-367",
+          "title": "Adapter-based send() and no-op close() are untested",
+          "body": "Session.send() now delegates to a newly introduced HTTPAdapter instead of calling request.send() directly, and Session.close() was reduced to `pass`, dropping the poolmanager.clear() call and its docstring. Both are real behavioural changes central to this refactor (moving sending onto an adapter), but no test in this diff exercises either path \u2014 nothing would fail if HTTPAdapter.send() returned the wrong thing, raised, or if the loss of pool cleanup in close() caused a leak.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "requests/sessions.py:363",
+            "requests/sessions.py:131"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "minor",
+          "confidence": 0.85,
+          "where": "requests/sessions.py:131-132",
+          "title": "Stale docstring removed but contract unclear for close()",
+          "body": "The `close()` method's docstring (which documented that it disposed of internal state by closing the PoolManager) was deleted at lines 131-134, but the method implementation changed from `self.poolmanager.clear()` to `pass`. The docstring removal is correct, but the new contract is now undocumented: callers cannot tell whether `close()` does anything, and the transition from resource cleanup to no-op is invisible. Add a docstring explaining the new behavior, or if this is intentional as part of moving to adapters, document that.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "requests/sessions.py:131"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.72,
+          "where": "requests/sessions.py:363-367",
+          "title": "send() docstring now incomplete for new adapter pattern",
+          "body": "The `send()` method's docstring (line 364: \"Send a given PreparedRequest.\") is now incomplete. The implementation has changed from directly calling `request.send()` to instantiating an `HTTPAdapter` and calling its `send()` method. This is a significant architectural shift that is not reflected in the docstring. Consider clarifying that the method delegates to an adapter.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "requests/sessions.py:363"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intro-tornado-cookies-move",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.822,
+      "cost_usd": 0.1534,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "error_handling",
+          "severity": "major",
+          "confidence": 0.988,
+          "where": "tornado/httpserver.py:513-524",
+          "title": "cookies property returns None on parse failure, crashing callers",
+          "body": "When `SimpleCookie.load()` raises (any malformed `Cookie:` header \u2014 an unquoted value, a stray control char, etc.), the except branch assigns `self._cookies = None` and line 524 returns `None`. The property's documented contract is \"a dictionary of Cookie.Morsel objects\", and every caller assumes a mapping:\n\n- `web.py:321` \u2014 `if name in self.request.cookies` raises `TypeError: argument of type 'NoneType' is not iterable`, so `get_cookie` (and therefore `get_secure_cookie`, XSRF handling, etc.) fails with a 500 instead of returning the default.\n- `web.py:367` \u2014 `self.request.cookies.iterkeys()` raises `AttributeError: 'NoneType' object has no attribute 'iterkeys'`, so `clear_all_cookies` cannot be used as a recovery path either.\n\nThe previous implementation never returned a non-mapping: on failure it called `clear_all_cookies()` and still returned the (empty) `SimpleCookie`. The fallback here should be an empty mapping, e.g. `self._cookies = {}`, which preserves the old \"behaves as if no cookies were sent\" semantics for both callers. Note this is remotely triggerable by any client that sends a bad Cookie header.\n\n_Also raised by the security agent:_ Malformed Cookie header makes request.cookies return None, crashing callers",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "error_handling"
+          ],
+          "matched_label": "tornado/httpserver.py:523",
+          "matched_labels": [
+            "tornado/httpserver.py:523"
+          ],
+          "cites": [
+            "tornado/httpserver.py:518",
+            "tornado/web.py:321",
+            "tornado/web.py:367",
+            "tornado/httpserver.py:519",
+            "tornado/web.py:367"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "major",
+          "confidence": 0.8,
+          "where": "tornado/httpserver.py:515",
+          "title": "Cookies property docstring omits possible None return",
+          "body": "The `cookies` property docstring states it returns 'A dictionary of Cookie.Morsel objects', but the implementation shows it can return None (line 523) when cookie parsing fails. Callers inheriting this property through `self.request.cookies` in web.py (e.g., lines 321, 367) will break if they assume a dict without checking for None. The docstring should document that the property can return None and what triggers that condition.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/httpserver.py:515",
+            "tornado/web.py:321",
+            "tornado/web.py:367"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "tornado/httpserver.py:519-523",
+          "title": "No test covers malformed-cookie path after moving cookies property",
+          "body": "The move changed the exception handler from `self.clear_all_cookies()` (in the old web.py version) to `self._cookies = None`. Now any caller that does `self.request.cookies[name]` or `self.request.cookies.iterkeys()` after a malformed Cookie header will hit a TypeError on None instead of getting an empty dict. This is exercised by web.py's get_cookie and clear_all_cookies (lines 321-322 and 367 in the diff), but neither those call sites nor the new httpserver.py property have a test for a bad/malformed Cookie header, so this regression would pass silently.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/httpserver.py:519",
+            "tornado/web.py:321",
+            "tornado/web.py:367"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "tornado/web.py:321-322",
+          "title": "get_cookie now crashes on malformed cookies",
+          "body": "The get_cookie method now accesses `self.request.cookies` without None-checking (line 321). If cookies fail to parse, the HTTPRequest.cookies property returns None, making `name in None` raise TypeError. The old RequestHandler.get_cookie would have silently returned default when cookies couldn't parse (it checked `if name in self.cookies` on a property that returned None). Callers relying on graceful degradation will now crash.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tornado/httpserver.py:523",
+          "matched_labels": [
+            "tornado/httpserver.py:523"
+          ],
+          "cites": [
+            "tornado/web.py:321",
+            "tornado/httpserver.py:522"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intro-tornado-multipart",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.847,
+      "cost_usd": 0.1547,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.93,
+          "where": "tornado/httpserver.py:360-365",
+          "title": "Boundary never matched: split on ';' leaves leading whitespace",
+          "body": "`content_type.split(\";\")` yields the parameter segments with the leading space that virtually every client emits, e.g. `\"multipart/form-data; boundary=----X\"` -> `[\"multipart/form-data\", \" boundary=----X\"]`. `field.partition(\"=\")` then gives `k == \" boundary\"`, so `k == \"boundary\"` is False, the loop never breaks, and the `for ... else` branch logs \"Invalid multipart/form-data\" and discards the body. The previous code used the substring test `'boundary=' in content_type`, which was whitespace-insensitive, so this is a regression: all standard multipart uploads stop being parsed (`self._request.files`/`arguments` stay empty) while the request still succeeds. Fix by normalising each segment, e.g. `k, sep, v = field.strip().partition(\"=\")` (and lower-casing `k`, since parameter names are case-insensitive per RFC 2045).",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tornado/httpserver.py:362",
+          "matched_labels": [
+            "tornado/httpserver.py:362"
+          ],
+          "cites": [
+            "tornado/httpserver.py:360"
+          ]
+        },
+        {
+          "match": "unlabelled",
+          "agent": "security",
+          "category": "input_validation",
+          "severity": "major",
+          "confidence": 0.912,
+          "where": "tornado/httpserver.py:360-367",
+          "title": "Content-Type param parsing ignores whitespace/quotes, creating parser differential",
+          "body": "Entry point is the attacker-supplied `Content-Type` request header; the sink is `self._parse_mime_body(v, data)` on line 364, which decides whether the multipart body is parsed at all and with which delimiter.\n\n`content_type.split(\";\")` on line 360 does not strip the leading space that RFC 2045/7231 permits (and that every mainstream client emits), so for the canonical header `multipart/form-data; boundary=----abc` the second field is `\" boundary=----abc\"` and `k` is `\" boundary\"`. The equality test on line 363 fails, the loop finishes without `break`, and the `for ... else` on line 366 logs \"Invalid multipart/form-data\" while the body is discarded. The previous `'boundary=' in content_type` substring test tolerated the space, so this is a regression introduced by the fix.\n\nTwo further gaps in the same comparison: the key match is case-sensitive (`Boundary=` is legal and will be skipped), and the value is passed to `_parse_mime_body` verbatim, so a quoted form `boundary=\"----abc\"` yields a delimiter including the quote characters.\n\nSecurity consequence: whether Tornado parses a multipart body now depends on byte-level details of the header that other parsers normalise away. A front-end proxy, WAF or request-inspection layer that parses `boundary` per spec will see and scan the parts, while Tornado (with a space present) sees none \u2014 or, conversely, an attacker can pick `multipart/form-data;boundary=x` with no space so Tornado parses parts an upstream filter may have normalised differently. Either direction lets crafted requests land in the application with a different view of `request.arguments`/`request.files` than the inspecting layer had.\n\nFix: normalise each parameter before comparing \u2014 e.g. `k, sep, v = field.strip().partition(\"=\")`, compare `k.lower() == \"boundary\"`, and strip surrounding quotes from `v` before passing it to `_parse_mime_body`.\n\n_Also raised by the correctness agent:_ Quoted boundary value passed to _parse_mime_body with quotes",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "input_validation"
+          ],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/httpserver.py:360",
+            "tornado/httpserver.py:362",
+            "tornado/httpserver.py:364",
+            "tornado/httpserver.py:366",
+            "tornado/httpserver.py:362"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.7,
+          "where": "tornado/httpserver.py:360-367",
+          "title": "No test covers the new multipart boundary-parsing logic",
+          "body": "The change reworks how the boundary parameter is extracted from the Content-Type header, moving from a naive substring search to splitting on ';' and '=' with a k=='boundary' check. This is exactly the kind of parsing logic where edge cases (e.g. 'k' containing leading/trailing whitespace like ' boundary', quoted boundary values, boundary appearing before other params, missing '=', empty value) determine correctness \u2014 and the PR description says this exact change introduced a bug that took three days to find, meaning nothing here would have caught it. No test file is present in the diff, and no existing test appears to exercise this branch, so a regression in field ordering, whitespace handling, or the fallback 'else' warning branch would pass silently.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/httpserver.py:360",
+            "tornado/httpserver.py:366"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intro-urllib3-util-refactor",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.848,
+      "cost_usd": 0.1087,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "major",
+          "confidence": 0.99,
+          "where": "urllib3/util.py:100",
+          "title": "Error message has format placeholder with no argument",
+          "body": "The LocationParseError on line 100 is constructed with format string \"Failed to parse: %s\" but no argument is provided to fill the placeholder. When this exception is raised, callers will see the literal string \"Failed to parse: %s\" instead of the intended URL that failed to parse. This is misleading documentation of what the error will actually say, and will confuse anyone debugging a parse failure.\n\n_Also raised by the security agent:_ LocationParseError message has %s placeholder with no argument\n\n_Also raised by the correctness agent:_ LocationParseError message has an unsubstituted %s placeholder",
+          "agreeing": [
+            "correctness",
+            "docs",
+            "security"
+          ],
+          "categories": [
+            "documentation",
+            "error_handling"
+          ],
+          "matched_label": "urllib3/util.py:100",
+          "matched_labels": [
+            "urllib3/util.py:100"
+          ],
+          "cites": [
+            "urllib3/util.py:96",
+            "urllib3/util.py:99",
+            "urllib3/util.py:100"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.6,
+          "where": "urllib3/util.py:96-104",
+          "title": "get_host()'s port-validation branch is untested",
+          "body": "The new get_host() function's handling of a URL with a colon-delimited port (lines 96-104) \u2014 including the error path that raises LocationParseError when the port is non-numeric \u2014 has no accompanying test in this diff. Nothing would catch a regression in this branch, including the fact that the LocationParseError message on line 100 embeds a literal '%s' with no interpolated value, which is a latent formatting bug that a test exercising this path would have surfaced.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "urllib3/util.py:96"
+          ]
+        }
+      ]
+    }
+  ]
+}

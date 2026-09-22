@@ -21,7 +21,15 @@
     }
   ],
   "id": "intro-tornado-multipart",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "tornado/httpserver.py",
+      "line": 360,
+      "note": "splitting on \";\" is not RFC 2045 parsing \u2014 the boundary value is never unquoted, so boundary=\"...\" is taken with its quotes, which the upstream .strip() fix did not address either"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

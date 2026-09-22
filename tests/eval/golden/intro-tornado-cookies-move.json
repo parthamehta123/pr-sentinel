@@ -40,7 +40,7 @@
       "category": "documentation"
     }
   ],
-  "provenance": "tornadoweb/tornado 4a4d8717 (Apache-2.0, 2011-08-18) \u2014 introduced the defect fixed by f0df94ca ('fix crash on invalid Cookie header') nearly three months later. Paired with real-tornado-cookie-crash.",
+  "provenance": "tornadoweb/tornado 4a4d8717 (Apache-2.0, 2011-08-18) \u2014 introduced the defect fixed by f0df94ca ('fix crash on invalid Cookie header') nearly three months later. Paired with real-tornado-cookie-none-guard.",
   "summary": "The real commit, unedited, and the hardest of the four: a two-file move. The defective line is in httpserver.py, the code it breaks is in web.py, and the commit touches both \u2014 but the broken caller is not itself changed, so it never appears in the diff.",
   "title": "Move 'cookies' property from RequestHandler to HTTPRequest"
 }

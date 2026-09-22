@@ -292,6 +292,7 @@ class Session(object):
             return r
 
         # Send the HTTP Request.
+        #!ALLOW agent=correctness category=api_contract|logic :: this commit deletes _send_request, but old_request still calls it; latent only because old_request is itself now unreachable
         return self._send_request(r, **args)
 
     def get(self, url, **kwargs):

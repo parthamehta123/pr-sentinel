@@ -357,6 +357,7 @@ class HTTPConnection(object):
                         self._request.arguments.setdefault(name, []).extend(
                             values)
             elif content_type.startswith("multipart/form-data"):
+                #!ALLOW agent=security category=input_validation :: splitting on ";" is not RFC 2045 parsing — the boundary value is never unquoted, so boundary="..." is taken with its quotes, which the upstream .strip() fix did not address either
                 fields = content_type.split(";")
                 for field in fields:
                     #!EXPECT agent=correctness category=logic severity>=major :: field is not stripped, so k is " boundary" for any sender that puts a space after the semicolon (Firefox, Safari); the comparison fails and the body is silently never parsed

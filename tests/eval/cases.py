@@ -2292,6 +2292,7 @@ from .utils import from_key_val_list, default_headers
 from .packages.urllib3.poolmanager import PoolManager
 
 
+#!ALLOW agent=security category=input_validation|other :: an unqualified import also resolves against sys.path, so any top-level module named adapters shadows the intended one
 #!EXPECT agent=correctness category=logic severity>=major :: implicit relative imports were removed in Python 3, so this raises ImportError there while every other import in the module uses the explicit form
 from adapters import HTTPAdapter
 
@@ -2597,8 +2598,8 @@ case(
 # tests/eval/sources/ because they are far too long to sit inline here.
 #
 # They are deliberately paired with the inverted-fix versions of the same bugs —
-# real-tornado-multipart-boundary, real-urllib3-locationparseerror and
-# real-requests-relative-import. Same defect, two framings. A reviewer that
+# real-tornado-multipart-boundary, real-urllib3-format-placeholder and
+# real-requests-implicit-relative-import. Same defect, two framings. A reviewer that
 # scores well on the inversion and poorly on the real commit is being flattered
 # by the inversion, and the pair is what makes that visible.
 # ---------------------------------------------------------------------------
@@ -2630,7 +2631,7 @@ case(
     ),
     provenance=(
         "urllib3/urllib3 d8ff66d0 (MIT, 2012-02-05) — introduced the defect fixed "
-        "by de20783d seven weeks later. Paired with real-urllib3-locationparseerror."
+        "by de20783d seven weeks later. Paired with real-urllib3-format-placeholder."
     ),
     expected_decision=None,
     source_dir="intro-urllib3-util-refactor",
@@ -2646,7 +2647,7 @@ case(
     ),
     provenance=(
         "psf/requests 92d57036 (Apache-2.0, 2012-12-15) — introduced the defect "
-        "fixed by ed360dca the same day. Paired with real-requests-relative-import."
+        "fixed by ed360dca the same day. Paired with real-requests-implicit-relative-import."
     ),
     expected_decision=None,
     source_dir="intro-requests-poolmanager",
@@ -2665,7 +2666,7 @@ case(
     provenance=(
         "tornadoweb/tornado 4a4d8717 (Apache-2.0, 2011-08-18) — introduced the "
         "defect fixed by f0df94ca ('fix crash on invalid Cookie header') nearly "
-        "three months later. Paired with real-tornado-cookie-crash."
+        "three months later. Paired with real-tornado-cookie-none-guard."
     ),
     expected_decision=None,
     source_dir="intro-tornado-cookies-move",

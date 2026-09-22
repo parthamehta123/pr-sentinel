@@ -1,0 +1,371 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 4,
+  "overall": {
+    "hits": 5,
+    "allowed": 4,
+    "labels_found": 4,
+    "concerns": 5,
+    "duplicate_rate": 1.0,
+    "false_positives": 0,
+    "unlabelled": 1,
+    "misses": 0,
+    "precision_strict": 0.833,
+    "precision_lenient": 1.0,
+    "recall": 1.0,
+    "f1": 0.909
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 4,
+      "allowed": 0,
+      "labels_found": 4,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "docs": {
+      "hits": 0,
+      "allowed": 1,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "security": {
+      "hits": 1,
+      "allowed": 0,
+      "labels_found": 1,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "misses": 0,
+      "precision_strict": 0.5,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 0.667
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 3,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.7,
+        "observed_hit_rate": 1.0,
+        "gap": 0.3
+      },
+      {
+        "range": "0.80-0.90",
+        "n": 1,
+        "mean_confidence": 0.88,
+        "observed_hit_rate": 1.0,
+        "gap": 0.12
+      },
+      {
+        "range": "0.90-1.01",
+        "n": 3,
+        "mean_confidence": 0.963,
+        "observed_hit_rate": 1.0,
+        "gap": 0.037
+      }
+    ],
+    "expected_calibration_error": 0.106
+  },
+  "category_agreement": 0.6,
+  "agent_attribution": 0.8,
+  "decision_accuracy": null,
+  "cost": {
+    "total_usd": 0.2608,
+    "per_case_usd": 0.0652
+  },
+  "per_case": [
+    {
+      "id": "real-requests-implicit-relative-import",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.75,
+      "cost_usd": 0.0665,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.88,
+          "where": "requests/sessions.py:9",
+          "title": "Implicit relative import of `adapters` breaks module import",
+          "body": "`from adapters import HTTPAdapter` relies on implicit relative imports, which were removed in Python 3 and are disabled in Python 2 whenever `from __future__ import absolute_import` is in effect. Under those conditions importing `requests.sessions` raises `ImportError: No module named adapters`, which cascades to any consumer of `requests`. Even where implicit relative imports still resolve, the absolute form can be shadowed by an unrelated top-level `adapters` module on `sys.path`, silently binding the wrong `HTTPAdapter`. Restore the explicit form: `from .adapters import HTTPAdapter`.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "requests/sessions.py:9",
+          "matched_labels": [
+            "requests/sessions.py:9"
+          ],
+          "cites": [
+            "requests/sessions.py:9",
+            "requests/sessions.py:6"
+          ]
+        },
+        {
+          "match": "unlabelled",
+          "agent": "security",
+          "category": "other",
+          "severity": "major",
+          "confidence": 0.62,
+          "where": "requests/sessions.py:9",
+          "title": "Non-relative `import adapters` allows sys.path module shadowing",
+          "body": "`from adapters import HTTPAdapter` no longer binds to `requests.adapters`. Under absolute-import semantics the name `adapters` is resolved against `sys.path`, whose first entry is typically the invoking script's directory (or the empty string / CWD for `-c`, `-m` and interactive use). Any file named `adapters.py` sitting there is imported and its top-level code executed inside the process that merely did `import requests`, and whatever it exports as `HTTPAdapter` becomes the transport used for every outbound HTTP request \u2014 so a shadowing module can also silently disable TLS verification or proxy traffic.\n\nThere is no attacker-controlled *data* path in this diff; the entry point here is the filesystem/`sys.path`, and the sink is the import machinery. Exploitation requires write access to a directory already on `sys.path`, which is a local or supply-chain precondition rather than a remote one \u2014 hence `major` rather than `critical`.\n\nRestore the explicit relative form: `from .adapters import HTTPAdapter`. It is unambiguous, matches the neighbouring imports, and removes the shadowing surface entirely.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "requests/sessions.py:9",
+            "requests/sessions.py:6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "real-tornado-cookie-none-guard",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.87,
+      "cost_usd": 0.0637,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "error_handling",
+          "severity": "major",
+          "confidence": 0.99,
+          "where": "tornado/web.py:3-4",
+          "title": "get_cookie raises TypeError when request.cookies is None",
+          "body": "`HTTPRequest.cookies` explicitly returns `None` when the Cookie header is present but cannot be parsed (see tornado/httpserver.py, whose docstring states \"every consumer has to allow for that\"). Evaluating `name in self.request.cookies` against `None` raises `TypeError: argument of type 'NoneType' is not iterable`, so any request with a malformed Cookie header will blow up inside any handler that calls `get_cookie` \u2014 a remotely reachable 500 triggered purely by a client-supplied header. Restore the guard: `if self.request.cookies is not None and name in self.request.cookies:`.\n\n_Also raised by the security agent:_ Removed None guard lets a malformed Cookie header crash get_cookie",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "error_handling"
+          ],
+          "matched_label": "tornado/web.py:3",
+          "matched_labels": [
+            "tornado/web.py:3"
+          ],
+          "cites": [
+            "tornado/web.py:3",
+            "tornado/web.py:4",
+            "tornado/httpserver.py:4",
+            "tornado/web.py:3",
+            "tornado/httpserver.py:1"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "tornado/web.py:3",
+          "title": "No test exercises get_cookie() with a malformed/None cookies dict",
+          "body": "The removed None guard was presumably added to fix a crash when request.cookies is None (per the documented behavior in httpserver.py: cookies is set to None when the Cookie header is present but unparsable). This diff reverts that fix, and there is no test in the PR that calls get_cookie() when self.request.cookies is None to catch the reintroduced TypeError.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/web.py:3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "real-tornado-multipart-boundary",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.75,
+      "cost_usd": 0.0789,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.95,
+          "where": "tornado/httpserver.py:4-6",
+          "title": "Dropping .strip() makes boundary lookup fail for standard headers",
+          "body": "`content_type.split(\";\")` leaves the whitespace that conventionally follows the semicolon on each parameter, so for the ordinary header `multipart/form-data; boundary=----abc` the second field is `\" boundary=----abc\"`. Without `.strip()`, `partition(\"=\")` yields `k == \" boundary\"`, the `k == \"boundary\"` test on line 5 is never true, `_parse_mime_body` is never called, and the multipart body is silently discarded \u2014 no exception, no log, just empty `arguments`/`files` for every well-formed upload. Restore `field.strip().partition(\"=\")` (and ideally also strip `v`, since a trailing `\\r` or space would corrupt the boundary).",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tornado/httpserver.py:4",
+          "matched_labels": [
+            "tornado/httpserver.py:4"
+          ],
+          "cites": [
+            "tornado/httpserver.py:4",
+            "tornado/httpserver.py:5"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "security",
+          "category": "input_validation",
+          "severity": "major",
+          "confidence": 0.7,
+          "where": "tornado/httpserver.py:4-6",
+          "title": "Dropping .strip() lets the client choose whether the body is parsed",
+          "body": "`Content-Type` is fully client-controlled and is the entry point here; the sink is `self._parse_mime_body(v, data)`, which populates the request's arguments/files. With `field.strip()` removed, a conventional header `multipart/form-data; boundary=----X` yields `k == \" boundary\"`, the `k == \"boundary\"` test on line 5 fails, and the body is never parsed \u2014 while `multipart/form-data;boundary=----X` (no space) still parses. A client therefore selects, per request, whether the server materialises form arguments and uploaded files, which is exactly the kind of parser differential that lets a request sail past an upstream proxy/WAF (or any handler logic keyed on `get_argument`/`request.files`) while still delivering a body that downstream code reading `request.body` will see. Secondarily, without the strip the captured `v` can retain trailing whitespace, producing a boundary that does not match the body delimiters. Restore `field.strip().partition(\"=\")` (or strip `k` and `v` individually).",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tornado/httpserver.py:4",
+          "matched_labels": [
+            "tornado/httpserver.py:4"
+          ],
+          "cites": [
+            "tornado/httpserver.py:4",
+            "tornado/httpserver.py:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "tornado/httpserver.py:2-4",
+          "title": "No test exercises whitespace around boundary parameter",
+          "body": "The change removes .strip() before partitioning on '=', which will break parsing of a Content-Type header like 'multipart/form-data; boundary=xyz' (with a space after the semicolon), since k would be ' boundary' and never match 'boundary'. There is no test in this diff covering a content-type header with a space after the semicolon (the common real-world form produced by most HTTP clients), so this regression would not be caught.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "tornado/httpserver.py:2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "real-urllib3-format-placeholder",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.833,
+      "cost_usd": 0.0517,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "error_handling",
+          "severity": "major",
+          "confidence": 0.95,
+          "where": "urllib3/util.py:7",
+          "title": "Format placeholder left unsubstituted in LocationParseError message",
+          "body": "The exception message is now the literal string `\"Failed to parse: %s\"` \u2014 the `%` operator and its `url` argument were removed, so the `%s` is never replaced. Every parse failure raises an identical, information-free error and the offending URL is lost, which makes diagnosing malformed URLs (e.g. `http://host:notaport`) impossible from logs or tracebacks. Restore the interpolation: `raise LocationParseError(\"Failed to parse: %s\" % url)`.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "urllib3/util.py:7",
+          "matched_labels": [
+            "urllib3/util.py:7"
+          ],
+          "cites": [
+            "urllib3/util.py:7",
+            "urllib3/util.py:4"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "major",
+          "confidence": 0.95,
+          "where": "urllib3/util.py:7",
+          "title": "Error message contains unfilled format placeholder",
+          "body": "The LocationParseError message contains a `%s` placeholder with no corresponding argument. Users seeing this error will read the literal string \"Failed to parse: %s\" instead of the actual URL that failed to parse. This makes the error message unhelpful for debugging. Restore the `% url` argument or use a different message format.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "urllib3/util.py:6"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "urllib3/util.py:7",
+          "title": "No test exercises the LocationParseError message formatting",
+          "body": "The line changed from `\"Failed to parse: %s\" % url` to `\"Failed to parse: %s\"` (missing the `% url` substitution), which will raise `TypeError: not all arguments converted during string formatting` whenever a malformed port is parsed. There is no test in this change (or apparently in the surrounding suite, since none is included here) that calls this parsing path with an invalid port and asserts on the resulting exception message or type, so this regression would not be caught by CI.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "urllib3/util.py:7"
+          ]
+        }
+      ]
+    }
+  ]
+}

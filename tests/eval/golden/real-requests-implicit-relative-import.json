@@ -21,7 +21,15 @@
     }
   ],
   "id": "real-requests-implicit-relative-import",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "input_validation|other",
+      "file_path": "requests/sessions.py",
+      "line": 9,
+      "note": "an unqualified import also resolves against sys.path, so any top-level module named adapters shadows the intended one"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

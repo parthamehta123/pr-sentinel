@@ -33,7 +33,7 @@
       "category": "documentation"
     }
   ],
-  "provenance": "urllib3/urllib3 d8ff66d0 (MIT, 2012-02-05) \u2014 introduced the defect fixed by de20783d seven weeks later. Paired with real-urllib3-locationparseerror.",
+  "provenance": "urllib3/urllib3 d8ff66d0 (MIT, 2012-02-05) \u2014 introduced the defect fixed by de20783d seven weeks later. Paired with real-urllib3-format-placeholder.",
   "summary": "The real commit, unedited: a new 125-line module lifted out of several others. One line in it carries a format placeholder with no argument. Nothing in the diff points at it \u2014 this is the needle case.",
   "title": "Refactor helpers into util.py"
 }

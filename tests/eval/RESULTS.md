@@ -546,8 +546,8 @@ rather than inline in `cases.py`.
 | `intro-requests-poolmanager` | `92d57036` *"WHOOOOOOOOOOOOOOOO"* | 70 lines | same day |
 
 Each is deliberately **paired** with the inverted-fix case for the same defect —
-`real-tornado-multipart-boundary`, `real-tornado-cookie-crash`,
-`real-urllib3-locationparseerror`, `real-requests-relative-import`. Same bug,
+`real-tornado-multipart-boundary`, `real-tornado-cookie-none-guard`,
+`real-urllib3-format-placeholder`, `real-requests-implicit-relative-import`. Same bug,
 two framings. If the reviewer scores well on the inversion and badly on the real
 commit, the inversion was flattering it, and the pair is what makes that visible.
 That comparison is the point of the tranche and it has **not been run yet** — see
@@ -589,18 +589,69 @@ is built on this and reproduces all four results deterministically from one
 command. Scrapy could not be traced this way and was dropped: its defective line
 is not distinctive enough to search on.
 
-### Not yet measured
+### Measured — and the prediction was wrong
 
-The four cases are built, their labels validated against the computed diffs, and
-the set is at 63 fixtures / 73 required labels. **No model has seen them.** The
-run was attempted and refused by the outage guard — 3 of 3 cases lost their whole
-panel — because the API key is no longer present in this environment; `.env` has
-`ANTHROPIC_API_KEY=` empty, the key having only ever lived in the shell. Nothing
-was scored and nothing was saved, which is the guard behaving correctly: a
-partial run is not a result.
+I predicted, in this file before running it, that recall would drop on
+`intro-urllib3-util-refactor` and `intro-tornado-cookies-move` and hold on the
+other two. **It did not drop.** Recall was 1.000 on all four, on all three runs,
+with a spread of 0.000 — including the 125-line needle and the two-file move.
 
-So the interesting number — inverted fix versus real introducing commit, on the
-same four defects — does not exist yet. My expectation, recorded before the fact
-so it can be wrong: recall will drop on `intro-urllib3-util-refactor` and
-`intro-tornado-cookies-move`, and hold on the other two, which are small enough
-that the inversion was not doing much work.
+Both sides of every pair, same panel, same day:
+
+| | inverted fix | introducing commit |
+|---|---|---|
+| recall | 1.000 | 1.000 *(3 runs, spread 0.000)* |
+| precision, lenient | 1.000 | 1.000 |
+| precision, strict *(before labelling)* | 0.833 | 0.714 *(0.430 mean over 3 runs)* |
+| precision, strict *(after labelling)* | 1.000 | 1.000 |
+| agent attribution | 0.800 | 0.800 |
+| category agreement | 0.600 | **1.000** |
+| calibration error | 0.106 | 0.088 |
+| cost per case | $0.065 | $0.155 |
+
+So the inverted fixes were **not** flattering the reviewer on these four defects.
+The hypothesis that motivated the whole tranche is not supported. That is worth
+stating plainly, because the tranche was built to expose a weakness and did not
+find one.
+
+Two things it did find, neither of which was the point:
+
+- **Category agreement is better on the real commits** (1.000 vs 0.600), not
+  worse. On the inversions the panel more often gets the defect right and its
+  name wrong. A plausible reading is that an inverted fix strips the surrounding
+  code that would tell you what *kind* of bug it is, but with n=4 on each side
+  that is a hypothesis, not a finding.
+- **The real commits cost 2.4x more per case**, which is just diff size.
+
+### The panel found a defect I had missed
+
+Scoring flagged two unlabelled findings on the introducer cases. Both verified
+against the upstream files:
+
+- `requests/sessions.py:295` — the commit **deletes** `_send_request` while
+  `old_request` still calls it. Defined at `:271` before, absent after, still
+  called at `:295`. A second real defect in that commit, which I did not label
+  when I authored the case and which the upstream fix never touched (the method
+  is unreachable, so it is latent). Now `ALLOW`.
+- `tornado/httpserver.py:360` — splitting the content-type on `";"` is not RFC
+  2045 parsing, so a `boundary="..."` value keeps its quotes. Also real, and also
+  not addressed by the upstream `.strip()` fix. Now `ALLOW`.
+
+After labelling those and one equivalent on the inverted side, every finding the
+panel produced on all eight cases is accounted for: 0 unlabelled, 0 false
+positives, strict precision 1.000 on both sides.
+
+That 1.000 is **post-hoc labelling, not an independent measurement**. The honest
+pre-labelling numbers are the ones in the table above. What the labelling pass
+legitimately establishes is that nothing the panel said on these eight cases was
+wrong — which is a different and weaker claim than a strict precision of 1.000
+read cold.
+
+### What this leaves
+
+Recall is 1.000 on both framings with zero spread, so neither framing can
+separate configurations any more. Harder cases are still the only lever, and
+"harder" now demonstrably does not mean "the real commit instead of the
+inversion" — that knob is spent. The remaining untested axis is a defect whose
+fix *nobody upstream has written yet*, which by construction cannot be mined
+this way.

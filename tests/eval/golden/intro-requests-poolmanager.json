@@ -35,6 +35,13 @@
       "file_path": "requests/sessions.py",
       "line": 172,
       "note": "the previous implementation is left behind as dead code"
+    },
+    {
+      "agent": "correctness",
+      "category": "api_contract|logic",
+      "file_path": "requests/sessions.py",
+      "line": 292,
+      "note": "this commit deletes _send_request, but old_request still calls it; latent only because old_request is itself now unreachable"
     }
   ],
   "must_not_find": [],
@@ -48,7 +55,7 @@
       "category": "documentation"
     }
   ],
-  "provenance": "psf/requests 92d57036 (Apache-2.0, 2012-12-15) \u2014 introduced the defect fixed by ed360dca the same day. Paired with real-requests-relative-import.",
+  "provenance": "psf/requests 92d57036 (Apache-2.0, 2012-12-15) \u2014 introduced the defect fixed by ed360dca the same day. Paired with real-requests-implicit-relative-import.",
   "summary": "The real commit, unedited, commit message and all: mid-refactor work in progress that moves sending onto an adapter. The bad import is one line among six hunks, two of which are legitimate findings in their own right.",
   "title": "WHOOOOOOOOOOOOOOOO"
 }
