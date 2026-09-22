@@ -296,10 +296,29 @@ decision: escalate (critical_security) · nothing posted · queued at priority 1
 The correctly parameterised `get_customer`, sitting four lines from the injection,
 was not flagged — which is the harder half.
 
-**Nothing has ever been written to GitHub**, and that is the gate working: a
-critical security finding is never posted to a pull request, so the auto-post
-branch is the one path still unexercised in production. It is covered by tests and
-by the offline demo, not by a real run.
+The auto-post branch has run too, on
+[`#2`](https://github.com/parthamehta123/pr-sentinel/pull/2) — a companion pull
+request whose defects are all correctness problems, so the gate posts rather than
+escalating. [Review 5278541333](https://github.com/parthamehta123/pr-sentinel/pull/2#pullrequestreview-5278541333)
+is a real GitHub review with four inline comments, $0.20, and reads like this:
+
+> 🟠 **major** · `logic` · correctness agent · confidence 0.94
+>
+> **Mutable default argument makes summarise accumulate across calls**
+>
+> `seen=[]` is evaluated once at function definition, so the same list is reused
+> by every call that does not pass `seen`… Use `seen=None` and
+> `seen = [] if seen is None else seen`.
+>
+> <details><summary>Why this was raised</summary>
+>
+> Line 27 mutates the default list in place, and the default object is shared by
+> all calls, so `summarise([1]) == 1` followed by `summarise([2]) == 2` instead
+> of 1.
+> </details>
+
+Both branches of the gate are now exercised against real pull requests with real
+models. Nothing in the pipeline is untested by a live run.
 
 - `replay` reached the pipeline without passing through ingress, so no
   `deliveries` row existed for a foreign key that needed one.

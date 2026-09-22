@@ -264,6 +264,11 @@ indexed repository:
 | decision | escalate, `critical_security`, queued at priority 1 |
 | spine | 7 spans, 4 model calls, 1 retrieval, 1 decision |
 
+The other branch of the gate ran on `#2`, a companion pull request whose defects
+are all correctness problems: `auto_post` at confidence 0.88, four inline comments
+written to GitHub, $0.20. The inline anchoring lands within a line of the defect,
+which is the grounding filter and GitHub's own diff-line rule agreeing.
+
 Two things worth reading off that table. The two Opus agents are 85% of the cost
 and 94% of the latency, which is where any optimisation has to start. And the
 panel is wall-clock bounded by its slowest member, so fanning out buys latency
