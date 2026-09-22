@@ -83,17 +83,17 @@
     "bins": [
       {
         "range": "0.00-0.50",
-        "n": 15,
+        "n": 1,
         "mean_confidence": 0.45,
-        "observed_hit_rate": 0.067,
-        "gap": -0.383
+        "observed_hit_rate": 1.0,
+        "gap": 0.55
       },
       {
         "range": "0.50-0.60",
-        "n": 21,
+        "n": 2,
         "mean_confidence": 0.55,
-        "observed_hit_rate": 0.048,
-        "gap": -0.502
+        "observed_hit_rate": 0.5,
+        "gap": -0.05
       },
       {
         "range": "0.70-0.80",
@@ -110,7 +110,7 @@
         "gap": -0.32
       }
     ],
-    "expected_calibration_error": 0.442
+    "expected_calibration_error": 0.263
   },
   "category_agreement": 0.75,
   "agent_attribution": 1.0,

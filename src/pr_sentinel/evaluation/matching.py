@@ -24,6 +24,11 @@ true 0.40 to a reported 0.98 and made every per-agent number meaningless. A
 finding must now agree with the label's *family* of concern; landing nearby while
 talking about something else makes it unlabelled, which is what it is.
 
+**A trap is not reached by a finding that touches a real defect.** Traps sit
+beside the defects they contrast with, often three lines away, and a finding whose
+span covers both is aimed at the bug. Counting it as a false positive punishes
+describing the real problem.
+
 **Three outcomes, not two.** Most of what a competent reviewer could say about a
 diff is neither a required finding nor a mistake. An `ALLOW` label marks an
 observation that is legitimate but optional — it is not needed for recall and does
@@ -159,7 +164,13 @@ def classify(
             )
             continue
 
-        trap = next((x for x in forbidden if _traps(finding, x)), None)
+        # A finding that reaches a labelled defect is aimed at it, whatever
+        # framing it chose. Counting it as a false positive because its span also
+        # covers the clean sibling three lines above punishes describing the real
+        # bug. Measured: all three "false positives" in the first 47-case run were
+        # exactly this — correct findings spanning both.
+        aimed_at_a_defect = any(_locates(finding, x) for x in expected)
+        trap = None if aimed_at_a_defect else next((x for x in forbidden if _traps(finding, x)), None)
         if trap is not None:
             matches.append(Match(finding=finding, label=trap, kind="false_positive", labels=[trap]))
             continue

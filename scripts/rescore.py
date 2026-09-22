@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Re-score a recorded eval run under the current matcher, without calling a model.
 
-    python scripts/rescore.py tests/eval/baselines/anthropic-3run.json
+    python scripts/rescore.py recorded.json [--save baseline.json]
 
 Scoring has now been changed three times — once for recall over distinct defects,
 once for evidence-based coverage, once to require the finding to be about the
@@ -56,6 +56,9 @@ def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
+    save_to = None
+    if "--save" in sys.argv:
+        save_to = Path(sys.argv[sys.argv.index("--save") + 1])
     payload = json.loads(Path(sys.argv[1]).read_text())
     runs = payload.get("runs") or [payload]
     cases = {c.id: c for c in load_cases()}
@@ -89,12 +92,23 @@ def main() -> int:
         ("recall", lambda r: r.overall.recall),
         ("agent attribution", lambda r: r.agent_attribution),
         ("category agreement", lambda r: r.category_agreement),
+        ("calibration error", lambda r: r.ece),
         ("permitted findings", lambda r: float(r.overall.allowed)),
         ("unlabelled findings", lambda r: float(r.overall.unlabelled)),
         ("false positives", lambda r: float(r.overall.false_positives)),
     ]:
         v = [fn(r) for r in reports]
         print(f"  {name:<24}{st.mean(v):>9.3f}{min(v):>9.3f}{max(v):>9.3f}")
+
+    if save_to is not None:
+        # Write the recorded findings back with current-matcher scores, so the
+        # committed baseline never quietly means something the code no longer does.
+        out = reports[-1].as_dict()
+        out["runs"] = [r.as_dict() for r in reports]
+        out["rescored_from"] = str(Path(sys.argv[1]).name)
+        save_to.parent.mkdir(parents=True, exist_ok=True)
+        save_to.write_text(json.dumps(out, indent=2) + "\n")
+        print(f"\n  saved: {save_to}")
     return 0
 
 

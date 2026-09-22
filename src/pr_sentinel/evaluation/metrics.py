@@ -304,7 +304,19 @@ def score(results: list[CaseResult], provider: str, models: dict[str, str]) -> E
     )
 
 
+def _scoreable(matches: list[Match]) -> list[Match]:
+    """Findings that calibration can learn from.
+
+    A permitted finding is neither right nor wrong, so it is not evidence either
+    way. Counting one as "not a hit" put the tests and docs observations — which
+    cluster between 0.55 and 0.75 — into those bins as failures, and reported a
+    calibration error of 0.276 for a model that had not changed.
+    """
+    return [m for m in matches if m.kind != "allowed"]
+
+
 def _calibration(matches: list[Match]) -> list[CalibrationBin]:
+    matches = _scoreable(matches)
     bins = [CalibrationBin(low=lo, high=hi) for lo, hi in CONFIDENCE_BINS]
     for b, (lo, hi) in zip(bins, CONFIDENCE_BINS, strict=True):
         members = [m for m in matches if lo <= m.finding.confidence < hi]
@@ -321,6 +333,7 @@ def _calibration(matches: list[Match]) -> list[CalibrationBin]:
 
 def _ece(matches: list[Match]) -> float:
     """Expected calibration error: mean |confidence - accuracy|, weighted by bin size."""
+    matches = _scoreable(matches)
     if not matches:
         return 0.0
     total = len(matches)

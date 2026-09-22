@@ -33,7 +33,17 @@ two passes while **the reviewer did not change at all**. Every point came from t
 labels getting less wrong, which is an argument for distrusting a single absolute
 number and watching deltas under a fixed set instead.
 
-## 1. Grow the eval set
+## 1. Grow the eval set, again
+
+The 47-case baseline is recorded: recall 1.000 with zero spread, precision 0.830
+strict and 0.988 lenient, calibration 0.076. Recall has saturated and lenient
+precision is close behind, so the set is once more unable to rank two good
+configurations.
+
+The honest read on the numbers above is that most of the movement across this
+whole sequence came from the labels and the scoring getting less wrong, not from
+the reviewer getting better. Until the set contains cases nobody wrote for it —
+mined from real merged pull requests — that will keep being true.
 
 Run against real models: precision 0.886/0.975, recall 0.933, calibration error
 0.110, $0.07 per review. Recorded in `tests/eval/baselines/anthropic-3run.json`.

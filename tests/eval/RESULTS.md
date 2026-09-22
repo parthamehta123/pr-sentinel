@@ -182,40 +182,48 @@ would be as misleading as quoting 0.983 was.
 
 ## Current
 
-Mean over three runs of the 34-case set. **These are pre-fix scores** — the
-committed baseline JSON was produced by the old matcher. `scripts/rescore.py`
-prints the current-matcher numbers over the same findings, and they are in the
-table above.
+47 cases, 57 required findings, 21 traps. Mean over three runs, $3.32 for the set:
 
 ```
-                        mean      min      max   spread
-  precision strict     0.987    0.973    1.000   +0.027
-  precision lenient    1.000    1.000    1.000   +0.000
-  recall               1.000    1.000    1.000   +0.000
-  f1                   0.993    0.986    1.000   +0.014
-  calibration error    0.182    0.157    0.201   +0.044
-  findings per concern 0.921    0.912    0.932   +0.019
-  cost per case       $0.070   $0.067   $0.075   +0.008
+                        mean      min      max
+  precision strict     0.830    0.806    0.859
+  precision lenient    0.988    0.982    1.000
+  recall               1.000    1.000    1.000
+  calibration error    0.076    0.061    0.098
+  agent attribution    0.849    0.821    0.889
+  category agreement   0.909    0.875    0.927
+  false positives/run  0.667    0.000    1.000
+  cost per case       $0.071   $0.070   $0.072
 ```
 
-**37 of 37 labelled defects found, in every run.** Against the pre-fix baseline
-that is recall 0.892 → 1.000 with non-overlapping ranges and a spread of exactly
-zero; every other metric moved within noise, including cost. The four misses that
-had reproduced in all three previous runs are gone.
+**Calibration is under 0.10 for the first time**, and the shape is good: 41
+findings at a stated 0.96 turn out right 98% of the time. The 0.50–0.60 bin is
+overconfident, on six findings, which is not enough to act on.
 
-**Recall has now saturated too.** That is the honest reading: with precision at
-0.987 and recall at 1.000, the set measures almost nothing about whether the next
-change is an improvement. It remains useful as a regression gate — it would still
-catch something breaking — but it can no longer rank two good configurations, and
-that is again an argument for more and harder cases rather than more tuning.
+All 57 required defects found in every run, with a recall spread of exactly zero.
 
-**The one surviving disagreement has been resolved** — see the severity A/B
-below.
+### Two harness bugs this run exposed
 
-The false positive on the clean TypeScript refactor did not appear in any of the
-three runs after the fix, having appeared in two of three before. Nothing in the
-change plausibly addresses it and `compare_arms.py` reads the difference as noise,
-so treat it as unresolved.
+The first report of this run read **calibration error 0.276**, with the 0.60–0.80
+bins showing 15–20% observed accuracy. The model had not changed. Permitted
+findings were counting as "not a hit" in the calibration bins, and the tests and
+docs observations they cover cluster at exactly those confidences. They are
+excluded from precision because they are neither right nor wrong; they are no more
+evidence about calibration. Excluding them: 0.276 → 0.076.
+
+It also reported three false positives, and all three were the same artifact —
+correct findings about the real defect whose line span also reached the clean
+sibling three lines above:
+
+> `search_customers` inlines values, violating `execute()`'s params contract —
+> confidence 0.95, counted as a false positive for flagging a line labelled clean
+
+Traps sit beside the defects they contrast with. A finding that reaches a labelled
+defect is aimed at it, whatever framing it chose, so the trap check is now skipped
+for those. False positives per run: 3 → 0.67.
+
+Both were introduced by earlier changes of mine and neither showed up on the
+34-case set — they needed the larger, harder corpus to surface.
 
 ---
 

@@ -97,12 +97,11 @@ findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
 false-positive traps**, seven cases where the right answer is silence, and
 thirteen whose defect is invisible without the retrieved repository context.
 
-The headline numbers below are from the 34-case set, scored by an earlier matcher.
-Investigating why `agent_attribution` sat at 0.33 found that matching on location
-alone was crediting any finding that landed near a labelled line, whatever it
-said. Corrected, and after two passes labelling what the models actually find,
-attribution is 0.82 and precision is 0.898 strict / 0.937 lenient with 2
-unlabelled findings per run — see [RESULTS.md](tests/eval/RESULTS.md). `scripts/rescore.py` recomputes
+How the numbers below were arrived at — including two passes labelling what the
+models actually find, and four corrections to the scoring itself — is in
+[RESULTS.md](tests/eval/RESULTS.md). `scripts/rescore.py` recomputes any recorded
+run under the current matcher without calling a model, and writes the result back,
+so a committed baseline never quietly means something the code no longer does. `scripts/rescore.py` recomputes
 any recorded run under the current matcher without calling a model.
 
 Sixteen of the cases put a real defect next to a plausible look-alike — a path
@@ -124,22 +123,19 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
                         mean      min      max
-  precision strict     0.987    0.973    1.000
-  precision lenient    1.000    1.000    1.000
+  precision strict     0.830    0.806    0.859
+  precision lenient    0.988    0.982    1.000
   recall               1.000    1.000    1.000
-  calibration error    0.182    0.157    0.201
-  gate decision match  0.917    0.917    0.917
-  cost per review     $0.070   $0.067   $0.075
+  calibration error    0.076    0.061    0.098
+  agent attribution    0.849    0.821    0.889
+  category agreement   0.909    0.875    0.927
+  false positives/run  0.667    0.000    1.000
+  cost per case       $0.071   $0.070   $0.072
 ```
 
-All 37 labelled defects found in every run, and every gate decision matching its
-label in two runs of three. The last standing disagreement — wildcard CORS with
-credentials rated `major` and therefore auto-posted — was a judgement call about
-what `critical` means, decided and recorded in
-[ADR-0006](docs/adr/0006-confidence-gate-and-security-escalation.md).
-
-With precision at 0.987 and recall at 1.000 the set is close to saturated again —
-still a working regression gate, no longer able to rank two good configurations.
+All 57 required defects found in every run, recall spread exactly zero, and
+calibration under the 0.10 target for the first time — 41 findings at a stated
+0.96 turn out right 98% of the time.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the
