@@ -27,7 +27,7 @@
       "category": "logic",
       "file_path": ".github/workflows/size.yml",
       "line": 4,
-      "note": "pull_request already fires for forked PRs, and under pull_request_target the workflow file itself comes from the base branch \u2014 so this change is not needed for the stated goal and splits the definition from the code under test"
+      "note": "under pull_request_target the workflow file comes from the base branch, so the definition is split from the code it measures. The change is NOT redundant, though: this diff also adds NPM_TOKEN, and plain pull_request does not expose repository secrets to a fork's pull request \u2014 which is why the swap is dangerous rather than merely unnecessary."
     },
     {
       "agent": "correctness",

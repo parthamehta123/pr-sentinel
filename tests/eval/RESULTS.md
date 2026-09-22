@@ -1026,3 +1026,59 @@ sharpest — that the checker should never see the builder's reasoning — this
 project still fails. The obvious experiment is to have the label audit done by a
 model that sees the diff and the finding but not the note, and compare against
 the three the audit caught by hand.
+
+### The blind label audit — my audit caught two of five
+
+Genesis Kit's sharpest claim is that the checker must not see the builder's
+reasoning. The hand audit of the label notes violated that in the obvious way:
+the same agent wrote the notes' verdicts and then checked them, knowing it was
+looking for overstatement. It reported three. There was no way to tell whether
+three was the real number or the number that agent happened to notice.
+
+`scripts/blind_label_audit.py` runs the check properly. For each label it sends a
+model the case — title, summary, unchanged context files, diff — and the note,
+and nothing else: no verdict, no hint that anything is wrong, no count to find.
+Its only job is to decide whether the material supports every factual claim the
+note makes. It judged the notes **as originally written**, at `b2991ad`, before
+the hand corrections.
+
+**It flagged 5 of 22. The hand audit had found 3, and only 2 of those overlap.**
+
+| note | hand audit | blind audit |
+|---|---|---|
+| `cve-jupyter-referer-token-log` api_contract | caught | caught |
+| `sec-removed-authz-check` | caught | caught, different reasoning |
+| `sec-workflow-pull-request-target` | **missed** | caught |
+| `intro-urllib3-util-refactor` | **missed** | caught |
+| `tst-deleted-test-with-fix` | **missed** | caught |
+| `sec-timing-unsafe-compare` | caught | SUPPORTED |
+
+The one it missed is not a failure of it: the note there is factually accurate,
+and the hand objection was that it describes the *replacement* rather than the
+code under review. That is relevance, not accuracy, and accuracy was all this
+checker was asked about.
+
+The three it caught are real, and one is a plain factual error rather than an
+overstatement. On `sec-workflow-pull-request-target` the note argued the trigger
+change "is not needed for the stated goal" because `pull_request` already fires
+for forked PRs. But the same diff adds `NPM_TOKEN: ${{ secrets.NPM_TOKEN }}`, and
+`pull_request` does **not** expose repository secrets to a fork's pull request.
+The change is not redundant; it is the precise reason the swap is dangerous. Two
+agents wrote and reviewed that note and neither looked at the `env:` block three
+lines below.
+
+All three notes are corrected.
+
+#### What the experiment cost to get right
+
+The first run flagged 7, and two of those were artifacts of the harness rather
+than faults in the notes: the prompt sent only the diff, while the panel also
+receives the pull request title, the summary and the unchanged context files.
+Blind to those, the checker correctly said that `execute()`'s documented params
+contract was not visible — it is, in `billing/db.py`, which the case supplies and
+the prompt withheld. Giving the checker what the panel gets dropped the count
+from 7 to 5.
+
+The lesson generalises past this script: an independent checker starved of
+context does not fail safely, it fails *loudly*, and its extra findings look
+exactly like diligence.

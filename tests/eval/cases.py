@@ -1858,7 +1858,7 @@ jobs:
 
 on:
   #!EXPECT agent=security category=authz severity>=critical :: pull_request_target runs with the base repository's secrets, and checking out the fork's head then running its script hands those secrets to anyone who opens a pull request
-  #!ALLOW agent=correctness category=logic :: pull_request already fires for forked PRs, and under pull_request_target the workflow file itself comes from the base branch — so this change is not needed for the stated goal and splits the definition from the code under test
+  #!ALLOW agent=correctness category=logic :: under pull_request_target the workflow file comes from the base branch, so the definition is split from the code it measures. The change is NOT redundant, though: this diff also adds NPM_TOKEN, and plain pull_request does not expose repository secrets to a fork's pull request — which is why the swap is dangerous rather than merely unnecessary.
   pull_request_target:
 
 jobs:
@@ -1976,7 +1976,7 @@ def test_rounds_up_above_half():
 
 
 #!EXPECT agent=tests category=test_coverage severity>=major :: test_rounds_half_to_even was deleted rather than updated, so the banker's-rounding behaviour it pinned is now unguarded
-#!ALLOW agent=correctness category=logic|api_contract :: the PR claims a rounding fix but only the test file changed, and dropping the half-to-even pin is a silent contract change for every monetary caller
+#!ALLOW agent=correctness category=logic|api_contract :: the title claims a rounding fix but only the test file changed, so no behaviour changed at all — what the deletion removes is the guarantee that half-to-even holds. round_cents itself is not in the diff, so whether callers depend on it cannot be read from here.
 def test_rounds_up_above_half():
     assert round_cents(Decimal("2.346")) == Decimal("2.35")
 """,

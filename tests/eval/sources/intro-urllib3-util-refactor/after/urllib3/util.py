@@ -89,7 +89,7 @@ def get_host(url):
 
     if '://' in url:
         scheme, url = url.split('://', 1)
-    #!ALLOW agent=security category=input_validation :: authority parsing ends only at '/', then splits on the first '@', so query/fragment and multi-@ userinfo diverge from urlparse and can flip the host used for allow/deny decisions
+    #!ALLOW agent=security category=input_validation :: authority parsing ends only at '/' and splits on the first '@', so 'http://evil.com?x=@good.com' yields good.com and 'a@b@real.com' yields b@real.com, both diverging from urlparse. How much that matters depends on what the caller does with the host, which this diff does not show.
     if '/' in url:
         url, _path = url.split('/', 1)
     if '@' in url:

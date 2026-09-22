@@ -930,6 +930,8 @@ def test_results_md_per_run_claims_match_the_recorded_runs():
 
     for path in recorded:
         payload = json.loads(path.read_text())
+        if not isinstance(payload, dict):
+            continue  # not a recorded run
         runs = payload.get("runs") or [payload]
         if len(runs) < 2:
             continue

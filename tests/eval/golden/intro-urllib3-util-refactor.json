@@ -27,7 +27,7 @@
       "category": "input_validation",
       "file_path": "urllib3/util.py",
       "line": 92,
-      "note": "authority parsing ends only at '/', then splits on the first '@', so query/fragment and multi-@ userinfo diverge from urlparse and can flip the host used for allow/deny decisions"
+      "note": "authority parsing ends only at '/' and splits on the first '@', so 'http://evil.com?x=@good.com' yields good.com and 'a@b@real.com' yields b@real.com, both diverging from urlparse. How much that matters depends on what the caller does with the host, which this diff does not show."
     }
   ],
   "must_not_find": [],

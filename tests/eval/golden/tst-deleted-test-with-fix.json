@@ -27,7 +27,7 @@
       "category": "logic|api_contract",
       "file_path": "tests/test_rounding.py",
       "line": 4,
-      "note": "the PR claims a rounding fix but only the test file changed, and dropping the half-to-even pin is a silent contract change for every monetary caller"
+      "note": "the title claims a rounding fix but only the test file changed, so no behaviour changed at all \u2014 what the deletion removes is the guarantee that half-to-even holds. round_cents itself is not in the diff, so whether callers depend on it cannot be read from here."
     }
   ],
   "must_not_find": [],
