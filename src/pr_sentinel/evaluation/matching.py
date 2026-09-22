@@ -24,6 +24,12 @@ true 0.40 to a reported 0.98 and made every per-agent number meaningless. A
 finding must now agree with the label's *family* of concern; landing nearby while
 talking about something else makes it unlabelled, which is what it is.
 
+**Attribution asks who contributed, not who won.** The aggregator merges findings
+from several agents and keeps the highest-severity one as primary, so a merged
+finding carries that agent's name and category. Comparing a label against those
+alone scored the security agent at 0.000 on six advisory cases it had found every
+one of — it had simply been merged under correctness each time.
+
 **A trap is not reached by a finding that touches a real defect.** Traps sit
 beside the defects they contrast with, often three lines away, and a finding whose
 span covers both is aimed at the bug. Counting it as a false positive punishes
@@ -134,7 +140,10 @@ def _same_concern(finding: Finding, label: Label) -> bool:
             families.add(family_of(Category(name)))
         except ValueError:
             return True
-    return family_of(finding.category) in families
+    # A merged finding is about every concern its contributors named, not only
+    # the one belonging to whichever of them happened to win the merge.
+    found = finding.categories or [str(finding.category)]
+    return any(family_of(Category(c)) in families for c in found)
 
 
 def classify(
@@ -155,9 +164,12 @@ def classify(
                     label=primary,
                     kind="hit",
                     labels=covered,
-                    agent_correct=primary.agent is None or str(finding.agent) == primary.agent,
+                    agent_correct=primary.agent is None
+                    or primary.agent in (finding.agreeing or [str(finding.agent)]),
                     category_correct=primary.category is None
-                    or str(finding.category) in primary.category.split("|"),
+                    or bool(
+                        set(finding.categories or [str(finding.category)]) & set(primary.category.split("|"))
+                    ),
                     severity_sufficient=SEVERITY_ORDER.index(str(finding.severity))
                     >= primary.min_severity_rank,
                 )

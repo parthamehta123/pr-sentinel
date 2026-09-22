@@ -42,9 +42,8 @@ yield is about one in four and the cost is attention rather than money.
 The security gap that left is closed on the input side: `mine_advisories.py`
 walks the GitHub advisory database and six advisory cases are in, covering CWE
 classes the hand-written set never had — XSS, credential leakage into logs, scope
-confusion, declared-length exhaustion. They are **not yet scored**: the credit
-balance ran out before they could run, and the guard refused the partial result.
-Running them is the next thing, and it is one command.
+confusion, declared-length exhaustion. All six are found, every run — and running them exposed the attribution metric as
+broken, which had been depressing every baseline in the project.
 
 One structural thing still to improve. Every mined case is an *inverted* fix
 rather than the pull request that originally introduced the bug. Mining the

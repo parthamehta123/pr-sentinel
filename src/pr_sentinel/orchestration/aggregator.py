@@ -108,6 +108,7 @@ def _collapse(cluster: list[Finding]) -> Finding:
         update={
             "confidence": confidence,
             "agreeing": sorted(str(a) for a in agents),
+            "categories": sorted({str(f.category) for f in cluster}),
             "line_start": min(f.line_start for f in cluster),
             "line_end": max(f.line_end for f in cluster),
             "evidence": _dedupe_evidence(cluster),

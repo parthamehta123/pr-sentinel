@@ -136,19 +136,30 @@ def test_recall_counts_missed_labels():
 
 
 def test_a_perfectly_calibrated_run_has_near_zero_error():
-    """Nine findings at 0.9 confidence of which eight are right."""
-    spec = [("hit", 0.9)] * 8 + [("unlabelled", 0.9)]
+    """Nine judged findings at 0.9 confidence, of which eight are right."""
+    spec = [("hit", 0.9)] * 8 + [("fp", 0.9)]
     rep = score([_result(spec)], "test", {})
     assert rep.ece < 0.05
 
 
 def test_systematic_overconfidence_is_measured():
-    """Ten findings at 0.95; only two are right."""
-    spec = [("hit", 0.95)] * 2 + [("unlabelled", 0.95)] * 8
+    """Ten judged findings at 0.95; only two are right."""
+    spec = [("hit", 0.95)] * 2 + [("fp", 0.95)] * 8
     rep = score([_result(spec)], "test", {})
     assert rep.ece > 0.6
     hot = next(b for b in rep.calibration if b.count)
     assert hot.hit_rate - hot.mean_confidence < -0.5
+
+
+def test_unjudged_findings_do_not_create_false_overconfidence():
+    """The same shape with unlabelled instead of false positives is not evidence.
+
+    This is the distinction the metric now draws: eight wrong answers at 0.95 is
+    overconfidence, eight unjudged findings at 0.95 is an unlabelled backlog.
+    """
+    spec = [("hit", 0.95)] * 2 + [("unlabelled", 0.95)] * 8
+    rep = score([_result(spec)], "test", {})
+    assert rep.ece < 0.1
 
 
 def test_gate_decisions_are_compared_against_the_label():
@@ -688,3 +699,62 @@ def test_a_few_failed_cases_are_still_scored():
         for _ in range(20)
     ]
     _refuse_if_everything_failed(results)  # does not raise
+
+
+def test_attribution_asks_who_contributed_not_who_won_the_merge():
+    """Regression: the security agent scored 0.000 on six advisory cases it found.
+
+    The aggregator keeps the highest-severity contributor as primary, so those
+    merged findings carried correctness's name. Comparing the label against that
+    alone made a correct attribution look like a miss every time.
+    """
+    merged = finding(line=10, agent=AgentType.CORRECTNESS, category="input_validation")
+    merged.agreeing = ["correctness", "security"]
+    merged.categories = ["crypto", "input_validation"]
+    m = classify([merged], [label(line=10, agent="security", category="crypto")], [])[0]
+    assert m.kind == "hit"
+    assert m.agent_correct, "security contributed, so attribution is correct"
+    assert m.category_correct
+
+
+def test_a_merged_finding_matches_on_any_contributing_concern():
+    merged = finding(line=10, agent=AgentType.CORRECTNESS, category="logic")
+    merged.agreeing = ["correctness", "security"]
+    merged.categories = ["crypto", "logic"]
+    assert classify([merged], [label(line=10, agent="security", category="crypto")], [])[0].kind == "hit"
+
+
+def test_attribution_is_still_wrong_when_the_expected_agent_never_contributed():
+    solo = finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor")
+    m = classify([solo], [label(line=10, agent="security", category="test_coverage")], [])[0]
+    assert m.kind == "hit" and not m.agent_correct
+
+
+def test_calibration_ignores_findings_the_set_has_not_judged():
+    """An unknown is not a wrong answer.
+
+    Unlabelled findings cluster at low confidence — the reviewer is least sure
+    about exactly the things nobody has labelled — so scoring them as failures
+    made the 0.50-0.80 bins read as badly overconfident when what they mostly
+    contained was "not judged yet".
+    """
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10)],
+        must_not_find=[],
+    )
+    findings = [finding(line=10, confidence=0.6)]  # a hit at 0.6
+    findings += [finding(line=500 + i * 10, confidence=0.6) for i in range(8)]  # unjudged
+    rep = score(
+        [score_case(case, findings, decision="auto_post", confidence=0.6, cost_usd=0.0, duration_ms=1)],
+        "t",
+        {},
+    )
+    scored = next(b for b in rep.calibration if b.count)
+    assert scored.count == 1, "only the judged finding informs calibration"
+    assert scored.hit_rate == 1.0

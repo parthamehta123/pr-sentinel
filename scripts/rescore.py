@@ -49,6 +49,10 @@ def _rebuild(raw: dict) -> Finding:
         rationale=raw["title"],
         confidence=raw["confidence"],
         evidence=evidence,
+        # Which agents contributed, and which concerns they named. Without these
+        # a merged finding is judged only on whichever contributor won the merge.
+        agreeing=raw.get("agreeing") or [],
+        categories=raw.get("categories") or [],
     )
 
 

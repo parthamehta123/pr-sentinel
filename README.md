@@ -126,20 +126,18 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
                         mean      min      max
-  precision strict     0.823    0.787    0.859
-  precision lenient    0.985    0.969    1.000
-  recall               0.968    0.952    0.984
-  calibration error    0.078    0.046    0.110
-  agent attribution    0.798    0.794    0.803
-  category agreement   0.871    0.869    0.873
-  false positives/run  1.000    0.000    2.000
+  precision strict     0.819    0.798    0.831
+  precision lenient    0.995    0.986    1.000
+  recall               1.000    1.000    1.000
+  calibration error    0.088    0.082    0.093
+  agent attribution    0.951    0.942    0.955
+  category agreement   0.916    0.881    0.942
+  false positives/run  0.333    0.000    1.000
+  cost per case       $0.072
 ```
 
-Twelve of the 59 cases are mined rather than written: six from merged fix commits
-and six from published security advisories, inverted so the change under review is
-the one that puts the bug back. The six merged-fix cases were all found on the
-first run; the six advisory cases are not yet scored, so the figures above are
-over the 53 cases that predate them.
+**69 of 69 required defects found in every run**, spread exactly zero — including
+all twelve mined cases, whose defects nobody on this project invented.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the

@@ -9,8 +9,8 @@ python scripts/compare_arms.py baseline.json arm.json  # which differences are r
 ```
 
 Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 53 cases, 63 required findings, 21 traps, six of them
-mined from real merged pull requests.
+`claude-haiku-4-5` (docs). 59 cases, 69 required findings, 21 traps. Twelve are mined:
+six from merged fix commits, six from published security advisories.
 
 ---
 
@@ -183,56 +183,22 @@ would be as misleading as quoting 0.983 was.
 
 ## Current
 
-53 cases, 63 required findings. Mean over two complete runs:
+59 cases, 69 required findings. Mean over three runs, $12.75 for the set:
 
 ```
                         mean      min      max
-  precision strict     0.823    0.787    0.859
-  precision lenient    0.985    0.969    1.000
-  recall               0.968    0.952    0.984
-  calibration error    0.078    0.046    0.110
-  agent attribution    0.798    0.794    0.803
-  category agreement   0.871    0.869    0.873
-  false positives/run  1.000    0.000    2.000
+  precision strict     0.819    0.798    0.831
+  precision lenient    0.995    0.986    1.000
+  recall               1.000    1.000    1.000
+  calibration error    0.088    0.082    0.093
+  agent attribution    0.951    0.942    0.955
+  category agreement   0.916    0.881    0.942
+  false positives/run  0.333    0.000    1.000
+  cost per case       $0.072
 ```
 
-Two runs rather than three because the API credit balance ran out part way
-through the third; see below.
-
-## Mined from real merged pull requests
-
-Every case before this point was written by me, which means I knew where the
-defect was before the reviewer did — and the set kept saturating because of it.
-Six cases now come from defects a real maintainer found in real code and merged a
-fix for:
-
-| case | source | the defect |
-|---|---|---|
-| `real-tornado-cookie-none-guard` | tornadoweb/tornado#397 (Apache-2.0) | `request.cookies` is None on a malformed Cookie header, so the lookup raises |
-| `real-tornado-multipart-boundary` | tornadoweb/tornado#177 (Apache-2.0) | no `.strip()`, so every content-type parameter after the first keeps a leading space and multipart bodies are silently not parsed |
-| `real-urllib3-format-placeholder` | urllib3/urllib3#64 (MIT) | `"Failed to parse: %s"` with no argument |
-| `real-aiohttp-stream-single-wait` | aio-libs/aiohttp#3527 (Apache-2.0) | `if` where `while` is needed: the waiter resolves at a chunk boundary without data |
-| `real-aiohttp-location-attribute-type` | aio-libs/aiohttp#3615 (Apache-2.0) | a documented public attribute changes from a string to a URL object |
-| `real-requests-implicit-relative-import` | psf/requests#1011 (Apache-2.0) | an implicit relative import, removed in Python 3 |
-
-They are built by **inverting the fix** — the change under review is the one that
-puts the bug back. That is not the same as the pull request which originally
-introduced it, and the labels come from what the fix did rather than from what a
-reviewer said at the time. What they do give is a defect whose existence was
-judged by somebody other than me.
-
-`scripts/mine_cases.py` finds candidates — merged, small, single-file, fix-shaped,
-from permissively licensed projects. It found 27; six survived reading. Choosing
-and labelling is by hand, because "the commit message says fix" is not the same as
-"here is the defect and here is where it is". Each case records its repository,
-pull request and licence.
-
-**All six found, first run.** Two of the three findings the set then called
-unlabelled were the security agent reframing the same defect — *"Malformed Cookie
-header crashes get_cookie (remote-triggerable 500)"* at 0.90, which is a better
-description than my label was. Both are now accepted as alternative categories.
-The third, *"implicit import widens module resolution to sys.path"* at 0.60, is a
-stretch and is left unlabelled on purpose.
+**69 of 69 required defects found in every run**, spread exactly zero — including
+all twelve mined cases, whose defects nobody on this project invented.
 
 ## Mined from published security advisories
 
@@ -264,11 +230,43 @@ scope confusion and no declared-length exhaustion at all.
 The scrapy one is the pick of them. `"https" if request.meta.get("is_secure")
 else "http"` is a line that reads as correct, and is a plaintext default.
 
-**These six are unscored.** The credit balance ran out before they could be run,
-and the guard refused the run rather than saving a partial result. They are
-structurally validated — the builder proves every label lands inside its diff —
-but whether the reviewer finds them is not yet known, and the baseline below is
-the 53-case one that predates them.
+**All six are found**, every run. Five were found by both the security and the
+correctness agent; the scrapy plaintext default was found at confidence 0.99 with
+the reasoning spelled out — *"S3 scheme now defaults to plaintext http when
+is_secure is unset"*.
+
+### And they exposed the attribution metric as broken
+
+The first run of these six reported **agent attribution 0.000**: not one credited
+to the security agent, on six cases mined from security advisories. That looked
+like a serious finding about the panel.
+
+It was a bug in the metric. Every one of the six came back as
+`agreeing=[correctness + security]` — the security agent had found all of them.
+The aggregator merges cross-agent findings and keeps the highest-confidence one as
+primary, so the merged finding carries *that* agent's name and category, and
+attribution was comparing the label against those alone.
+
+A merged finding now carries every contributing agent **and** every contributing
+category, and matching considers all of them. Re-scored over the same recorded
+findings, attribution on those six went 0.000 → 1.000, and across the whole set
+0.798 → 0.951. The number had been depressing every baseline in this file.
+
+### Calibration only counts what the set has judged
+
+The same run read `calibration error 0.107` with the 0.50–0.80 bins looking badly
+overconfident. Those bins turned out to hold mostly *unlabelled* findings, scored
+as failures — and an unknown is not a wrong answer. They cluster at low confidence
+for the obvious reason: the reviewer is least sure about exactly the things nobody
+has got round to labelling.
+
+Calibration now uses only findings the set has an opinion about, a hit or a false
+positive, which is the same rule already applied to permitted findings. The price
+is that it is measured on the labelled subset — the part somebody understood well
+enough to label — so it should be read next to the unlabelled count, which is
+about 15 per run out of 83.
+
+
 
 ### A partial outage is worse than a total one
 

@@ -539,3 +539,48 @@ def test_each_agent_collapses_its_own_asks_separately():
     )
     assert len(merged) == 2
     assert {tuple(f.agreeing) or (str(f.agent),) for f in merged} == {("tests",), ("docs",)}
+
+
+def test_a_merged_finding_carries_every_contributing_category():
+    """The primary's category is what gets posted; the full set is kept too.
+
+    Without it, a merged finding is judged only on the framing of whichever
+    contributor happened to win the merge — which scored the security agent at
+    zero attribution on six advisory cases it had found every one of.
+    """
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [
+                    finding(
+                        AgentType.SECURITY, category="crypto", title="Plaintext by default", confidence=0.9
+                    )
+                ],
+            ),
+            verdict(
+                AgentType.CORRECTNESS,
+                [
+                    finding(
+                        AgentType.CORRECTNESS,
+                        category="input_validation",
+                        title="Plaintext default here",
+                        confidence=0.95,
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 1
+    assert merged[0].categories == ["crypto", "input_validation"]
+    assert merged[0].agreeing == ["correctness", "security"]
+
+
+def test_an_unmerged_finding_has_no_category_list():
+    """Only merges populate it; a single finding is described by its own category."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(AgentType.SECURITY, [finding(AgentType.SECURITY, category="injection")]),
+        ]
+    )
+    assert merged[0].categories == []

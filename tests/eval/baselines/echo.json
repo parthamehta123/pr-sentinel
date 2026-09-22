@@ -157,6 +157,7 @@
           "title": "Bare except swallows control-flow exceptions",
           "body": "`except:` also catches KeyboardInterrupt and SystemExit. Catch `Exception`, or the specific error.",
           "agreeing": [],
+          "categories": [],
           "matched_label": "telemetry/push.py:4",
           "matched_labels": [
             "telemetry/push.py:4"
@@ -232,6 +233,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -248,6 +250,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -279,6 +282,7 @@
           "title": "New function arrives without a test (and 7 more)",
           "body": "No test file in this diff covers the new function.\n\nThe same gap appears at 7 other place(s) in this change:\n\n- `billing/lines.py:8` \u2014 New function arrives without a test\n- `billing/lines.py:12` \u2014 New function arrives without a test\n- `billing/lines.py:16` \u2014 New function arrives without a test\n- `billing/lines.py:20` \u2014 New function arrives without a test\n- `billing/lines.py:24` \u2014 New function arrives without a test\n- `billing/lines.py:28` \u2014 New function arrives without a test\n- `billing/lines.py:32` \u2014 New function arrives without a test\n\n_Collapsed into one comment: this is one piece of work, not 8 separate ones._",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -317,6 +321,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -333,6 +338,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -378,6 +384,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -394,6 +401,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -425,6 +433,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -456,6 +465,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -501,6 +511,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -630,6 +641,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -646,6 +658,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": "cache/lookup.py:8",
           "matched_labels": [
             "cache/lookup.py:8"
@@ -707,6 +720,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -738,6 +752,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -769,6 +784,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": "billing/totals.py:1",
           "matched_labels": [
             "billing/totals.py:1"
@@ -928,6 +944,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -944,6 +961,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -989,6 +1007,7 @@
           "title": "Credential literal committed to the repository",
           "body": "A secret is hardcoded here. Move it to configuration and rotate it.",
           "agreeing": [],
+          "categories": [],
           "matched_label": "billing/acmepay_client.py:4",
           "matched_labels": [
             "billing/acmepay_client.py:4"
@@ -1007,6 +1026,7 @@
           "title": "Credential literal committed to the repository",
           "body": "A secret is hardcoded here. Move it to configuration and rotate it.",
           "agreeing": [],
+          "categories": [],
           "matched_label": "tests/fixtures/acmepay.py:3",
           "matched_labels": [
             "tests/fixtures/acmepay.py:3"
@@ -1040,6 +1060,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1056,6 +1077,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1087,6 +1109,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1132,6 +1155,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1148,6 +1172,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1193,6 +1218,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1224,6 +1250,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1240,6 +1267,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1285,6 +1313,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1301,6 +1330,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1346,6 +1376,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1362,6 +1393,7 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1378,6 +1410,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1394,6 +1427,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1467,6 +1501,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1483,6 +1518,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1542,6 +1578,7 @@
           "title": "New function arrives without a test (and 5 more)",
           "body": "No test file in this diff covers the new function.\n\nThe same gap appears at 5 other place(s) in this change:\n\n- `reports/csv_export.py:10` \u2014 New function arrives without a test\n- `reports/json_export.py:8` \u2014 New function arrives without a test\n- `reports/json_export.py:14` \u2014 New function arrives without a test\n- `reports/pdf_export.py:5` \u2014 New function arrives without a test\n- `reports/pdf_export.py:11` \u2014 New function arrives without a test\n\n_Collapsed into one comment: this is one piece of work, not 6 separate ones._",
           "agreeing": [],
+          "categories": [],
           "matched_label": "reports/csv_export.py:5",
           "matched_labels": [
             "reports/csv_export.py:5",
@@ -1585,6 +1622,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [
@@ -1616,6 +1654,7 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
+          "categories": [],
           "matched_label": null,
           "matched_labels": [],
           "cites": [

@@ -211,6 +211,7 @@ class EvalReport:
                             # cannot tell a thin finding from a thin citation.
                             "body": m.finding.body,
                             "agreeing": m.finding.agreeing,
+                            "categories": m.finding.categories,
                             "matched_label": (f"{m.label.file_path}:{m.label.line}" if m.label else None),
                             "matched_labels": [f"{lab.file_path}:{lab.line}" for lab in m.labels],
                             # A consolidated finding covers what it cites, so the
@@ -305,14 +306,28 @@ def score(results: list[CaseResult], provider: str, models: dict[str, str]) -> E
 
 
 def _scoreable(matches: list[Match]) -> list[Match]:
-    """Findings that calibration can learn from.
+    """Findings that calibration can learn from: the ones the set has judged.
 
-    A permitted finding is neither right nor wrong, so it is not evidence either
-    way. Counting one as "not a hit" put the tests and docs observations — which
-    cluster between 0.55 and 0.75 — into those bins as failures, and reported a
+    Calibration compares a stated confidence against how often the finding turns
+    out right, so it can only use findings the set has an opinion about — a hit
+    or a false positive. Two kinds are excluded for the same reason:
+
+    A **permitted** finding is neither right nor wrong by construction. Counting
+    one as "not a hit" put the tests and docs observations — which cluster
+    between 0.55 and 0.75 — into those bins as failures and reported a
     calibration error of 0.276 for a model that had not changed.
+
+    An **unlabelled** finding is unknown, which is not the same as wrong, and
+    they cluster at low confidence for the obvious reason: the reviewer is least
+    sure about exactly the things nobody has got round to labelling. Scoring
+    them as failures made the 0.50-0.80 bins read as badly overconfident when
+    what they mostly contained was "not judged yet".
+
+    The cost of this is that calibration is measured on the labelled subset, and
+    that subset is the part somebody understood well enough to label. Read the
+    number next to the unlabelled count.
     """
-    return [m for m in matches if m.kind != "allowed"]
+    return [m for m in matches if m.kind in ("hit", "false_positive")]
 
 
 def _calibration(matches: list[Match]) -> list[CalibrationBin]:

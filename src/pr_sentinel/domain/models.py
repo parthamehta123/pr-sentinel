@@ -161,6 +161,10 @@ class Finding(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     evidence: list[Evidence] = Field(default_factory=list)
     agreeing: list[str] = Field(default_factory=list)
+    # Every category the contributors named, when several findings merged. The
+    # primary's `category` is what gets stored and posted; this is the full set,
+    # because a merged finding really is about all of them.
+    categories: list[str] = Field(default_factory=list)
     merged_into: uuid.UUID | None = None
 
     @field_validator("line_end")
