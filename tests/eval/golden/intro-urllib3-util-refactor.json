@@ -1,0 +1,39 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "error_handling|logic",
+      "file_path": "urllib3/util.py",
+      "line": 100,
+      "min_severity": "minor",
+      "note": "the %s is never substituted, so the error reports a literal \"%s\" instead of the url that failed"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 125,
+      "deletions": 0,
+      "filename": "urllib3/util.py",
+      "patch": "@@ -0,0 +1,125 @@\n+# urllib3/util.py\n+# Copyright 2008-2012 Andrey Petrov and contributors (see CONTRIBUTORS.txt)\n+#\n+# This module is part of urllib3 and is released under\n+# the MIT License: http://www.opensource.org/licenses/mit-license.php\n+\n+\n+from base64 import b64encode\n+\n+try:\n+    from select import poll, POLLIN\n+except ImportError: # Doesn't exist on OSX and other platforms\n+    from select import select\n+    poll = False\n+\n+from .packages import six\n+\n+from .exceptions import LocationParseError\n+\n+\n+def make_headers(keep_alive=None, accept_encoding=None, user_agent=None,\n+                 basic_auth=None):\n+    \"\"\"\n+    Shortcuts for generating request headers.\n+\n+    :param keep_alive:\n+        If ``True``, adds 'connection: keep-alive' header.\n+\n+    :param accept_encoding:\n+        Can be a boolean, list, or string.\n+        ``True`` translates to 'gzip,deflate'.\n+        List will get joined by comma.\n+        String will be used as provided.\n+\n+    :param user_agent:\n+        String representing the user-agent you want, such as\n+        \"python-urllib3/0.6\"\n+\n+    :param basic_auth:\n+        Colon-separated username:password string for 'authorization: basic ...'\n+        auth header.\n+\n+    Example: ::\n+\n+        >>> make_headers(keep_alive=True, user_agent=\"Batman/1.0\")\n+        {'connection': 'keep-alive', 'user-agent': 'Batman/1.0'}\n+        >>> make_headers(accept_encoding=True)\n+        {'accept-encoding': 'gzip,deflate'}\n+    \"\"\"\n+    headers = {}\n+    if accept_encoding:\n+        if isinstance(accept_encoding, str):\n+            pass\n+        elif isinstance(accept_encoding, list):\n+            accept_encoding = ','.join(accept_encoding)\n+        else:\n+            accept_encoding = 'gzip,deflate'\n+        headers['accept-encoding'] = accept_encoding\n+\n+    if user_agent:\n+        headers['user-agent'] = user_agent\n+\n+    if keep_alive:\n+        headers['connection'] = 'keep-alive'\n+\n+    if basic_auth:\n+        headers['authorization'] = 'Basic ' + \\\n+            b64encode(six.b(basic_auth)).decode('utf-8')\n+\n+    return headers\n+\n+\n+def get_host(url):\n+    \"\"\"\n+    Given a url, return its scheme, host and port (None if it's not there).\n+\n+    For example: ::\n+\n+        >>> get_host('http://google.com/mail/')\n+        ('http', 'google.com', None)\n+        >>> get_host('google.com:80')\n+        ('http', 'google.com', 80)\n+    \"\"\"\n+\n+    # This code is actually similar to urlparse.urlsplit, but much\n+    # simplified for our needs.\n+    port = None\n+    scheme = 'http'\n+\n+    if '://' in url:\n+        scheme, url = url.split('://', 1)\n+    if '/' in url:\n+        url, _path = url.split('/', 1)\n+    if '@' in url:\n+        _auth, url = url.split('@', 1)\n+    if ':' in url:\n+        url, port = url.split(':', 1)\n+\n+        if not port.isdigit():\n+            raise LocationParseError(\"Failed to parse: %s\")\n+\n+        port = int(port)\n+\n+    return scheme, url, port\n+\n+\n+\n+\n+def is_connection_dropped(conn):\n+    \"\"\"\n+    Returns True if the connection is dropped and should be closed.\n+\n+    :param conn:\n+        ``HTTPConnection`` object.\n+    \"\"\"\n+    if not poll: # Platform-specific\n+        return select([conn.sock], [], [], 0.0)[0]\n+\n+    # This version is better on platforms that support it.\n+    p = poll()\n+    p.register(conn.sock, POLLIN)\n+    for (fno, ev) in p.poll(0.0):\n+        if fno == conn.sock.fileno():\n+            # Either data is buffered (bad), or the connection is dropped.\n+            return True",
+      "status": "added"
+    }
+  ],
+  "id": "intro-urllib3-util-refactor",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "urllib3/urllib3 d8ff66d0 (MIT, 2012-02-05) \u2014 introduced the defect fixed by de20783d seven weeks later. Paired with real-urllib3-locationparseerror.",
+  "summary": "The real commit, unedited: a new 125-line module lifted out of several others. One line in it carries a format placeholder with no argument. Nothing in the diff points at it \u2014 this is the needle case.",
+  "title": "Refactor helpers into util.py"
+}

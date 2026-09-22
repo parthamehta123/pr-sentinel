@@ -1,0 +1,54 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract|logic",
+      "file_path": "requests/sessions.py",
+      "line": 22,
+      "min_severity": "major",
+      "note": "implicit relative import; fails at module load under absolute_import / Python 3, and shadows any top-level \"adapters\" on the path"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 44,
+      "deletions": 26,
+      "filename": "requests/sessions.py",
+      "patch": "@@ -18,6 +18,8 @@\n from .utils import header_expand, from_key_val_list\n from .packages.urllib3.poolmanager import PoolManager\n \n+\n+from adapters import HTTPAdapter\n \n def merge_kwargs(local_kwarg, default_kwarg):\n     \"\"\"Merges kwarg dictionaries.\n@@ -114,24 +116,12 @@\n         for (k, v) in list(defaults.items()):\n             self.config.setdefault(k, deepcopy(v))\n \n-        self.init_poolmanager()\n-\n         # Set up a CookieJar to be used by default\n         if isinstance(cookies, cookielib.CookieJar):\n             self.cookies = cookies\n         else:\n             self.cookies = cookiejar_from_dict(cookies)\n \n-    def init_poolmanager(self):\n-        self.poolmanager = PoolManager(\n-            num_pools=self.config.get('pool_connections'),\n-            maxsize=self.config.get('pool_maxsize'),\n-            strict=not self.config.get('support_http0.9')\n-        )\n-\n-    def __repr__(self):\n-        return '<requests-client at 0x%x>' % (id(self))\n-\n     def __enter__(self):\n         return self\n \n@@ -139,14 +129,47 @@\n         self.close()\n \n     def close(self):\n-        \"\"\"Dispose of any internal state.\n-\n-        Currently, this just closes the PoolManager, which closes pooled\n-        connections.\n-        \"\"\"\n-        self.poolmanager.clear()\n+        pass\n \n     def request(self, method, url,\n+        params=None,\n+        data=None,\n+        headers=None,\n+        cookies=None,\n+        files=None,\n+        auth=None,\n+        timeout=None,\n+        allow_redirects=True,\n+        proxies=None,\n+        hooks=None,\n+        return_response=True,\n+        config=None,\n+        prefetch=None,\n+        verify=None,\n+        cert=None):\n+\n+        req = Request()\n+        req.method = method\n+        req.url = url\n+        req.headers = headers\n+        req.files = files\n+        req.data = data\n+        req.params = params\n+        req.auth = auth\n+        req.cookies = cookies\n+        # TODO: move to attached\n+        req.allow_redirects = allow_redirects\n+        req.proxies = proxies\n+        req.hooks = hooks\n+\n+        prep = req.prepare()\n+\n+        return self.send(prep)\n+\n+\n+\n+\n+    def old_request(self, method, url,\n         params=None,\n         data=None,\n         headers=None,\n@@ -268,13 +291,6 @@\n         # Send the HTTP Request.\n         return self._send_request(r, **args)\n \n-    def _send_request(self, r, **kwargs):\n-        # Send the request.\n-        r.send(prefetch=kwargs.get(\"prefetch\"))\n-\n-        # Return the response.\n-        return r.response\n-\n     def get(self, url, **kwargs):\n         \"\"\"Sends a GET request. Returns :class:`Response` object.\n \n@@ -346,7 +362,9 @@\n \n     def send(self, request):\n         \"\"\"Send a given PreparedRequest.\"\"\"\n-        return request.send()\n+        adapter = HTTPAdapter()\n+        r = adapter.send(request)\n+        return r\n \n     def __getstate__(self):\n         return dict((attr, getattr(self, attr, None)) for attr in self.__attrs__)",
+      "status": "modified"
+    }
+  ],
+  "id": "intro-requests-poolmanager",
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "resource_leak",
+      "file_path": "requests/sessions.py",
+      "line": 132,
+      "note": "close() no longer clears the PoolManager, so pooled connections are leaked"
+    },
+    {
+      "agent": "correctness",
+      "category": "readability|other",
+      "file_path": "requests/sessions.py",
+      "line": 172,
+      "note": "the previous implementation is left behind as dead code"
+    }
+  ],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "psf/requests 92d57036 (Apache-2.0, 2012-12-15) \u2014 introduced the defect fixed by ed360dca the same day. Paired with real-requests-relative-import.",
+  "summary": "The real commit, unedited, commit message and all: mid-refactor work in progress that moves sending onto an adapter. The bad import is one line among six hunks, two of which are legitimate findings in their own right.",
+  "title": "WHOOOOOOOOOOOOOOOO"
+}

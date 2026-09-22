@@ -2579,3 +2579,94 @@ case(
 """,
     },
 )
+
+
+# ---------------------------------------------------------------------------
+# Tranche 6 — the introducing commits
+#
+# Every case above that carries a real provenance is an *inverted fix*: I took
+# the commit that repaired a defect and ran it backwards. That is convenient and
+# it is not what a reviewer sees. The fix knows where the bug is — its diff is
+# centred on the defective line, and inverting it produces a small, suspiciously
+# well-aimed patch.
+#
+# These three are the real commits that introduced three of those same defects,
+# found by walking back from each fix with `git log -S` on the defective line
+# (`git blame` lands on later reformatting commits). The files are the upstream
+# files at that commit, unedited except for the label markers, and they live in
+# tests/eval/sources/ because they are far too long to sit inline here.
+#
+# They are deliberately paired with the inverted-fix versions of the same bugs —
+# real-tornado-multipart-boundary, real-urllib3-locationparseerror and
+# real-requests-relative-import. Same defect, two framings. A reviewer that
+# scores well on the inversion and poorly on the real commit is being flattered
+# by the inversion, and the pair is what makes that visible.
+# ---------------------------------------------------------------------------
+
+case(
+    id="intro-tornado-multipart",
+    title="Don't assume 'boundary' is last field in Content-Type header",
+    summary=(
+        "The real commit, unedited. It is itself a bug fix — it stops assuming "
+        "boundary comes last — and it introduced a new bug that took three days "
+        "to find. 493-line file, one changed hunk."
+    ),
+    provenance=(
+        "tornadoweb/tornado 9e965556 (Apache-2.0, 2010-11-19) — the commit that "
+        "introduced the defect fixed by 263994e8 three days later. Paired with "
+        "real-tornado-multipart-boundary, which is 263994e8 inverted."
+    ),
+    expected_decision=None,
+    source_dir="intro-tornado-multipart",
+)
+
+case(
+    id="intro-urllib3-util-refactor",
+    title="Refactor helpers into util.py",
+    summary=(
+        "The real commit, unedited: a new 125-line module lifted out of several "
+        "others. One line in it carries a format placeholder with no argument. "
+        "Nothing in the diff points at it — this is the needle case."
+    ),
+    provenance=(
+        "urllib3/urllib3 d8ff66d0 (MIT, 2012-02-05) — introduced the defect fixed "
+        "by de20783d seven weeks later. Paired with real-urllib3-locationparseerror."
+    ),
+    expected_decision=None,
+    source_dir="intro-urllib3-util-refactor",
+)
+
+case(
+    id="intro-requests-poolmanager",
+    title="WHOOOOOOOOOOOOOOOO",
+    summary=(
+        "The real commit, unedited, commit message and all: mid-refactor work in "
+        "progress that moves sending onto an adapter. The bad import is one line "
+        "among six hunks, two of which are legitimate findings in their own right."
+    ),
+    provenance=(
+        "psf/requests 92d57036 (Apache-2.0, 2012-12-15) — introduced the defect "
+        "fixed by ed360dca the same day. Paired with real-requests-relative-import."
+    ),
+    expected_decision=None,
+    source_dir="intro-requests-poolmanager",
+)
+
+
+case(
+    id="intro-tornado-cookies-move",
+    title="Move 'cookies' property from RequestHandler to HTTPRequest",
+    summary=(
+        "The real commit, unedited, and the hardest of the four: a two-file move. "
+        "The defective line is in httpserver.py, the code it breaks is in web.py, "
+        "and the commit touches both — but the broken caller is not itself changed, "
+        "so it never appears in the diff."
+    ),
+    provenance=(
+        "tornadoweb/tornado 4a4d8717 (Apache-2.0, 2011-08-18) — introduced the "
+        "defect fixed by f0df94ca ('fix crash on invalid Cookie header') nearly "
+        "three months later. Paired with real-tornado-cookie-crash."
+    ),
+    expected_decision=None,
+    source_dir="intro-tornado-cookies-move",
+)

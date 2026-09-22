@@ -107,9 +107,38 @@ def make_patch(path: str, before: str, after: str) -> str:
     return "\n".join(body)
 
 
+SOURCES = ROOT / "tests" / "eval" / "sources"
+
+
+def _read_source_dir(name: str) -> tuple[dict[str, str], dict[str, str]]:
+    """Load a mined case from files on disk.
+
+    A case built from a real commit carries that commit's real files, which are
+    far too long to sit inside `cases.py` and would drown the hand-written cases
+    around them. They live under `tests/eval/sources/<name>/{before,after}/`
+    instead, with the same marker syntax in the `after` copy.
+    """
+    root = SOURCES / name
+    if not root.is_dir():
+        raise FileNotFoundError(f"no source directory {root}")
+    out: list[dict[str, str]] = []
+    for side in ("before", "after"):
+        files = {}
+        base = root / side
+        if base.is_dir():
+            for path in sorted(base.rglob("*")):
+                if path.is_file():
+                    files[str(path.relative_to(base))] = path.read_text()
+        out.append(files)
+    return out[0], out[1]
+
+
 def build_case(case: dict) -> dict:
-    before_files: dict[str, str] = case.get("before", {})
-    after_raw: dict[str, str] = case["after"]
+    if "source_dir" in case:
+        before_files, after_raw = _read_source_dir(case["source_dir"])
+    else:
+        before_files = case.get("before", {})
+        after_raw = case["after"]
 
     files: list[dict] = []
     expected: list[dict] = []

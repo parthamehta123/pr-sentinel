@@ -520,3 +520,87 @@ where every labelled defect is obvious stops discriminating once a model gets go
 - **The set is too small.** Run-to-run spread on an unchanged configuration is
   ±0.04 overall precision and ±0.15 for a single agent. Anything smaller than that
   cannot be measured here. More cases, not more repetitions.
+
+---
+
+## Mined from the introducing commits
+
+Every case with a real provenance before this one is an **inverted fix**: I took
+the upstream commit that repaired a defect and ran it backwards. It is a usable
+proxy and it flatters the reviewer, for a reason worth stating plainly — the fix
+already knows where the bug is. Its diff is centred on the defective line, so
+inverting it produces a small, well-aimed patch in which the defect is most of
+what changed. A reviewer does not get that. A reviewer gets the commit that
+shipped the defect: a feature or a refactor, larger, with the defect one line
+among many that all look equally plausible.
+
+These four are those commits — the real upstream files at the real SHA, unedited
+except for the label markers, which is why they live in `tests/eval/sources/`
+rather than inline in `cases.py`.
+
+| case | introducing commit | changed | the fix came |
+|---|---|---|---|
+| `intro-tornado-multipart` | `9e965556` *"Don't assume 'boundary' is last field in Content-Type header"* | 9 lines | 3 days later |
+| `intro-tornado-cookies-move` | `4a4d8717` *"Move 'cookies' property from RequestHandler to HTTPRequest"* | 33 lines, 2 files | 3 months later |
+| `intro-urllib3-util-refactor` | `d8ff66d0` *"Refactor helpers into util.py"* | 125 lines, new file | 7 weeks later |
+| `intro-requests-poolmanager` | `92d57036` *"WHOOOOOOOOOOOOOOOO"* | 70 lines | same day |
+
+Each is deliberately **paired** with the inverted-fix case for the same defect —
+`real-tornado-multipart-boundary`, `real-tornado-cookie-crash`,
+`real-urllib3-locationparseerror`, `real-requests-relative-import`. Same bug,
+two framings. If the reviewer scores well on the inversion and badly on the real
+commit, the inversion was flattering it, and the pair is what makes that visible.
+That comparison is the point of the tranche and it has **not been run yet** — see
+below.
+
+Two of them are worth describing, because they are shapes the hand-written cases
+do not contain:
+
+- **`intro-urllib3-util-refactor` is a needle.** The commit creates a 125-line
+  module by lifting helpers out of several others. Every line is an addition, so
+  nothing in the diff is a signal — there is no small edit to draw the eye. The
+  defect is `raise LocationParseError("Failed to parse: %s")`, a format
+  placeholder with no argument, one line in 125.
+- **`intro-tornado-cookies-move` spans two files and the broken caller is in
+  neither diff hunk that contains the bug.** The commit adds an `HTTPRequest.cookies`
+  property that sets `self._cookies = None` when the header will not parse. The
+  code that breaks is `get_cookie` in `web.py`, which does
+  `if name in self.request.cookies` — and that line is *not modified by the
+  commit*, so it never appears as a changed line. Finding this requires reading
+  the new property's contract against a caller the diff does not show.
+
+### Finding them: `git log -S`, not `git blame`
+
+Blaming the fix's parent is the obvious approach and it failed twice:
+
+- **Merge SHAs mostly do not resolve.** GitHub's `merge_commit_sha` is a test-merge
+  computed for the PR page; for older pull requests it was frequently never
+  pushed, so a full clone has never heard of it.
+- **Blame lands on reformatting.** Every one of these repositories has a commit
+  like tornado's `e211ec0a` *"adding black formatter to all the code"* touching
+  308 files, and blame correctly reports it as the last toucher of every line.
+  Skipping those by subject and file count is a heuristic that needs re-tuning
+  per repository and still misses smaller reindents.
+
+`git log -S<content>` searches for commits that change the *number of occurrences*
+of a string. A pure whitespace commit does not change that count, so it is
+invisible to the search for free — no heuristic, no tuning. `scripts/mine_introducers.py`
+is built on this and reproduces all four results deterministically from one
+command. Scrapy could not be traced this way and was dropped: its defective line
+is not distinctive enough to search on.
+
+### Not yet measured
+
+The four cases are built, their labels validated against the computed diffs, and
+the set is at 63 fixtures / 73 required labels. **No model has seen them.** The
+run was attempted and refused by the outage guard — 3 of 3 cases lost their whole
+panel — because the API key is no longer present in this environment; `.env` has
+`ANTHROPIC_API_KEY=` empty, the key having only ever lived in the shell. Nothing
+was scored and nothing was saved, which is the guard behaving correctly: a
+partial run is not a result.
+
+So the interesting number — inverted fix versus real introducing commit, on the
+same four defects — does not exist yet. My expectation, recorded before the fact
+so it can be wrong: recall will drop on `intro-urllib3-util-refactor` and
+`intro-tornado-cookies-move`, and hold on the other two, which are small enough
+that the inversion was not doing much work.

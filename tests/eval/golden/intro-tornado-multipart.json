@@ -1,0 +1,39 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "tornado/httpserver.py",
+      "line": 362,
+      "min_severity": "major",
+      "note": "field is not stripped, so k is \" boundary\" for any sender that puts a space after the semicolon (Firefox, Safari); the comparison fails and the body is silently never parsed"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 3,
+      "filename": "tornado/httpserver.py",
+      "patch": "@@ -357,9 +357,12 @@\n                         self._request.arguments.setdefault(name, []).extend(\n                             values)\n             elif content_type.startswith(\"multipart/form-data\"):\n-                if 'boundary=' in content_type:\n-                    boundary = content_type.split('boundary=',1)[1]\n-                    if boundary: self._parse_mime_body(boundary, data)\n+                fields = content_type.split(\";\")\n+                for field in fields:\n+                    k, sep, v = field.partition(\"=\")\n+                    if k == \"boundary\" and v:\n+                        self._parse_mime_body(v, data)\n+                        break\n                 else:\n                     logging.warning(\"Invalid multipart/form-data\")\n         self.request_callback(self._request)",
+      "status": "modified"
+    }
+  ],
+  "id": "intro-tornado-multipart",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "tornadoweb/tornado 9e965556 (Apache-2.0, 2010-11-19) \u2014 the commit that introduced the defect fixed by 263994e8 three days later. Paired with real-tornado-multipart-boundary, which is 263994e8 inverted.",
+  "summary": "The real commit, unedited. It is itself a bug fix \u2014 it stops assuming boundary comes last \u2014 and it introduced a new bug that took three days to find. 493-line file, one changed hunk.",
+  "title": "Don't assume 'boundary' is last field in Content-Type header"
+}

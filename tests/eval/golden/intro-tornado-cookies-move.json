@@ -1,0 +1,46 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "error_handling|api_contract",
+      "file_path": "tornado/httpserver.py",
+      "line": 523,
+      "min_severity": "major",
+      "note": "on a malformed Cookie header the property yields None rather than an empty SimpleCookie, and every caller does `name in self.request.cookies`, so a header any client can send turns a parse failure into a TypeError"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 14,
+      "deletions": 0,
+      "filename": "tornado/httpserver.py",
+      "patch": "@@ -24,6 +24,7 @@\n `tornado.web.RequestHandler.request`.\n \"\"\"\n \n+import Cookie\n import errno\n import logging\n import os\n@@ -509,6 +510,19 @@\n         \"\"\"Returns True if this request supports HTTP/1.1 semantics\"\"\"\n         return self.version == \"HTTP/1.1\"\n \n+    @property\n+    def cookies(self):\n+        \"\"\"A dictionary of Cookie.Morsel objects.\"\"\"\n+        if not hasattr(self, \"_cookies\"):\n+            self._cookies = Cookie.SimpleCookie()\n+            if \"Cookie\" in self.headers:\n+                try:\n+                    self._cookies.load(\n+                        native_str(self.headers[\"Cookie\"]))\n+                except Exception:\n+                    self._cookies = None\n+        return self._cookies\n+\n     def write(self, chunk, callback=None):\n         \"\"\"Writes the given chunk to the response stream.\"\"\"\n         assert isinstance(chunk, bytes_type)",
+      "status": "modified"
+    },
+    {
+      "additions": 3,
+      "deletions": 16,
+      "filename": "tornado/web.py",
+      "patch": "@@ -316,23 +316,10 @@\n         \"\"\"\n         return _unicode(value)\n \n-    @property\n-    def cookies(self):\n-        \"\"\"A dictionary of Cookie.Morsel objects.\"\"\"\n-        if not hasattr(self, \"_cookies\"):\n-            self._cookies = Cookie.SimpleCookie()\n-            if \"Cookie\" in self.request.headers:\n-                try:\n-                    self._cookies.load(\n-                        escape.native_str(self.request.headers[\"Cookie\"]))\n-                except Exception:\n-                    self.clear_all_cookies()\n-        return self._cookies\n-\n     def get_cookie(self, name, default=None):\n         \"\"\"Gets the value of the cookie with the given name, else default.\"\"\"\n-        if name in self.cookies:\n-            return self.cookies[name].value\n+        if name in self.request.cookies:\n+            return self.request.cookies[name].value\n         return default\n \n     def set_cookie(self, name, value, domain=None, expires=None, path=\"/\",\n@@ -377,7 +364,7 @@\n \n     def clear_all_cookies(self):\n         \"\"\"Deletes all the cookies the user sent with this request.\"\"\"\n-        for name in self.cookies.iterkeys():\n+        for name in self.request.cookies.iterkeys():\n             self.clear_cookie(name)\n \n     def set_secure_cookie(self, name, value, expires_days=30, **kwargs):",
+      "status": "modified"
+    }
+  ],
+  "id": "intro-tornado-cookies-move",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "tornadoweb/tornado 4a4d8717 (Apache-2.0, 2011-08-18) \u2014 introduced the defect fixed by f0df94ca ('fix crash on invalid Cookie header') nearly three months later. Paired with real-tornado-cookie-crash.",
+  "summary": "The real commit, unedited, and the hardest of the four: a two-file move. The defective line is in httpserver.py, the code it breaks is in web.py, and the commit touches both \u2014 but the broken caller is not itself changed, so it never appears in the diff.",
+  "title": "Move 'cookies' property from RequestHandler to HTTPRequest"
+}
