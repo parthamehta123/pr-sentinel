@@ -891,3 +891,28 @@ A label with sound reasoning and a label with unsound reasoning are numerically
 identical, so the only thing standing between a justified `ALLOW` and a rubber
 stamp is somebody reading the source. Two passes, by two different models, both
 produced notes that asserted more than the diff showed.
+
+### The rerun that did not happen, and what it cost to learn
+
+The corrected labels were never measured. The rerun reached 344 successful model
+calls — run 1 of 3 complete, run 2 about a third in — and then the credit balance
+ran out. 39 of 63 cases lost their whole panel, the guard refused, and **nothing
+was saved.**
+
+Including run 1, which had completed cleanly, with every case getting its whole
+panel, at a cost of roughly $5. The guard raised, the exception propagated out of
+the loop, and the completed run went with it.
+
+That was wrong, and it is fixed. The guard's job is to stop a *partial* run being
+scored as though it were complete. A run that already finished is not partial, and
+an outage in run N says nothing about runs 1..N-1. `run_eval` now discards the
+outage run, keeps what completed, logs `eval.run.outage`, and returns a spread
+over fewer runs rather than over none. An outage in the *first* run still
+propagates, because then there is genuinely nothing to report.
+
+So the open question stands, unmeasured: **does unlabelled-per-run come back near
+zero on a fresh sample, or near thirteen?** The prediction on record is 4–9 —
+neither. If it is near zero the 22 labels generalise and strict precision means
+something again; if it is near thirteen the labelling pass was fitting one sample
+and strict precision will never converge. That is the experiment worth buying with
+the next $15.

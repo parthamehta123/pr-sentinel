@@ -83,7 +83,25 @@ async def run_eval(
         if repeat > 1:
             log.info("eval.run", run=run + 1, of=repeat)
         results = await asyncio.gather(*(guarded(c) for c in cases))
-        _refuse_if_everything_failed(list(results))
+        try:
+            _refuse_if_everything_failed(list(results))
+        except EvalRunFailed:
+            # An outage in run N does not retract runs 1..N-1. Those completed,
+            # every case in them got its whole panel, and they cost real money.
+            # Discarding them loses good data to protect against bad data that is
+            # already being discarded on its own. Keep what completed, drop the
+            # outage run, and say so — the caller reports a spread over fewer runs
+            # rather than over none.
+            if not reports:
+                raise
+            log.warning(
+                "eval.run.outage",
+                run=run + 1,
+                of=repeat,
+                completed=len(reports),
+                detail="run discarded; earlier completed runs kept",
+            )
+            break
         reports.append(
             score(
                 list(results),

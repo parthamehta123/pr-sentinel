@@ -786,3 +786,57 @@ def test_rescore_refuses_to_overwrite_the_recorded_run(tmp_path):
     assert out.returncode != 0
     assert "refusing to write over" in out.stderr
     assert recorded.read_text() == before
+
+
+def _run_eval_with_outage_on(run_number: int, *, repeat: int, monkeypatch):
+    """Drive the real run_eval, failing the guard on `run_number`."""
+    import asyncio
+
+    from pr_sentinel.evaluation import runner as R
+
+    seen = {"n": 0}
+
+    def fake_guard(results):
+        seen["n"] += 1
+        if seen["n"] == run_number:
+            raise R.EvalRunFailed("simulated outage")
+
+    async def fake_run_case(case, engine_name, budget_cap_usd):
+        return object()
+
+    monkeypatch.setattr(R, "_refuse_if_everything_failed", fake_guard)
+    monkeypatch.setattr(R, "run_case", fake_run_case)
+    fake_case = type("C", (), {"id": "fake-case"})()
+    monkeypatch.setattr(R, "load_cases", lambda only=None: [fake_case])
+    monkeypatch.setattr(R, "score", lambda results, **kw: {"run": seen["n"]})
+    monkeypatch.setattr(R, "get_provider", lambda: type("P", (), {"name": "fake"})())
+    return asyncio.run(R.run_eval(repeat=repeat))
+
+
+def test_outage_in_a_later_run_keeps_the_runs_that_completed(monkeypatch):
+    """A credit exhaustion in run 2 must not retract run 1.
+
+    Run 1 completed, every case in it got its whole panel, and it cost real
+    money. Discarding it loses good data to guard against bad data that is
+    already being discarded on its own. Seen for real: run 1 of a --repeat 3
+    finished cleanly, run 2 lost 39 of 63 panels, and the exception threw away
+    run 1 along with it.
+    """
+    reports = _run_eval_with_outage_on(2, repeat=3, monkeypatch=monkeypatch)
+    assert len(reports) == 1, "the completed run should survive the later outage"
+
+
+def test_outage_in_the_first_run_still_refuses(monkeypatch):
+    """With nothing completed there is nothing to keep, so it must propagate."""
+    import pytest
+
+    from pr_sentinel.evaluation.runner import EvalRunFailed
+
+    with pytest.raises(EvalRunFailed):
+        _run_eval_with_outage_on(1, repeat=3, monkeypatch=monkeypatch)
+
+
+def test_a_clean_repeat_still_returns_every_run(monkeypatch):
+    """The guard must not cost a run when nothing goes wrong."""
+    reports = _run_eval_with_outage_on(99, repeat=3, monkeypatch=monkeypatch)
+    assert len(reports) == 3
