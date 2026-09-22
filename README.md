@@ -123,10 +123,11 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
   cost per review     $0.070   $0.067   $0.075
 ```
 
-All 37 labelled defects found in every run. One disagreement survives every run
-recorded so far: wildcard CORS with credentials is found and rated below
-`critical`, so the never-post-critical-security rule does not fire and the review
-auto-posts. Six consistent samples make that the strongest open signal.
+All 37 labelled defects found in every run, and every gate decision matching its
+label in two runs of three. The last standing disagreement — wildcard CORS with
+credentials rated `major` and therefore auto-posted — was a judgement call about
+what `critical` means, decided and recorded in
+[ADR-0006](docs/adr/0006-confidence-gate-and-security-escalation.md).
 
 With precision at 0.987 and recall at 1.000 the set is close to saturated again —
 still a working regression gate, no longer able to rank two good configurations.

@@ -39,12 +39,8 @@ change is an improvement. It remains useful as a regression gate — it would st
 catch something breaking — but it can no longer rank two good configurations, and
 that is again an argument for more and harder cases rather than more tuning.
 
-**One disagreement survives everything.** `sec-cors-wildcard-credentials` wants
-`escalate` and gets `auto_post` in all six runs recorded either side of this fix:
-the model finds wildcard CORS with credentials every time and rates it below
-`critical`, so the never-post-critical-security rule does not fire. Six consistent
-samples make it the strongest remaining signal in this file, and it is a question
-about severity judgement rather than detection.
+**The one surviving disagreement has been resolved** — see the severity A/B
+below.
 
 The false positive on the clean TypeScript refactor did not appear in any of the
 three runs after the fix, having appeared in two of three before. Nothing in the
@@ -52,6 +48,47 @@ change plausibly addresses it and `compare_arms.py` reads the difference as nois
 so treat it as unresolved.
 
 ---
+
+---
+
+## A/B: what counts as a `critical` security finding
+
+`sec-cors-wildcard-credentials` was found in all six runs recorded up to this
+point, rated `major` every time, and therefore auto-posted rather than escalated.
+The data could not say whether the model was under-rating it or the label was
+wrong; that was a judgement call, and it was made: a wildcard origin with
+credentials lets any site read authenticated responses, so it is critical.
+
+The guidance written from that is about the principle, not about CORS — a rule
+naming one misconfiguration teaches nothing about the next one. Rate by what is at
+stake if you are right, not by how many steps someone would need to take; and for
+security, `critical` covers a control removed, weakened or bypassed, whether or
+not an end-to-end exploit is demonstrated.
+
+Three runs per arm, raw data in `baselines/ab-severity-{old,new}.json`:
+
+| | old | new |
+|---|---|---|
+| the case's severity | `major`, `major`, `major` | **`critical` ×3** |
+| the case's decision | `auto_post` ×3 | **`escalate` ×3** |
+| precision strict | 0.987 | 0.983 |
+| recall | 1.000 | 1.000 |
+| negative controls | 12× suppress | 12× suppress |
+| escalated cases, of 34 | 8.0 (7–9) | 9.7 (9–10) |
+| cost per review | $0.070 | $0.071 |
+
+Everything except the target moved within noise, and the four negative controls
+stayed silent in all three runs, so the broadening did not leak into cases where
+the right answer is nothing.
+
+**The number to watch is escalations: 8.0 → 9.7 of 34.** Within noise at n=3, but
+in the direction you would expect, and it is the real cost of the decision.
+Broadening `critical` spends human queue capacity, which is the resource the whole
+system exists to protect.
+
+One wobble worth recording: `sec-path-traversal` wanted `escalate` and got
+`auto_post` in one run of three, having escalated reliably before. One sample in
+three is not a finding, but it is the kind of thing that becomes one.
 
 ---
 

@@ -46,6 +46,40 @@ The escalation rate on the dashboard is the feedback signal: 90% means the model
 is not calibrated or the thresholds are too high; 2% probably means the model is
 not being honest about its uncertainty.
 
+## Amendment, 2026-09-22 — what counts as `critical`
+
+Six consecutive eval runs showed wildcard CORS with credentials being found every
+time and rated `major`, so the never-post rule never fired and the review was
+posted publicly. Two readings were defensible: the model was under-rating a
+genuine critical, or the band was right and auto-posting was correct.
+
+**Decided: it is critical.** A wildcard origin combined with credentials lets any
+site on the internet read authenticated responses. That the attack needs a victim
+to visit a page is the attacker's problem, not a reason to discount what they get.
+
+The guidance that follows from it is deliberately about the principle rather than
+about CORS, because a rule naming one misconfiguration teaches nothing about the
+next one:
+
+> Rate by what is at stake if you are right, not by how many steps someone would
+> have to take to get there.
+
+and, for security specifically, `critical` covers a change that removes, weakens
+or bypasses a control — an authorisation check no longer applied, an allowlist
+widened to admit anything, verification switched off, a credential exposed —
+whether or not an end-to-end exploit is demonstrated. "The control is off" is more
+serious than "the control has a bug in it", not less. `major` keeps the defects
+that make an attack easier without themselves granting access: a weak hash behind
+a strong one, a missing rate limit, a timing side channel.
+
+Measured over three runs per arm: the case moved to `critical` and `escalate` in
+all three, precision and recall held, the four negative controls stayed silent,
+and escalations across the set went from 8.0 to 9.7 of 34 cases — within noise at
+n=3, but in the direction you would expect. **That number is the cost of this
+decision.** Broadening `critical` spends human queue capacity, which is the
+resource the whole system exists to protect, so it is worth watching as the corpus
+grows rather than assuming it stays small.
+
 ## What would make this wrong
 
 A private repository with a security team already in the loop might reasonably
