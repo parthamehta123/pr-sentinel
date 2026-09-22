@@ -98,20 +98,32 @@ class EvalRunFailed(RuntimeError):
     """Every agent failed, so the run measures the outage and not the reviewer."""
 
 
-def _refuse_if_everything_failed(results: list) -> None:
-    """Stop a dead run from being mistaken for a perfect one.
+# Above this share of cases losing their whole panel, the run is an outage.
+# Below it, a degraded result is still a result and is scored.
+OUTAGE_THRESHOLD = 0.25
 
-    An exhausted credit balance made every agent fail. The report that came back
-    read `calibration error 0.000`, `0 findings`, `$0.0000` — which is what a
-    flawless run of a reviewer that says nothing also looks like — and it
-    overwrote a good baseline on its way past. A regression gate fed that would
-    have passed.
+
+def _refuse_if_everything_failed(results: list) -> None:
+    """Stop a dead or half-dead run from being mistaken for a result.
+
+    First seen when an exhausted credit balance made every agent fail: the report
+    read `calibration error 0.000`, `0 findings`, `$0.0000` — which is also what a
+    flawless run of a reviewer that says nothing looks like — and it overwrote a
+    good baseline on its way past.
+
+    Then seen again, worse, when the balance ran out *part way through*: two runs
+    of a repeat completed and the third lost 31 of 53 cases. Nothing refused it,
+    and because the summary reports the last run, the headline recall read 0.349
+    for a reviewer that had just scored 1.000 twice. A partial outage is more
+    dangerous than a total one, because it looks like a measurement.
     """
     if not results:
         return
-    if all(len(r.failed_agents) == len(ALL_AGENTS) for r in results):
+    dead = sum(1 for r in results if len(r.failed_agents) == len(ALL_AGENTS))
+    if dead and dead / len(results) > OUTAGE_THRESHOLD:
         raise EvalRunFailed(
-            f"every agent failed in all {len(results)} case(s) — this is an outage, "
-            "not a result. Nothing was scored or saved. Check the worker log for the "
+            f"{dead} of {len(results)} case(s) lost their whole panel — this is an "
+            "outage, not a result, and the cases that did run are whichever ones got "
+            "in first. Nothing was scored or saved. Check the worker log for the "
             "provider error (an exhausted credit balance looks exactly like this)."
         )

@@ -1,0 +1,39 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "requests/sessions.py",
+      "line": 9,
+      "min_severity": "major",
+      "note": "implicit relative imports were removed in Python 3, so this raises ImportError there while every other import in the module uses the explicit form"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "requests/sessions.py",
+      "patch": "@@ -6,7 +6,7 @@\n from .packages.urllib3.poolmanager import PoolManager\n \n \n-from .adapters import HTTPAdapter\n+from adapters import HTTPAdapter\n \n \n def merge_kwargs(local_kwarg, default_kwarg):",
+      "status": "modified"
+    }
+  ],
+  "id": "real-requests-implicit-relative-import",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "psf/requests#1011 (Apache-2.0) \u2014 'Fixed relative import'",
+  "summary": "An implicit relative import. Inverted from the fix that made it explicit.",
+  "title": "Drop the leading dot from the adapters import"
+}

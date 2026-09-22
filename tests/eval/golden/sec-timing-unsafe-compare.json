@@ -39,6 +39,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A signature compared with ==, one line below one compared with compare_digest.",
   "title": "Add a second webhook provider"
 }

@@ -30,6 +30,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "TypeScript. A discriminated-union refactor that removes a cast and makes the code safer. Any finding here is a false positive.",
   "title": "Narrow the event union"
 }

@@ -1,0 +1,44 @@
+{
+  "context_files": [
+    {
+      "content": "    async def _wait(self, func_name: str) -> None:\n        \"\"\"Wake when the feeder calls feed_data() OR feed_eof().\n\n        The waiter is also resolved at the end of a chunk, which can happen with\n        no new data in the buffer, so a caller must re-check its condition after\n        waking rather than assuming data arrived.\n        \"\"\"\n        waiter = self._waiter = self._loop.create_future()\n        await waiter\n",
+      "path": "aiohttp/streams.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "concurrency",
+      "file_path": "aiohttp/streams.py",
+      "line": 5,
+      "min_severity": "major",
+      "note": "the waiter also resolves at the end of a chunk with nothing added to the buffer, so a single if returns an empty read instead of waiting again"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "aiohttp/streams.py",
+      "patch": "@@ -2,7 +2,7 @@\n         if self._exception is not None:\n             raise self._exception\n \n-        while not self._buffer and not self._eof:\n+        if not self._buffer and not self._eof:\n             await self._wait('readany')\n \n         return self._read_nowait(-1)",
+      "status": "modified"
+    }
+  ],
+  "id": "real-aiohttp-stream-single-wait",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "aio-libs/aiohttp#3527 (Apache-2.0) \u2014 'Fix stream .read() / .readany() / .iter_any()'",
+  "summary": "A while loop turned into a single if. Inverted from the fix for reads returning empty when the waiter is woken without data.",
+  "title": "Simplify the stream read wait"
+}

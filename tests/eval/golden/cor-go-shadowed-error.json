@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Go. An error shadowed inside an if-scope, so the failure is dropped.",
   "title": "Add the settlement writer"
 }

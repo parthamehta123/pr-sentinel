@@ -47,6 +47,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A get_* that mutates, alongside a get_* that does not.",
   "title": "Add a cached lookup helper"
 }

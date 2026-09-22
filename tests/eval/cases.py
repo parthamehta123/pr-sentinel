@@ -2036,3 +2036,268 @@ case(
     before={"billing/lines.py": _rename_module("calc", ">=")},
     after={"billing/lines.py": _rename_module("compute", "MARK")},
 )
+
+
+# ===========================================================================
+# Fourth tranche — mined from real merged pull requests.
+#
+# Every case above this line was written by me, which means I knew where the
+# defect was before the reviewer did, and the set kept saturating because of it.
+# These are different: each one is a defect that a real maintainer found in real
+# code and merged a fix for.
+#
+# They are built by *inverting* the fix — the change under review is the one that
+# puts the bug back. That is not the same as the pull request which originally
+# introduced it, and the labels come from what the fix did rather than from what
+# a reviewer said at the time. What they do give is a defect whose existence was
+# judged by somebody other than me.
+#
+# The excerpts are short passages from permissively licensed projects, and each
+# case records its repository, pull request and licence. `scripts/mine_cases.py`
+# finds candidates; choosing and labelling them is by hand, because "the commit
+# message says fix" is not the same as "here is the defect and here is where".
+# ===========================================================================
+
+case(
+    id="real-tornado-cookie-none-guard",
+    title="Simplify get_cookie",
+    summary=(
+        "Drops the None check on request.cookies. Inverted from the fix for a "
+        "crash on a malformed Cookie header."
+    ),
+    provenance="tornadoweb/tornado#397 (Apache-2.0) — 'Invalid Cookie header crashes get_cookie'",
+    expected_decision=None,
+    context={
+        "tornado/httpserver.py": '''    @property
+    def cookies(self):
+        """A dictionary of Cookie.Morsel objects.
+
+        Set to None when the Cookie header is present but cannot be parsed, so
+        every consumer has to allow for that.
+        """
+        if self._cookies is None:
+            return None
+        return self._cookies
+''',
+    },
+    before={
+        "tornado/web.py": '''    def get_cookie(self, name, default=None):
+        """Gets the value of the cookie with the given name, else default."""
+        if self.request.cookies is not None and name in self.request.cookies:
+            return self.request.cookies[name].value
+        return default
+''',
+    },
+    after={
+        "tornado/web.py": '''    def get_cookie(self, name, default=None):
+        """Gets the value of the cookie with the given name, else default."""
+        #!EXPECT agent=correctness category=logic|input_validation severity>=major :: request.cookies is None when the Cookie header cannot be parsed, so a malformed header turns this lookup into a TypeError instead of returning the default
+        if name in self.request.cookies:
+            return self.request.cookies[name].value
+        return default
+''',
+    },
+)
+
+case(
+    id="real-tornado-multipart-boundary",
+    title="Tidy the multipart content-type parsing",
+    summary=(
+        "Drops a .strip() while parsing content-type parameters. Inverted from "
+        "the fix for multipart/form-data bodies silently not being parsed."
+    ),
+    provenance="tornadoweb/tornado#177 (Apache-2.0) — 'Fix for multipart/form-data requests'",
+    expected_decision=None,
+    before={
+        "tornado/httpserver.py": """            elif content_type.startswith("multipart/form-data"):
+                fields = content_type.split(";")
+                for field in fields:
+                    k, sep, v = field.strip().partition("=")
+                    if k == "boundary" and v:
+                        self._parse_mime_body(v, data)
+                        break
+""",
+    },
+    after={
+        "tornado/httpserver.py": """            elif content_type.startswith("multipart/form-data"):
+                fields = content_type.split(";")
+                for field in fields:
+                    #!EXPECT agent=correctness category=logic|input_validation severity>=major :: content-type parameters are separated by "; ", so every field after the first keeps a leading space and never equals "boundary"; the body is then silently not parsed
+                    k, sep, v = field.partition("=")
+                    if k == "boundary" and v:
+                        self._parse_mime_body(v, data)
+                        break
+""",
+    },
+)
+
+case(
+    id="real-urllib3-format-placeholder",
+    title="Shorten the parse error message",
+    summary=(
+        "A format placeholder left without its argument. Inverted from the fix "
+        "that added the url to the message."
+    ),
+    provenance="urllib3/urllib3#64 (MIT) — 'Added url to LocationParseError message'",
+    expected_decision=None,
+    before={
+        "urllib3/util.py": '''def get_host(url):
+    """Given a url, return its scheme, host and port (None if default)."""
+    if ':' in url:
+        url, port = url.split(':', 1)
+
+        if not port.isdigit():
+            raise LocationParseError("Failed to parse: %s" % url)
+
+        port = int(port)
+
+    return url, port
+''',
+    },
+    after={
+        "urllib3/util.py": '''def get_host(url):
+    """Given a url, return its scheme, host and port (None if default)."""
+    if ':' in url:
+        url, port = url.split(':', 1)
+
+        if not port.isdigit():
+            #!EXPECT agent=correctness category=logic severity>=minor :: the %s placeholder has no argument, so the error reads literally "Failed to parse: %s" and tells whoever is debugging nothing
+            raise LocationParseError("Failed to parse: %s")
+
+        port = int(port)
+
+    return url, port
+''',
+    },
+)
+
+case(
+    id="real-aiohttp-stream-single-wait",
+    title="Simplify the stream read wait",
+    summary=(
+        "A while loop turned into a single if. Inverted from the fix for reads "
+        "returning empty when the waiter is woken without data."
+    ),
+    provenance="aio-libs/aiohttp#3527 (Apache-2.0) — 'Fix stream .read() / .readany() / .iter_any()'",
+    expected_decision=None,
+    context={
+        "aiohttp/streams.py": '''    async def _wait(self, func_name: str) -> None:
+        """Wake when the feeder calls feed_data() OR feed_eof().
+
+        The waiter is also resolved at the end of a chunk, which can happen with
+        no new data in the buffer, so a caller must re-check its condition after
+        waking rather than assuming data arrived.
+        """
+        waiter = self._waiter = self._loop.create_future()
+        await waiter
+''',
+    },
+    before={
+        "aiohttp/streams.py": """    async def readany(self) -> bytes:
+        if self._exception is not None:
+            raise self._exception
+
+        while not self._buffer and not self._eof:
+            await self._wait('readany')
+
+        return self._read_nowait(-1)
+""",
+    },
+    after={
+        "aiohttp/streams.py": """    async def readany(self) -> bytes:
+        if self._exception is not None:
+            raise self._exception
+
+        #!EXPECT agent=correctness category=concurrency severity>=major :: the waiter also resolves at the end of a chunk with nothing added to the buffer, so a single if returns an empty read instead of waiting again
+        if not self._buffer and not self._eof:
+            await self._wait('readany')
+
+        return self._read_nowait(-1)
+""",
+    },
+)
+
+case(
+    id="real-aiohttp-location-attribute-type",
+    title="Assign the parsed location once",
+    summary=(
+        "A public attribute changes from the string it was given to a URL "
+        "object. Inverted from the fix that put it back."
+    ),
+    provenance="aio-libs/aiohttp#3615 (Apache-2.0) — 'Fix backport of redirect URL fix to 3.5'",
+    expected_decision=None,
+    context={
+        "docs/web_reference.rst": """.. attribute:: HTTPMove.location
+
+   The location the response redirects to, **as the string it was constructed
+   with**. Application code compares it against configured strings and passes it
+   to ``str.startswith``.
+""",
+    },
+    before={
+        "aiohttp/web_exceptions.py": """class _HTTPMove(HTTPRedirection):
+    def __init__(self, location, *, headers=None, reason=None,
+                 body=None, text=None, content_type=None):
+        if not location:
+            raise ValueError("HTTP redirects need a location to redirect to.")
+        super().__init__(headers=headers, reason=reason,
+                         body=body, text=text, content_type=content_type)
+        self.headers['Location'] = str(URL(location))
+        self.location = location
+""",
+    },
+    after={
+        "aiohttp/web_exceptions.py": """class _HTTPMove(HTTPRedirection):
+    def __init__(self, location, *, headers=None, reason=None,
+                 body=None, text=None, content_type=None):
+        if not location:
+            raise ValueError("HTTP redirects need a location to redirect to.")
+        super().__init__(headers=headers, reason=reason,
+                         body=body, text=text, content_type=content_type)
+        #!EXPECT agent=correctness category=api_contract severity>=minor :: location is documented as the string it was constructed with; handing callers a URL object instead breaks startswith and any equality check against a configured string
+        self.location = URL(location)
+        self.headers['Location'] = str(self.location)
+""",
+    },
+)
+
+case(
+    id="real-requests-implicit-relative-import",
+    title="Drop the leading dot from the adapters import",
+    summary=("An implicit relative import. Inverted from the fix that made it explicit."),
+    provenance="psf/requests#1011 (Apache-2.0) — 'Fixed relative import'",
+    expected_decision=None,
+    before={
+        "requests/sessions.py": '''from .compat import cookielib, OrderedDict, urljoin, urlparse
+from .cookies import cookiejar_from_dict
+from .models import Request
+from .hooks import default_hooks, dispatch_hook
+from .utils import from_key_val_list, default_headers
+from .packages.urllib3.poolmanager import PoolManager
+
+
+from .adapters import HTTPAdapter
+
+
+def merge_kwargs(local_kwarg, default_kwarg):
+    """Merges kwarg dictionaries."""
+''',
+    },
+    after={
+        "requests/sessions.py": '''from .compat import cookielib, OrderedDict, urljoin, urlparse
+from .cookies import cookiejar_from_dict
+from .models import Request
+from .hooks import default_hooks, dispatch_hook
+from .utils import from_key_val_list, default_headers
+from .packages.urllib3.poolmanager import PoolManager
+
+
+#!EXPECT agent=correctness category=logic severity>=major :: implicit relative imports were removed in Python 3, so this raises ImportError there while every other import in the module uses the explicit form
+from adapters import HTTPAdapter
+
+
+def merge_kwargs(local_kwarg, default_kwarg):
+    """Merges kwarg dictionaries."""
+''',
+    },
+)

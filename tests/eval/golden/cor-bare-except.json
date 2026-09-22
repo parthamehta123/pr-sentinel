@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A bare except that also swallows KeyboardInterrupt and SystemExit.",
   "title": "Make the metrics push non-fatal"
 }

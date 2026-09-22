@@ -44,6 +44,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A naive datetime compared against an aware one.",
   "title": "Expire stale invitations"
 }

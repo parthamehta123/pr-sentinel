@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A guard removed during cleanup, on a field that is genuinely optional.",
   "title": "Tidy up the invoice renderer"
 }

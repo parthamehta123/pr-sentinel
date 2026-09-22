@@ -369,44 +369,6 @@ def test_a_run_where_every_agent_failed_is_refused_not_scored():
         _refuse_if_everything_failed(dead)
 
 
-def test_a_run_with_one_healthy_case_is_still_scored():
-    """Partial failure is a result — degraded, but real. Only a total outage is refused."""
-    from pr_sentinel.domain.enums import ALL_AGENTS
-    from pr_sentinel.evaluation.runner import _refuse_if_everything_failed
-
-    case = EvalCase(
-        id="c",
-        title="t",
-        summary="",
-        expected_decision=None,
-        files=[],
-        context_chunks=[],
-        expected=[label()],
-        must_not_find=[],
-    )
-    mixed = [
-        score_case(
-            case,
-            [],
-            decision="escalate",
-            confidence=0.0,
-            cost_usd=0.0,
-            duration_ms=1,
-            failed_agents=[str(a) for a in ALL_AGENTS],
-        ),
-        score_case(
-            case,
-            [finding()],
-            decision="auto_post",
-            confidence=0.9,
-            cost_usd=0.01,
-            duration_ms=1,
-            failed_agents=[],
-        ),
-    ]
-    _refuse_if_everything_failed(mixed)  # does not raise
-
-
 # --- scoped traps -----------------------------------------------------------
 #
 # An unscoped CLEAN claims nothing at that line is a finding, which is a strong
@@ -636,3 +598,93 @@ def test_a_label_accepts_alternative_categories():
         m = classify([finding(line=10, category=cat)], [either], [])[0]
         assert m.kind == "hit" and m.category_correct, cat
     assert classify([finding(line=10, category="documentation")], [either], [])[0].kind == "unlabelled"
+
+
+def test_a_partial_outage_is_refused_too():
+    """Regression: the credit balance ran out part way through a repeat.
+
+    Two runs completed; the third lost 31 of 53 cases. Nothing refused it, and
+    because the summary reports the last run, the headline recall read 0.349 for
+    a reviewer that had just scored 1.000 twice. A partial outage is more
+    dangerous than a total one, because it looks like a measurement.
+    """
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import EvalRunFailed, _refuse_if_everything_failed
+
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label()],
+        must_not_find=[],
+    )
+    dead = [
+        score_case(
+            case,
+            [],
+            decision="escalate",
+            confidence=0.0,
+            cost_usd=0.0,
+            duration_ms=1,
+            failed_agents=[str(a) for a in ALL_AGENTS],
+        )
+        for _ in range(31)
+    ]
+    alive = [
+        score_case(
+            case,
+            [finding()],
+            decision="auto_post",
+            confidence=0.9,
+            cost_usd=0.01,
+            duration_ms=1,
+            failed_agents=[],
+        )
+        for _ in range(22)
+    ]
+    with pytest.raises(EvalRunFailed, match="lost their whole panel"):
+        _refuse_if_everything_failed(dead + alive)
+
+
+def test_a_few_failed_cases_are_still_scored():
+    """Degraded is not the same as dead. Only an outage-sized share is refused."""
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import _refuse_if_everything_failed
+
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label()],
+        must_not_find=[],
+    )
+    results = [
+        score_case(
+            case,
+            [],
+            decision="escalate",
+            confidence=0.0,
+            cost_usd=0.0,
+            duration_ms=1,
+            failed_agents=[str(a) for a in ALL_AGENTS],
+        )
+    ]
+    results += [
+        score_case(
+            case,
+            [finding()],
+            decision="auto_post",
+            confidence=0.9,
+            cost_usd=0.01,
+            duration_ms=1,
+            failed_agents=[],
+        )
+        for _ in range(20)
+    ]
+    _refuse_if_everything_failed(results)  # does not raise

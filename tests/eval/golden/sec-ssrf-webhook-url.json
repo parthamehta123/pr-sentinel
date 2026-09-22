@@ -41,6 +41,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A caller-supplied URL fetched server-side with no allowlist or scheme check.",
   "title": "Let customers register a webhook target"
 }

@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Check-then-act on shared state across an await.",
   "title": "Add a per-tenant rate limiter"
 }

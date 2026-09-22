@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A default is lowered from 5 to 1. Reasonable in isolation; the retrieved caller relies on the old value to survive a known flaky dependency.",
   "title": "Make retries less aggressive by default"
 }

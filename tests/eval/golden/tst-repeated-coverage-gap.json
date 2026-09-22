@@ -100,6 +100,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Six new public functions across three files, none tested. One comment naming the gap is the right review; six comments is the failure mode.",
   "title": "Add the reporting exporters"
 }

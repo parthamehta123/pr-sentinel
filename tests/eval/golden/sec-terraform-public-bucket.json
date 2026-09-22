@@ -39,6 +39,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Terraform, not Python. One bucket is deliberately public; the next is not meant to be.",
   "title": "Add the public assets bucket"
 }

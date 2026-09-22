@@ -92,10 +92,11 @@ instead.
 
 ## Measuring it
 
-47 labelled pull requests live in [`tests/eval/`](tests/eval/): 47 labelled
+53 labelled pull requests live in [`tests/eval/`](tests/eval/): 63 required
 findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
-false-positive traps**, seven cases where the right answer is silence, and
-thirteen whose defect is invisible without the retrieved repository context.
+false-positive traps**, seven cases where the right answer is silence, thirteen
+whose defect is invisible without the retrieved repository context, and **six
+mined from real merged pull requests** in tornado, aiohttp, urllib3 and requests.
 
 How the numbers below were arrived at — including two passes labelling what the
 models actually find, and four corrections to the scoring itself — is in
@@ -123,19 +124,19 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 
 ```
                         mean      min      max
-  precision strict     0.830    0.806    0.859
-  precision lenient    0.988    0.982    1.000
-  recall               1.000    1.000    1.000
-  calibration error    0.076    0.061    0.098
-  agent attribution    0.849    0.821    0.889
-  category agreement   0.909    0.875    0.927
-  false positives/run  0.667    0.000    1.000
-  cost per case       $0.071   $0.070   $0.072
+  precision strict     0.823    0.787    0.859
+  precision lenient    0.985    0.969    1.000
+  recall               0.968    0.952    0.984
+  calibration error    0.078    0.046    0.110
+  agent attribution    0.798    0.794    0.803
+  category agreement   0.871    0.869    0.873
+  false positives/run  1.000    0.000    2.000
 ```
 
-All 57 required defects found in every run, recall spread exactly zero, and
-calibration under the 0.10 target for the first time — 41 findings at a stated
-0.96 turn out right 98% of the time.
+Six of the 53 cases are mined from real merged pull requests — defects a
+maintainer found in someone else's code and shipped a fix for, inverted so the
+change under review is the one that puts the bug back. All six were found on the
+first run.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the

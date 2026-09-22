@@ -6,7 +6,7 @@
     "tests": "claude-sonnet-5",
     "docs": "claude-haiku-4-5"
   },
-  "cases": 47,
+  "cases": 53,
   "overall": {
     "hits": 4,
     "allowed": 33,
@@ -15,11 +15,11 @@
     "duplicate_rate": 0.44,
     "false_positives": 2,
     "unlabelled": 0,
-    "misses": 48,
+    "misses": 54,
     "precision_strict": 0.667,
     "precision_lenient": 0.667,
-    "recall": 0.158,
-    "f1": 0.255
+    "recall": 0.143,
+    "f1": 0.235
   },
   "by_agent": {
     "correctness": {
@@ -30,11 +30,11 @@
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 0,
-      "misses": 24,
+      "misses": 30,
       "precision_strict": 1.0,
       "precision_lenient": 1.0,
-      "recall": 0.04,
-      "f1": 0.077
+      "recall": 0.032,
+      "f1": 0.062
     },
     "docs": {
       "hits": 1,
@@ -116,8 +116,8 @@
   "agent_attribution": 1.0,
   "decision_accuracy": 0.6,
   "cost": {
-    "total_usd": 0.3228,
-    "per_case_usd": 0.0069
+    "total_usd": 0.3548,
+    "per_case_usd": 0.0067
   },
   "per_case": [
     {
@@ -733,6 +733,90 @@
       "expected_decision": "suppress",
       "confidence": 1.0,
       "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-aiohttp-location-attribute-type",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0058,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-aiohttp-stream-single-wait",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.006,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-requests-implicit-relative-import",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0044,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-tornado-cookie-none-guard",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0057,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-tornado-multipart-boundary",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "real-urllib3-format-placeholder",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0046,
       "failed_agents": [],
       "error": null,
       "findings": []

@@ -1,0 +1,44 @@
+{
+  "context_files": [
+    {
+      "content": "    @property\n    def cookies(self):\n        \"\"\"A dictionary of Cookie.Morsel objects.\n\n        Set to None when the Cookie header is present but cannot be parsed, so\n        every consumer has to allow for that.\n        \"\"\"\n        if self._cookies is None:\n            return None\n        return self._cookies\n",
+      "path": "tornado/httpserver.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic|input_validation",
+      "file_path": "tornado/web.py",
+      "line": 3,
+      "min_severity": "major",
+      "note": "request.cookies is None when the Cookie header cannot be parsed, so a malformed header turns this lookup into a TypeError instead of returning the default"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "tornado/web.py",
+      "patch": "@@ -1,5 +1,5 @@\n     def get_cookie(self, name, default=None):\n         \"\"\"Gets the value of the cookie with the given name, else default.\"\"\"\n-        if self.request.cookies is not None and name in self.request.cookies:\n+        if name in self.request.cookies:\n             return self.request.cookies[name].value\n         return default",
+      "status": "modified"
+    }
+  ],
+  "id": "real-tornado-cookie-none-guard",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "tornadoweb/tornado#397 (Apache-2.0) \u2014 'Invalid Cookie header crashes get_cookie'",
+  "summary": "Drops the None check on request.cookies. Inverted from the fix for a crash on a malformed Cookie header.",
+  "title": "Simplify get_cookie"
+}

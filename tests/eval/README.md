@@ -55,7 +55,7 @@ the specialist that should have found it), gate-decision match, and cost per cas
 Mean over three runs: precision 0.987 strict / 1.000 lenient, recall 1.000 (37 of
 37 defects, every run), calibration error 0.182, gate decision match 0.917, $0.070
 per review. Recorded in
-`baselines/anthropic-3run.json`, which carries every individual finding — with the
+`baselines/anthropic-baseline.json`, which carries every individual finding — with the
 labels it matched and the locations it cited — so a run can be diagnosed without
 paying to reproduce it. Full tables and the story of each change in
 [RESULTS.md](RESULTS.md).

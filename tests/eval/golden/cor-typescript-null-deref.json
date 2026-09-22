@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "TypeScript. Optional chaining removed from a value that is genuinely optional.",
   "title": "Simplify the account banner"
 }

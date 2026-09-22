@@ -41,6 +41,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "One test asserts on a mock instead of behaviour; another asserts nothing at all.",
   "title": "Add tests for the invoice renderer"
 }

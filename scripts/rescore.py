@@ -64,7 +64,17 @@ def main() -> int:
     cases = {c.id: c for c in load_cases()}
 
     reports = []
+    skipped = 0
     for run in runs:
+        dead = sum(1 for c in run["per_case"] if len(c.get("failed_agents", [])) >= 4)
+        if dead and dead / max(len(run["per_case"]), 1) > 0.25:
+            skipped += 1
+            print(
+                f"  skipping a run in which {dead} of {len(run['per_case'])} cases lost "
+                "their whole panel — an outage, not a result",
+                file=sys.stderr,
+            )
+            continue
         results = []
         for recorded in run["per_case"]:
             case = cases.get(recorded["id"])
@@ -83,7 +93,13 @@ def main() -> int:
             )
         reports.append(score(results, payload.get("provider", "?"), payload.get("models", {})))
 
-    print(f"  re-scored {len(reports)} recorded run(s) over {len(reports[0].cases)} case(s)")
+    if not reports:
+        print("  every recorded run was an outage; nothing to score", file=sys.stderr)
+        return 1
+    print(
+        f"  re-scored {len(reports)} recorded run(s) over {len(reports[0].cases)} case(s)"
+        + (f", skipped {skipped} degraded" if skipped else "")
+    )
     print("  recorded numbers are from a previous matcher; these are the current one\n")
     print(f"  {'metric':<24}{'mean':>9}{'min':>9}{'max':>9}")
     for name, fn in [

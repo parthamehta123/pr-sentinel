@@ -1,0 +1,39 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "urllib3/util.py",
+      "line": 7,
+      "min_severity": "minor",
+      "note": "the %s placeholder has no argument, so the error reads literally \"Failed to parse: %s\" and tells whoever is debugging nothing"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "urllib3/util.py",
+      "patch": "@@ -4,7 +4,7 @@\n         url, port = url.split(':', 1)\n \n         if not port.isdigit():\n-            raise LocationParseError(\"Failed to parse: %s\" % url)\n+            raise LocationParseError(\"Failed to parse: %s\")\n \n         port = int(port)\n ",
+      "status": "modified"
+    }
+  ],
+  "id": "real-urllib3-format-placeholder",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "urllib3/urllib3#64 (MIT) \u2014 'Added url to LocationParseError message'",
+  "summary": "A format placeholder left without its argument. Inverted from the fix that added the url to the message.",
+  "title": "Shorten the parse error message"
+}

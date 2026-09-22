@@ -39,6 +39,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A synchronous HTTP call inside an async handler, beside an awaited one.",
   "title": "Fetch the tenant plan during request handling"
 }

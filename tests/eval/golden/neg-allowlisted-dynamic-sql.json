@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Dynamic SQL built by string formatting \u2014 and correct, because the only interpolated values are literals the module owns. Documented, validated and tested in the same change, so there is genuinely nothing to say.",
   "title": "Allow sorting the invoice list"
 }

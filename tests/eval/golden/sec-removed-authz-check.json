@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "An ownership check deleted for performance. Critical: the control is gone.",
   "title": "Speed up the bulk export endpoint"
 }

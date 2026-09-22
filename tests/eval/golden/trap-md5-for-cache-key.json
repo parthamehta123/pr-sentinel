@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "MD5, used to key a cache. Not a password, not a signature, not integrity against an adversary. Flagging it is the reflex this case exists to catch.",
   "title": "Key the render cache by template digest"
 }

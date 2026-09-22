@@ -37,6 +37,9 @@ class EvalCase:
     files: list[DiffFile]
     context_chunks: list[CodeChunk]
     expected: list[Label]
+    # Where a mined case came from: repository, pull request, licence. Recorded
+    # because these excerpts are other people's code.
+    provenance: str | None = None
     must_not_find: list[Label] = field(default_factory=list)
     # Legitimate but optional: neither required for recall nor counted against
     # precision. Most of what a good reviewer could say lives here.
@@ -72,6 +75,7 @@ def load_cases(directory: Path | None = None, only: list[str] | None = None) -> 
                 id=raw["id"],
                 title=raw["title"],
                 summary=raw.get("summary", ""),
+                provenance=raw.get("provenance"),
                 expected_decision=raw.get("expected_decision"),
                 files=[build_diff_file(f) for f in raw["files"]],
                 context_chunks=[_chunk(c) for c in raw.get("context_files", [])],

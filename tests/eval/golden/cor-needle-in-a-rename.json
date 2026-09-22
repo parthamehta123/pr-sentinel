@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Forty functions renamed from calc_* to compute_*, and one comparison flipped along the way. The review where a defect actually gets missed.",
   "title": "Rename the line-item calculators"
 }

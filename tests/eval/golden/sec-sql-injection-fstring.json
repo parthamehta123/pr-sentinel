@@ -44,6 +44,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "An f-string SQL query one line below a correctly parameterised one.",
   "title": "Add customer lookup endpoint"
 }

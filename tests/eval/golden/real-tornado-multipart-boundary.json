@@ -1,0 +1,39 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic|input_validation",
+      "file_path": "tornado/httpserver.py",
+      "line": 4,
+      "min_severity": "major",
+      "note": "content-type parameters are separated by \"; \", so every field after the first keeps a leading space and never equals \"boundary\"; the body is then silently not parsed"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "tornado/httpserver.py",
+      "patch": "@@ -1,7 +1,7 @@\n             elif content_type.startswith(\"multipart/form-data\"):\n                 fields = content_type.split(\";\")\n                 for field in fields:\n-                    k, sep, v = field.strip().partition(\"=\")\n+                    k, sep, v = field.partition(\"=\")\n                     if k == \"boundary\" and v:\n                         self._parse_mime_body(v, data)\n                         break",
+      "status": "modified"
+    }
+  ],
+  "id": "real-tornado-multipart-boundary",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "tornadoweb/tornado#177 (Apache-2.0) \u2014 'Fix for multipart/form-data requests'",
+  "summary": "Drops a .strip() while parsing content-type parameters. Inverted from the fix for multipart/form-data bodies silently not being parsed.",
+  "title": "Tidy the multipart content-type parsing"
+}

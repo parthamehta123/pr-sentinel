@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A file handle that leaks on the validation-failure path.",
   "title": "Add a CSV importer"
 }

@@ -38,6 +38,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "An endpoint that loads an object by id and mutates it without checking ownership.",
   "title": "Allow updating a saved payment method"
 }

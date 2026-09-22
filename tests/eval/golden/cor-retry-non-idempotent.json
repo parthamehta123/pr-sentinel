@@ -44,6 +44,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "A retry decorator applied to a charge, and correctly applied to a read.",
   "title": "Retry flaky gateway calls"
 }

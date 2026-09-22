@@ -150,6 +150,7 @@ def build_case(case: dict) -> dict:
     return {
         "id": case["id"],
         "title": case["title"],
+        "provenance": case.get("provenance"),
         "summary": case.get("summary", ""),
         "expected_decision": case.get("expected_decision"),
         "files": files,

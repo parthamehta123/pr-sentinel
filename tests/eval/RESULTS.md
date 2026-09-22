@@ -9,7 +9,8 @@ python scripts/compare_arms.py baseline.json arm.json  # which differences are r
 ```
 
 Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 34 cases, 37 labelled findings, 18 false-positive traps.
+`claude-haiku-4-5` (docs). 53 cases, 63 required findings, 21 traps, six of them
+mined from real merged pull requests.
 
 ---
 
@@ -182,25 +183,71 @@ would be as misleading as quoting 0.983 was.
 
 ## Current
 
-47 cases, 57 required findings, 21 traps. Mean over three runs, $3.32 for the set:
+53 cases, 63 required findings. Mean over two complete runs:
 
 ```
                         mean      min      max
-  precision strict     0.830    0.806    0.859
-  precision lenient    0.988    0.982    1.000
-  recall               1.000    1.000    1.000
-  calibration error    0.076    0.061    0.098
-  agent attribution    0.849    0.821    0.889
-  category agreement   0.909    0.875    0.927
-  false positives/run  0.667    0.000    1.000
-  cost per case       $0.071   $0.070   $0.072
+  precision strict     0.823    0.787    0.859
+  precision lenient    0.985    0.969    1.000
+  recall               0.968    0.952    0.984
+  calibration error    0.078    0.046    0.110
+  agent attribution    0.798    0.794    0.803
+  category agreement   0.871    0.869    0.873
+  false positives/run  1.000    0.000    2.000
 ```
 
-**Calibration is under 0.10 for the first time**, and the shape is good: 41
-findings at a stated 0.96 turn out right 98% of the time. The 0.50–0.60 bin is
-overconfident, on six findings, which is not enough to act on.
+Two runs rather than three because the API credit balance ran out part way
+through the third; see below.
 
-All 57 required defects found in every run, with a recall spread of exactly zero.
+## Mined from real merged pull requests
+
+Every case before this point was written by me, which means I knew where the
+defect was before the reviewer did — and the set kept saturating because of it.
+Six cases now come from defects a real maintainer found in real code and merged a
+fix for:
+
+| case | source | the defect |
+|---|---|---|
+| `real-tornado-cookie-none-guard` | tornadoweb/tornado#397 (Apache-2.0) | `request.cookies` is None on a malformed Cookie header, so the lookup raises |
+| `real-tornado-multipart-boundary` | tornadoweb/tornado#177 (Apache-2.0) | no `.strip()`, so every content-type parameter after the first keeps a leading space and multipart bodies are silently not parsed |
+| `real-urllib3-format-placeholder` | urllib3/urllib3#64 (MIT) | `"Failed to parse: %s"` with no argument |
+| `real-aiohttp-stream-single-wait` | aio-libs/aiohttp#3527 (Apache-2.0) | `if` where `while` is needed: the waiter resolves at a chunk boundary without data |
+| `real-aiohttp-location-attribute-type` | aio-libs/aiohttp#3615 (Apache-2.0) | a documented public attribute changes from a string to a URL object |
+| `real-requests-implicit-relative-import` | psf/requests#1011 (Apache-2.0) | an implicit relative import, removed in Python 3 |
+
+They are built by **inverting the fix** — the change under review is the one that
+puts the bug back. That is not the same as the pull request which originally
+introduced it, and the labels come from what the fix did rather than from what a
+reviewer said at the time. What they do give is a defect whose existence was
+judged by somebody other than me.
+
+`scripts/mine_cases.py` finds candidates — merged, small, single-file, fix-shaped,
+from permissively licensed projects. It found 27; six survived reading. Choosing
+and labelling is by hand, because "the commit message says fix" is not the same as
+"here is the defect and here is where it is". Each case records its repository,
+pull request and licence.
+
+**All six found, first run.** Two of the three findings the set then called
+unlabelled were the security agent reframing the same defect — *"Malformed Cookie
+header crashes get_cookie (remote-triggerable 500)"* at 0.90, which is a better
+description than my label was. Both are now accepted as alternative categories.
+The third, *"implicit import widens module resolution to sys.path"* at 0.60, is a
+stretch and is left unlabelled on purpose.
+
+### A partial outage is worse than a total one
+
+The 53-case baseline ran with the credit balance running out part way through the
+third repeat. Runs one and two completed; run three lost 31 of 53 cases.
+
+Nothing refused it. The guard added earlier only fires when *every* case loses its
+panel, and because the summary reports the last run, the headline came back
+reading **recall 0.349** for a reviewer that had just scored 0.968 twice. A total
+outage announces itself; a partial one looks like a measurement.
+
+The guard now refuses any run where more than a quarter of cases lose their whole
+panel, on the grounds that the cases which did run are whichever ones got in
+first. `rescore.py` drops such a run rather than averaging it in, which is how the
+two good runs above were salvaged without paying for them again.
 
 ### Two harness bugs this run exposed
 
@@ -387,7 +434,7 @@ unlabelled findings behind it are, on inspection, mostly real.
 **The full 47-case baseline is not recorded yet.** The API credit balance ran out
 mid-run. The runner refused to score it, saved nothing, and left the previous
 baseline intact — which is the guard added after the last time this happened
-doing its job. The committed `baselines/anthropic-3run.json` is therefore the
+doing its job. The committed `baselines/anthropic-baseline.json` is therefore the
 34-case one, and the numbers at the top of this file are its numbers.
 
 ---

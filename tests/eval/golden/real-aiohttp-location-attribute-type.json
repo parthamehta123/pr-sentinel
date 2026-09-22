@@ -1,0 +1,44 @@
+{
+  "context_files": [
+    {
+      "content": ".. attribute:: HTTPMove.location\n\n   The location the response redirects to, **as the string it was constructed\n   with**. Application code compares it against configured strings and passes it\n   to ``str.startswith``.\n",
+      "path": "docs/web_reference.rst"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "aiohttp/web_exceptions.py",
+      "line": 8,
+      "min_severity": "minor",
+      "note": "location is documented as the string it was constructed with; handing callers a URL object instead breaks startswith and any equality check against a configured string"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 2,
+      "deletions": 2,
+      "filename": "aiohttp/web_exceptions.py",
+      "patch": "@@ -5,5 +5,5 @@\n             raise ValueError(\"HTTP redirects need a location to redirect to.\")\n         super().__init__(headers=headers, reason=reason,\n                          body=body, text=text, content_type=content_type)\n-        self.headers['Location'] = str(URL(location))\n-        self.location = location\n+        self.location = URL(location)\n+        self.headers['Location'] = str(self.location)",
+      "status": "modified"
+    }
+  ],
+  "id": "real-aiohttp-location-attribute-type",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": "aio-libs/aiohttp#3615 (Apache-2.0) \u2014 'Fix backport of redirect URL fix to 3.5'",
+  "summary": "A public attribute changes from the string it was given to a URL object. Inverted from the fix that put it back.",
+  "title": "Assign the parsed location once"
+}

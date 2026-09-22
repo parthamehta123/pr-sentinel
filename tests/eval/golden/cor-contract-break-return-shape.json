@@ -46,6 +46,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Return type changes from a tuple to a dict. An existing caller still unpacks it, and the docstring above still describes the old shape.",
   "title": "Return richer data from lookup_user"
 }

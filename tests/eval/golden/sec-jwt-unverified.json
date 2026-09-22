@@ -33,6 +33,7 @@
       "category": "documentation"
     }
   ],
+  "provenance": null,
   "summary": "Signature verification disabled to avoid a key lookup.",
   "title": "Read the tenant id straight from the token"
 }
