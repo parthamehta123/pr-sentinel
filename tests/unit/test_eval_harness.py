@@ -758,3 +758,31 @@ def test_calibration_ignores_findings_the_set_has_not_judged():
     scored = next(b for b in rep.calibration if b.count)
     assert scored.count == 1, "only the judged finding informs calibration"
     assert scored.hit_rate == 1.0
+
+
+def test_rescore_refuses_to_overwrite_the_recorded_run(tmp_path):
+    """A recorded run is the raw measurement and must stay immutable.
+
+    Rescoring answers "what would today's labels make of that run" — a derived
+    number. Writing it back over the source destroys the only record of the
+    original scoring, so every later comparison "against the baseline" silently
+    compares against post-hoc relabelling. This has happened once; the guard is
+    cheaper than noticing it again.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    recorded = tmp_path / "run.json"
+    recorded.write_text('{"per_case": []}')
+    before = recorded.read_text()
+
+    out = subprocess.run(
+        [sys.executable, str(root / "scripts" / "rescore.py"), str(recorded), "--save", str(recorded)],
+        capture_output=True,
+        text=True,
+    )
+    assert out.returncode != 0
+    assert "refusing to write over" in out.stderr
+    assert recorded.read_text() == before

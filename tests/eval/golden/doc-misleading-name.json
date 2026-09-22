@@ -29,7 +29,15 @@
     }
   ],
   "id": "doc-misleading-name",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "cache/lookup.py",
+      "line": 11,
+      "note": "the same clear is reachable from a caller-supplied tenant_id, so a requester can thrash every other tenant's entries out of the shared cache"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "cache/lookup.py",

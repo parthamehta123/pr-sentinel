@@ -21,7 +21,15 @@
     }
   ],
   "id": "cor-async-blocking-call",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "injection|input_validation",
+      "file_path": "api/plans.py",
+      "line": 11,
+      "note": "tenant_id is interpolated into an internal URL path with no encoding, so a value carrying ../ or ? reaches arbitrary paths on billing.internal"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "api/plans.py",

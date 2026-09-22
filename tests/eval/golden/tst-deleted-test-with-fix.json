@@ -21,7 +21,15 @@
     }
   ],
   "id": "tst-deleted-test-with-fix",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "logic|api_contract",
+      "file_path": "tests/test_rounding.py",
+      "line": 4,
+      "note": "the PR claims a rounding fix but only the test file changed, and dropping the half-to-even pin is a silent contract change for every monetary caller"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

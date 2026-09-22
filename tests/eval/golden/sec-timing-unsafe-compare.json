@@ -21,7 +21,15 @@
     }
   ],
   "id": "sec-timing-unsafe-compare",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "webhooks/verify.py",
+      "line": 12,
+      "note": "== and compare_digest also diverge on edge inputs \u2014 None or bytes raises TypeError from compare_digest and quietly returns False from =="
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "webhooks/verify.py",

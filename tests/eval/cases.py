@@ -75,6 +75,7 @@ def get_customer(customer_id):
 
 def search_customers(term, status):
     #!EXPECT agent=security category=injection severity>=critical :: `term` is interpolated straight into the WHERE clause
+    #!ALLOW agent=correctness category=api_contract :: same defect read against execute()'s documented params contract — the values are spliced into the statement and params is omitted
     sql = f"SELECT * FROM customers WHERE name LIKE '%{term}%' AND status = '{status}'"
     return execute(sql)
 """,
@@ -168,7 +169,7 @@ def client():
 TEST_KEY = "acme_test_00000000000000000000000000"
 
 
-#!ALLOW agent=correctness category=api_contract :: the fake's return shape does not match the real client; true of the fixture, and minor
+#!ALLOW agent=correctness category=api_contract|test_quality :: the fake's return shape does not match the real client; true of the fixture, and minor
 def fake_client():
     return {"api_key": TEST_KEY}
 ''',
@@ -805,6 +806,7 @@ def verify_stripe(secret, body, header):
 def verify_acmepay(secret, body, header):
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     #!EXPECT agent=security category=crypto severity>=major :: == on a signature is not constant time and leaks the expected value a byte at a time, unlike the compare_digest call above
+    #!ALLOW agent=correctness category=api_contract :: == and compare_digest also diverge on edge inputs — None or bytes raises TypeError from compare_digest and quietly returns False from ==
     return expected == header
 """,
     },
@@ -958,6 +960,7 @@ async def fetch_plan(client: httpx.AsyncClient, tenant_id):
 
 async def fetch_plan_limits(tenant_id):
     #!EXPECT agent=correctness category=concurrency severity>=major :: a synchronous request inside a coroutine blocks the whole event loop for the duration of the call
+    #!ALLOW agent=security category=injection|input_validation :: tenant_id is interpolated into an internal URL path with no encoding, so a value carrying ../ or ? reaches arbitrary paths on billing.internal
     response = requests.get(f"https://billing.internal/limits/{tenant_id}", timeout=5)
     return response.json()
 """,
@@ -1435,6 +1438,7 @@ def get_tenant_fresh(tenant_id):
     tenant = _fetch(tenant_id)
     _CACHE[tenant_id] = tenant
     #!EXPECT agent=correctness category=logic severity>=major :: the size-bound eviction clears the whole cache, discarding the entry just written and every other tenant's
+    #!ALLOW agent=security category=input_validation :: the same clear is reachable from a caller-supplied tenant_id, so a requester can thrash every other tenant's entries out of the shared cache
     if len(_CACHE) > 1000:
         _CACHE.clear()
     return tenant
@@ -1692,6 +1696,7 @@ _CACHE = {}
 def cached_render(template_source, context):
     """Render `template_source` with `context`, memoised on a digest of both."""
     #!CLEAN agent=security :: MD5 over the template's own source and a canonical encoding of the context; no secret, no adversary, and a collision costs one re-render
+    #!ALLOW agent=correctness category=logic|api_contract|error_handling :: json.dumps narrows accepted context values from hashable to JSON-serialisable, and non-string keys either collide under coercion or raise under sort_keys
     payload = json.dumps([template_source, context], sort_keys=True)
     key = hashlib.md5(payload.encode()).hexdigest()
     if key not in _CACHE:
@@ -1757,6 +1762,7 @@ def bulk_export(request, report_ids):
 def bulk_export(request, report_ids):
     user = current_user(request)
     #!EXPECT agent=security category=authz severity>=critical :: the per-object require_owner loop was deleted, so any authenticated caller can read another tenant's reports by id
+    #!ALLOW agent=correctness category=error_handling :: an unknown report id used to fail inside require_owner; now None reaches to_dict and surfaces as AttributeError / 500
     reports = [Report.get(rid) for rid in report_ids]
     return [r.to_dict() for r in reports]
 """,
@@ -1783,6 +1789,7 @@ def request_reset(request, email):
     },
     after={
         "api/password_reset.py": """#!EXPECT agent=security category=input_validation severity>=minor :: the limiter was removed, so reset emails can be sent in unlimited volume to any address; it makes enumeration and mail-bombing cheap without granting access
+#!ALLOW agent=correctness category=logic :: same observation under correctness — every call now reaches send_reset_email with no per-caller bound
 def request_reset(request, email):
     send_reset_email(email)
     return {"sent": True}
@@ -1851,6 +1858,7 @@ jobs:
 
 on:
   #!EXPECT agent=security category=authz severity>=critical :: pull_request_target runs with the base repository's secrets, and checking out the fork's head then running its script hands those secrets to anyone who opens a pull request
+  #!ALLOW agent=correctness category=logic :: pull_request already fires for forked PRs, and under pull_request_target the workflow file itself comes from the base branch — so this change is not needed for the stated goal and splits the definition from the code under test
   pull_request_target:
 
 jobs:
@@ -1859,6 +1867,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          #!ALLOW agent=correctness category=logic :: pinning ref to the PR head measures the fork tip rather than refs/pull/N/merge, so the reported size is no longer the merge result
           ref: ${{ github.event.pull_request.head.sha }}
       - run: ./scripts/measure.sh
         env:
@@ -1967,6 +1976,7 @@ def test_rounds_up_above_half():
 
 
 #!EXPECT agent=tests category=test_coverage severity>=major :: test_rounds_half_to_even was deleted rather than updated, so the banker's-rounding behaviour it pinned is now unguarded
+#!ALLOW agent=correctness category=logic|api_contract :: the PR claims a rounding fix but only the test file changed, and dropping the half-to-even pin is a silent contract change for every monetary caller
 def test_rounds_up_above_half():
     assert round_cents(Decimal("2.346")) == Decimal("2.35")
 """,
@@ -2258,6 +2268,7 @@ case(
         super().__init__(headers=headers, reason=reason,
                          body=body, text=text, content_type=content_type)
         #!EXPECT agent=correctness category=api_contract severity>=minor :: location is documented as the string it was constructed with; handing callers a URL object instead breaks startswith and any equality check against a configured string
+        #!ALLOW agent=security category=authz :: the same type change silently breaks redirect allowlist checks that call str.startswith or compare against configured strings
         self.location = URL(location)
         self.headers['Location'] = str(self.location)
 """,
@@ -2363,6 +2374,8 @@ case(
         for header in ["Host", "Accept", "Referer", "User-Agent"]:
             if header in request.headers:
                 #!EXPECT agent=security category=secrets severity>=major :: notebook URLs carry the auth token as a query parameter, so the browser puts it in the Referer and this writes a live credential into the log on every 5xx
+                #!ALLOW agent=correctness category=logic :: same defect under a correctness reading — Referer is logged unscrubbed
+                #!ALLOW agent=correctness category=api_contract :: extra_param_keys was consumed only by the deleted _scrub_uri call, so callers still pass it and silently get no effect
                 headers[header] = request.headers[header]
         log_method(json.dumps(headers, indent=2))
 """,
@@ -2391,6 +2404,7 @@ case(
         "scrapy/core/downloader/handlers/s3.py": """    async def download_request(self, request: Request) -> Response:
         p = urlparse_cached(request)
         #!EXPECT agent=security category=crypto|input_validation severity>=major :: is_secure is absent on almost every request, so this selects plaintext by default and the AWS signature and payload travel unencrypted
+        #!ALLOW agent=correctness category=logic :: same defect under a correctness reading — the default flips to plaintext http whenever is_secure is unset
         scheme = "https" if request.meta.get("is_secure") else "http"
         bucket = p.hostname
         path = p.path + "?" + p.query if p.query else p.path
@@ -2489,6 +2503,7 @@ case(
             name := vars["name"]
 
             //!EXPECT agent=security category=authz severity>=critical :: DELETE falls into the push branch, so a token granting only push authorises deletion; push and delete are separate actions precisely because they are not the same permission
+            //!ALLOW agent=correctness category=logic :: the old default mapped unknown methods (OPTIONS, TRACE) to pull; the new condition sends them down the push branch
             action := "pull"
             if m := request.Method; m != http.MethodGet && m != http.MethodHead {
                 action = "push"
@@ -2577,6 +2592,7 @@ case(
     // Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
     // stream it once it is this part's turn.
     //!EXPECT agent=security category=input_validation severity>=major :: contentLength is the value the client declared, so an unauthenticated request announcing a huge part reserves that much memory before a single byte of body is read
+    //!ALLOW agent=correctness category=logic|error_handling :: chunked or unknown-length bodies yield contentLength=-1, which reaches Reserve unguarded
     rw := multipart.NewRW().Reserve(contentLength)
     hasher := md5.New()
     n, err := io.Copy(rw, io.TeeReader(body, hasher))

@@ -28,7 +28,15 @@
     }
   ],
   "id": "intro-tornado-cookies-move",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "tornado/web.py",
+      "line": 321,
+      "note": "RequestHandler.cookies was a documented public property and is gone with no alias; subclasses and templates reading self.cookies now raise AttributeError"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

@@ -89,6 +89,7 @@ def get_host(url):
 
     if '://' in url:
         scheme, url = url.split('://', 1)
+    #!ALLOW agent=security category=input_validation :: authority parsing ends only at '/', then splits on the first '@', so query/fragment and multi-@ userinfo diverge from urlparse and can flip the host used for allow/deny decisions
     if '/' in url:
         url, _path = url.split('/', 1)
     if '@' in url:

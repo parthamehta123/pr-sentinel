@@ -26,7 +26,15 @@
     }
   ],
   "id": "sec-sql-injection-fstring",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "billing/queries.py",
+      "line": 9,
+      "note": "same defect read against execute()'s documented params contract \u2014 the values are spliced into the statement and params is omitted"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "billing/queries.py",

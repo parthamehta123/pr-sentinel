@@ -21,7 +21,15 @@
     }
   ],
   "id": "sec-missing-rate-limit",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "api/password_reset.py",
+      "line": 1,
+      "note": "same observation under correctness \u2014 every call now reaches send_reset_email with no per-caller bound"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

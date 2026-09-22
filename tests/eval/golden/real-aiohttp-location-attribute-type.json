@@ -26,7 +26,15 @@
     }
   ],
   "id": "real-aiohttp-location-attribute-type",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": "aiohttp/web_exceptions.py",
+      "line": 8,
+      "note": "the same type change silently breaks redirect allowlist checks that call str.startswith or compare against configured strings"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

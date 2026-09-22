@@ -21,7 +21,15 @@
     }
   ],
   "id": "intro-urllib3-util-refactor",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "urllib3/util.py",
+      "line": 92,
+      "note": "authority parsing ends only at '/', then splits on the first '@', so query/fragment and multi-@ userinfo diverge from urlparse and can flip the host used for allow/deny decisions"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

@@ -19,7 +19,15 @@
     }
   ],
   "id": "trap-md5-for-cache-key",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "logic|api_contract|error_handling",
+      "file_path": "render/cache.py",
+      "line": 9,
+      "note": "json.dumps narrows accepted context values from hashable to JSON-serialisable, and non-string keys either collide under coercion or raise under sort_keys"
+    }
+  ],
   "must_not_find": [
     {
       "agent": "security",

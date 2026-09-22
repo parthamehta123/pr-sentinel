@@ -26,7 +26,15 @@
     }
   ],
   "id": "sec-removed-authz-check",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "error_handling",
+      "file_path": "api/export.py",
+      "line": 6,
+      "note": "an unknown report id used to fail inside require_owner; now None reaches to_dict and surfaces as AttributeError / 500"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

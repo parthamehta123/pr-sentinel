@@ -19,6 +19,7 @@ from .utils import header_expand, from_key_val_list
 from .packages.urllib3.poolmanager import PoolManager
 
 
+#!ALLOW agent=security category=input_validation|other :: an unqualified import also resolves against sys.path, so any top-level module named adapters shadows the intended one
 #!EXPECT agent=correctness category=api_contract|logic severity>=major :: implicit relative import; fails at module load under absolute_import / Python 3, and shadows any top-level "adapters" on the path
 from adapters import HTTPAdapter
 
@@ -147,6 +148,8 @@ class Session(object):
         return_response=True,
         config=None,
         prefetch=None,
+        #!ALLOW agent=security category=crypto :: verify and cert are still accepted but never copied onto the Request or handed to send, so a caller asking for TLS verification or a client cert is silently ignored
+        #!ALLOW agent=correctness category=api_contract :: timeout, verify, cert, prefetch, return_response and config are accepted by the signature and then dropped
         verify=None,
         cert=None):
 

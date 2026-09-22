@@ -23,11 +23,32 @@
   "id": "intro-requests-poolmanager",
   "may_find": [
     {
+      "agent": "security",
+      "category": "input_validation|other",
+      "file_path": "requests/sessions.py",
+      "line": 22,
+      "note": "an unqualified import also resolves against sys.path, so any top-level module named adapters shadows the intended one"
+    },
+    {
       "agent": "correctness",
       "category": "resource_leak",
       "file_path": "requests/sessions.py",
       "line": 132,
       "note": "close() no longer clears the PoolManager, so pooled connections are leaked"
+    },
+    {
+      "agent": "security",
+      "category": "crypto",
+      "file_path": "requests/sessions.py",
+      "line": 148,
+      "note": "verify and cert are still accepted but never copied onto the Request or handed to send, so a caller asking for TLS verification or a client cert is silently ignored"
+    },
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "requests/sessions.py",
+      "line": 148,
+      "note": "timeout, verify, cert, prefetch, return_response and config are accepted by the signature and then dropped"
     },
     {
       "agent": "correctness",

@@ -9,8 +9,10 @@ python scripts/compare_arms.py baseline.json arm.json  # which differences are r
 ```
 
 Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 59 cases, 69 required findings, 21 traps. Twelve are mined:
-six from merged fix commits, six from published security advisories.
+`claude-haiku-4-5` (docs). 63 cases, 73 required findings, 31 permitted, 21 traps.
+Twelve are mined from merged fix commits, six from published security advisories,
+four from the introducing commits of defects the inverted fixes had already
+covered.
 
 ---
 
@@ -183,22 +185,33 @@ would be as misleading as quoting 0.983 was.
 
 ## Current
 
-59 cases, 69 required findings. Mean over three runs, $12.75 for the set:
+63 cases, 73 required findings, 31 permitted, 21 traps. Mean over three runs,
+$14.33 for the set. **As measured** — the numbers the run produced against the
+labels that existed when it ran, which is the only column that can be compared
+with anything:
 
 ```
                         mean      min      max
-  precision strict     0.819    0.798    0.831
-  precision lenient    0.995    0.986    1.000
-  recall               1.000    1.000    1.000
-  calibration error    0.088    0.082    0.093
-  agent attribution    0.951    0.942    0.955
-  category agreement   0.916    0.881    0.942
-  false positives/run  0.333    0.000    1.000
-  cost per case       $0.072
+  precision strict     0.815    0.791    0.835
+  precision lenient    0.986    0.986    0.986
+  recall               0.991    0.986    1.000
+  calibration error    0.084    0.076    0.093
+  agent attribution    0.944    0.944    0.958
+  category agreement   0.944    0.915    0.944
+  false positives/run  1.000    1.000    1.000
+  unlabelled/run      13.000   11.000   15.000
+  cost per case       $0.076
 ```
 
-**69 of 69 required defects found in every run**, spread exactly zero — including
-all twelve mined cases, whose defects nobody on this project invented.
+Re-scored after the trap correction and the labelling pass, strict precision is
+1.000, lenient 1.000, 0 false positives, 0 unlabelled. **That is not a headline
+number and it is not comparable to anything** — see "Why strict precision stopped
+meaning anything" below.
+
+**72 of 73 required defects found on average** — two one-off misses across three
+runs (`sec-command-injection`, `doc-misleading-name`), never the same label twice.
+Strict precision at 1.000 is post-labelling; the measured figure before that pass
+was 0.847. See "Full baseline — 63 cases" below.
 
 ## Mined from published security advisories
 
@@ -662,23 +675,25 @@ this way.
 
 $14.33 over three runs of the whole set ($4.77/run, $0.076/case, ~750 model calls).
 
-| metric | 59-case baseline | 63 cases, as measured | after correcting the trap |
-|---|---|---|---|
-| precision, strict | 0.819 | 0.815 *(0.791–0.835)* | **0.847** *(0.828–0.866)* |
-| precision, lenient | 0.995 | 0.986 *(spread 0.000)* | **1.000** |
-| recall | 1.000 *(spread 0.000)* | 0.991 *(0.986–1.000)* | 0.991 |
-| calibration error | 0.088 | 0.084 *(0.076–0.093)* | 0.081 |
-| agent attribution | 0.951 | 0.944 | 0.949 |
-| category agreement | — | 0.944 | 0.930 |
-| gate decision match | — | 1.000 | 1.000 |
-| false positives | — | 1 | **0** |
+| metric | 59-case baseline | 63 cases, as measured | after trap fix | after labelling the 13 |
+|---|---|---|---|---|
+| precision, strict | 0.819 | 0.815 *(0.791–0.835)* | 0.847 *(0.828–0.866)* | **1.000** |
+| precision, lenient | 0.995 | 0.986 *(spread 0.000)* | 1.000 | **1.000** |
+| recall | 1.000 *(spread 0.000)* | 0.991 *(0.986–1.000)* | 0.991 | 0.991 |
+| calibration error | 0.088 | 0.084 *(0.076–0.093)* | 0.081 | 0.081 |
+| agent attribution | 0.951 | 0.944 | 0.949 | 0.949 |
+| category agreement | — | 0.944 | 0.930 | 0.930 |
+| gate decision match | — | 1.000 | 1.000 | 1.000 |
+| false positives | — | 1 | **0** | **0** |
+| unlabelled / run | — | — | 13 | **0** |
 
 **I predicted strict precision would rise, and as measured it did not** — 0.815
 against 0.819, inside the ±0.044 spread either way. The three `ALLOW` labels
 added earlier that day did retire findings which used to count against it, but
 the four new introducer cases brought their own unlabelled findings and cancelled
-the gain. The rise to 0.847 only appears after the trap correction below, and it
-is bookkeeping in exactly the same sense — the reviewer did not get better.
+the gain. The rise to 0.847 only appears after the trap correction below, and the
+rise to 1.000 only after the labelling pass after that — both bookkeeping in
+exactly the same sense. The reviewer did not get better.
 
 ### Recall is no longer pinned at 1.000
 
@@ -722,8 +737,114 @@ a control written by the same person who writes the labels is not a control. The
 scoped trap is the mitigation that has worked; the unscoped one has failed every
 time.
 
-### Still open
+### Labelling the remaining thirteen
 
-13 unlabelled findings remain unexamined. They are the whole of the remaining gap
-between strict (0.847) and lenient (1.000) precision, and on past form some
-fraction of them are real defects rather than noise.
+Thirteen unlabelled findings per run were the whole of the gap between strict
+(0.847) and lenient (1.000). Re-scored over the same recorded findings after
+labelling — **$0**, no model calls:
+
+Every one of them checked out. None were noise. They fell into two piles:
+
+**Same defect, different family.** The matcher requires the finding's concern
+family to agree with the label's, so a correctness `api_contract` reading of an
+f-string SQL injection, or a correctness `logic` reading of an unscrubbed
+Referer, sits next to the security `EXPECT` and does not hit it. Nine of the
+thirteen were that shape — the panel describing the labelled defect under the
+other specialist's vocabulary. Each is now `ALLOW` on the same line.
+
+**Real secondary observations the set had not named.** Four were defects (or
+real consequences) the labels had missed:
+
+- `intro-requests-poolmanager` — `request()` still advertises `verify`/`cert`/
+  `timeout` and then drops them on the floor; TLS policy the caller asked for is
+  silently ignored
+- `trap-md5-for-cache-key` — `json.dumps(..., sort_keys=True)` narrows accepted
+  context values from hashable to JSON-serialisable and collides non-string keys
+  (the trap only forbids the MD5-as-crypto reading)
+- `intro-urllib3-util-refactor` — `get_host` ends the authority at `/` and splits
+  on the first `@`, so query/fragment and multi-`@` userinfo diverge from
+  `urlparse`
+- `intro-tornado-cookies-move` — `RequestHandler.cookies` was a documented public
+  property and left with no alias
+
+Plus smaller but genuine side-effects on the advisory and hand-written cases: an
+ignored `extra_param_keys` after the Referer scrubber was deleted; unknown HTTP
+methods defaulting to `push` in zot; `contentLength=-1` reaching `Reserve`; the
+workflow measuring the PR head rather than the merge result; `tenant_id` in an
+internal URL path; the cache-clear being abuseable; the fixture's return shape;
+`AttributeError` instead of `Forbidden` for unknown report ids; `==` vs
+`compare_digest` on `None`/bytes; a PR that claims a rounding fix while only
+deleting the test.
+
+The set is now 73 required, 31 permitted, 21 traps. Strict precision at 1.000 is
+**post-hoc labelling, not an independent measurement** — the honest pre-labelling
+number on this run is 0.847. What the pass establishes is that nothing the panel
+said across the three runs was wrong. That is a different and weaker claim than a
+cold reading of 1.000.
+
+Recall is unchanged at 0.991. The two one-off misses
+(`sec-command-injection`, `doc-misleading-name`) were never going to move on a
+rescoring pass.
+
+---
+
+## Why strict precision stopped meaning anything
+
+The labelling pass took strict precision from 0.847 to 1.000 by examining the 13
+unlabelled findings, confirming each one, and marking it `ALLOW`. Every label was
+justified — I checked the load-bearing ones independently and they hold. That is
+not the problem.
+
+The problem is the loop. It runs:
+
+    measure → whatever is unlabelled, verify it → label it ALLOW → precision 1.000
+
+After any labelling pass, strict precision is 1.000 **by construction**. It cannot
+report a bad result, because a finding can only stay unlabelled if nobody looked
+at it. It has stopped measuring the reviewer and started measuring whether I have
+done the labelling pass yet. A number that can only move one way is not a
+measurement.
+
+Three numbers survive this and should be the ones quoted:
+
+- **Unlabelled findings per run, on cases whose labels predate the run.** This is
+  the honest version of precision: how much does the panel say that nobody has
+  yet agreed is worth saying. It was 13/run here. It is only meaningful *before*
+  the labelling pass, which means it must be recorded at measurement time — as it
+  now is, in the block above.
+- **Lenient precision**, which only traps can move. Traps are written in advance
+  and are not added in response to output, so this one is falsifiable. It caught a
+  real regression this run (0.986) and the regression turned out to be my label,
+  not the model.
+- **Recall**, which a labelling pass cannot inflate, because every label added
+  from the model's own output is `ALLOW` and `ALLOW` never counts as a hit.
+
+### The rule that keeps recall honest
+
+All 21 labels from this pass are `ALLOW`; `required` stayed at 73. That is
+deliberate and it is the right call, though it was not stated at the time.
+
+Several of the newly labelled findings are serious enough to deserve `EXPECT` —
+`verify`/`cert` accepted by `Session.request` and then silently dropped, so a
+caller asking for TLS verification does not get it, is a genuine security defect
+a reviewer ought to be required to catch. But promoting a finding to `EXPECT`
+*because a model produced it* makes recall self-fulfilling: the run that
+discovered the label scores 1.000 on it automatically.
+
+So: **a label derived from model output is `ALLOW`. A label may only become
+`EXPECT` on independent evidence** — an upstream fix, an advisory, a reading of
+the code done without the finding in hand. Several of these are good candidates
+for promotion once someone confirms them that way; until then they stay `ALLOW`
+and recall stays honest.
+
+### The recorded run is immutable
+
+The rescoring pass wrote its output back over `baseline-63.json`, replacing the
+as-measured scores (18 unlabelled, 1 false positive in run 1) with the rescored
+ones (0 and 0). The raw findings survived, but the record of *how that run
+actually scored* did not — which would have made every later "compared against
+the baseline" quietly compare against post-hoc relabelling.
+
+The file is restored, and `scripts/rescore.py` now refuses to write over its own
+input, with a test. Rescoring is a derived view of a measurement; it does not get
+to edit the measurement.

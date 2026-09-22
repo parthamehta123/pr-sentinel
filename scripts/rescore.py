@@ -63,7 +63,23 @@ def main() -> int:
     save_to = None
     if "--save" in sys.argv:
         save_to = Path(sys.argv[sys.argv.index("--save") + 1])
-    payload = json.loads(Path(sys.argv[1]).read_text())
+    source = Path(sys.argv[1])
+    if save_to is not None and save_to.resolve() == source.resolve():
+        # A recorded run is the raw measurement: what the models actually said,
+        # and how it scored at the time. Rescoring is meant to answer "what would
+        # today's labels make of that run", which is a derived number. Writing it
+        # back over the source destroys the only record of the original scoring
+        # and makes every later "compared against the baseline" quietly compare
+        # against post-hoc relabelling instead.
+        print(
+            f"refusing to write over the recorded run {source}.\n"
+            "  A recorded run is immutable: it is what the models said and how it\n"
+            "  scored when it was measured. Rescoring produces a derived view of\n"
+            "  it — save that somewhere else, or omit --save to just print.",
+            file=sys.stderr,
+        )
+        return 2
+    payload = json.loads(source.read_text())
     runs = payload.get("runs") or [payload]
     cases = {c.id: c for c in load_cases()}
 
