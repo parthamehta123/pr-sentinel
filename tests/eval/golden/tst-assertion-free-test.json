@@ -1,0 +1,35 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "tests",
+      "category": "test_quality",
+      "file_path": "tests/test_invoice.py",
+      "line": 8,
+      "min_severity": "minor",
+      "note": "asserts the mock was called rather than anything about the rendered output, so it breaks on refactors and catches no bugs"
+    },
+    {
+      "agent": "tests",
+      "category": "test_quality",
+      "file_path": "tests/test_invoice.py",
+      "line": 12,
+      "min_severity": "major",
+      "note": "no assertion at all; this test cannot fail"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 10,
+      "deletions": 0,
+      "filename": "tests/test_invoice.py",
+      "patch": "@@ -1,2 +1,12 @@\n def test_renders_total():\n     assert render(Invoice(total=100)).endswith(\"100.00\")\n+\n+\n+def test_renders_line_items(mocker):\n+    fmt = mocker.patch(\"invoice.format_line\")\n+    render(Invoice(lines=[Line(1), Line(2)]))\n+    assert fmt.call_count == 2\n+\n+\n+def test_renders_empty_invoice():\n+    render(Invoice(lines=[]))",
+      "status": "modified"
+    }
+  ],
+  "id": "tst-assertion-free-test",
+  "must_not_find": [],
+  "summary": "One test asserts on a mock instead of behaviour; another asserts nothing at all.",
+  "title": "Add tests for the invoice renderer"
+}

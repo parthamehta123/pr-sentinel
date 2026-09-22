@@ -1,0 +1,36 @@
+{
+  "context_files": [],
+  "expected": [],
+  "expected_decision": "suppress",
+  "files": [
+    {
+      "additions": 8,
+      "deletions": 4,
+      "filename": "billing/totals.py",
+      "patch": "@@ -1,7 +1,11 @@\n+def discount_for(customer, subtotal):\n+    \"\"\"Return the discount owed to `customer` on `subtotal`, as a Decimal.\"\"\"\n+    if customer.tier == \"gold\":\n+        return subtotal * Decimal(\"0.10\")\n+    return Decimal(\"0\")\n+\n+\n def order_total(order):\n     \"\"\"Return the order total after discounts, as a Decimal.\"\"\"\n     subtotal = sum(line.amount for line in order.lines)\n-    discount = Decimal(\"0\")\n-    if order.customer.tier == \"gold\":\n-        discount = subtotal * Decimal(\"0.10\")\n-    return subtotal - discount\n+    return subtotal - discount_for(order.customer, subtotal)",
+      "status": "modified"
+    },
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "tests/test_totals.py",
+      "patch": "@@ -0,0 +1,6 @@\n+def test_gold_customers_get_ten_percent():\n+    assert discount_for(Customer(tier=\"gold\"), Decimal(\"100\")) == Decimal(\"10\")\n+\n+\n+def test_standard_customers_get_nothing():\n+    assert discount_for(Customer(tier=\"standard\"), Decimal(\"100\")) == Decimal(\"0\")",
+      "status": "added"
+    }
+  ],
+  "id": "neg-clean-extract-method",
+  "must_not_find": [
+    {
+      "file_path": "billing/totals.py",
+      "line": 1,
+      "note": "a documented, tested pure extraction; nothing here is a defect"
+    },
+    {
+      "file_path": "tests/test_totals.py",
+      "line": 1,
+      "note": "a real assertion on real behaviour"
+    }
+  ],
+  "summary": "A pure refactor with a test and a docstring. Any finding here is a false positive, and this case is the one that stops the set rewarding noise.",
+  "title": "Extract the discount calculation"
+}

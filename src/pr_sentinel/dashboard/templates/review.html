@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Review {{ review_id }}</h1>
+{% if review %}
+<p class="sub">
+  {{ review.status }} · decision <code>{{ review.decision or '—' }}</code>
+  {% if review.decision_reason %}(<code>{{ review.decision_reason }}</code>){% endif %}
+  · confidence {{ '%.3f'|format(review.overall_confidence or 0) }}
+  · ${{ '%.4f'|format(review.total_cost_usd|float) }}
+  · prompts <code>{{ review.prompt_bundle }}</code>
+</p>
+{% endif %}
+<p class="sub"><a href="/">← queue</a></p>
+
+<h2>Findings</h2>
+{% if findings %}
+<table>
+  <tr><th>sev</th><th>agent</th><th>where</th><th>finding</th><th>conf</th><th>posted</th></tr>
+  {% for f in findings %}
+  <tr>
+    <td class="sev-{{ f.severity }}">{{ f.severity }}</td>
+    <td>{{ f.agreeing|join(' + ') if f.agreeing else f.agent }}</td>
+    <td><code>{{ f.file_path }}:{{ f.line_start }}</code></td>
+    <td><strong>{{ f.title }}</strong><br><span class="l" style="color:var(--muted)">{{ f.rationale }}</span></td>
+    <td>{{ '%.2f'|format(f.confidence|float) }}</td>
+    <td>{{ 'yes' if f.posted else '—' }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No findings survived aggregation.</div>{% endif %}
+
+<h2>Trace</h2>
+<pre>{% for e in trace %}{{ '%-12s'|format(e.kind) }} {{ '%-26s'|format(e.name) }} {{ '%-12s'|format(e.agent or '') }}{% if e.duration_ms %}{{ e.duration_ms }}ms {% endif %}{% if e.cost_usd %}${{ '%.4f'|format(e.cost_usd|float) }} {% endif %}{{ e.status or '' }}
+{% endfor %}</pre>
+{% endblock %}

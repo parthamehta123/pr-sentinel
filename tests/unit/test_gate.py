@@ -1,0 +1,133 @@
+"""The confidence gate. Precedence order is the contract."""
+
+from __future__ import annotations
+
+import pytest
+
+from pr_sentinel.config import get_settings
+from pr_sentinel.domain.enums import AgentType, Decision, EscalationReason, VerdictStatus
+from pr_sentinel.domain.models import AgentVerdict, Finding
+from pr_sentinel.gate import evaluate, render_review_body
+
+
+def finding(agent=AgentType.CORRECTNESS, severity="major", confidence=0.85, category="logic", line=14):
+    return Finding(
+        agent=agent,
+        category=category,
+        severity=severity,
+        file_path="a.py",
+        line_start=line,
+        line_end=line,
+        title="Something is wrong",
+        body="fix it",
+        rationale=f"because of line {line}",
+        confidence=confidence,
+    )
+
+
+def healthy_panel():
+    return [AgentVerdict(agent=a, status=VerdictStatus.OK) for a in AgentType]
+
+
+def test_confident_findings_are_posted():
+    result = evaluate([finding()], healthy_panel(), 0.9)
+    assert result.decision is Decision.AUTO_POST
+    assert len(result.postable) == 1
+
+
+def test_low_overall_confidence_escalates_instead_of_posting():
+    result = evaluate([finding(confidence=0.5)], healthy_panel(), 0.5)
+    assert result.decision is Decision.ESCALATE
+    assert result.reason is EscalationReason.LOW_CONFIDENCE
+
+
+def test_individually_weak_findings_are_withheld_from_a_confident_review():
+    s = get_settings()
+    strong = finding(confidence=0.95)
+    weak = finding(confidence=s.finding_post_confidence - 0.1, line=40)
+    result = evaluate([strong, weak], healthy_panel(), 0.9)
+    assert result.decision is Decision.AUTO_POST
+    assert result.postable == [strong]
+
+
+def test_a_critical_security_finding_is_never_posted():
+    """Describing a live vulnerability in a PR thread is a disclosure."""
+    result = evaluate(
+        [finding(agent=AgentType.SECURITY, severity="critical", category="injection", confidence=0.99)],
+        healthy_panel(),
+        0.99,
+    )
+    assert result.decision is Decision.ESCALATE
+    assert result.reason is EscalationReason.CRITICAL_SECURITY
+    assert result.postable == []
+    assert result.priority == 1
+
+
+def test_a_critical_non_security_finding_is_still_posted():
+    result = evaluate(
+        [finding(agent=AgentType.CORRECTNESS, severity="critical", category="logic", confidence=0.95)],
+        healthy_panel(),
+        0.95,
+    )
+    assert result.decision is Decision.AUTO_POST
+
+
+def test_a_failed_agent_outranks_high_confidence():
+    panel = healthy_panel()
+    panel[0] = AgentVerdict(agent=AgentType.SECURITY, status=VerdictStatus.TIMEOUT)
+    result = evaluate([finding(confidence=0.99)], panel, 0.99)
+    assert result.reason is EscalationReason.AGENT_FAILURE
+
+
+def test_budget_exhaustion_outranks_everything():
+    panel = healthy_panel()
+    panel[0] = AgentVerdict(agent=AgentType.SECURITY, status=VerdictStatus.TIMEOUT)
+    result = evaluate(
+        [finding(agent=AgentType.SECURITY, severity="critical", category="injection")],
+        panel,
+        0.99,
+        budget_exhausted=True,
+    )
+    assert result.reason is EscalationReason.BUDGET_EXCEEDED
+
+
+def test_a_clean_diff_is_suppressed_rather_than_congratulated():
+    result = evaluate([], healthy_panel(), 1.0)
+    assert result.decision is Decision.SUPPRESS
+    assert result.postable == []
+
+
+def test_everything_below_threshold_means_staying_quiet():
+    result = evaluate([finding(confidence=0.1)], healthy_panel(), 0.95)
+    assert result.decision is Decision.SUPPRESS
+
+
+def test_public_repositories_are_named_in_the_escalation_text():
+    result = evaluate(
+        [finding(agent=AgentType.SECURITY, severity="critical", category="secrets")],
+        healthy_panel(),
+        0.99,
+        is_public_repo=True,
+    )
+    assert "public repository" in result.explanation
+
+
+def test_review_body_declares_its_limits_and_provenance():
+    body = render_review_body([finding()], "1 major", held_back=2, bundle="abc123")
+    assert "never blocks a merge" in body
+    assert "abc123" in body
+    assert "2 lower-confidence" in body
+
+
+def test_review_body_highlights_cross_agent_agreement():
+    f = finding()
+    f.agreeing = ["correctness", "security"]
+    body = render_review_body([f], "1 major", held_back=0, bundle="abc")
+    assert "more than one" in body
+
+
+@pytest.mark.parametrize("confidence", [0.0, 0.699, 0.7, 0.701, 1.0])
+def test_threshold_boundary_is_inclusive_upward(confidence):
+    result = evaluate([finding(confidence=0.9)], healthy_panel(), confidence)
+    expected = Decision.AUTO_POST if confidence >= get_settings().auto_post_confidence else Decision.ESCALATE
+    assert result.decision is expected

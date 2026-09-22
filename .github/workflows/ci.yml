@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev,langgraph]"
+      - run: ruff check src tests scripts
+      - run: ruff format --check src tests scripts
+      - run: mypy src
+      - run: pytest tests/unit -q
+      # The offline demo is the end-to-end smoke test: it walks signature
+      # verification, grounding, the four-agent panel, aggregation and the gate
+      # with no network, no database and no API key.
+      - run: python scripts/demo_end_to_end.py
+      # cases.py is the source of truth; golden/*.json is generated and committed.
+      - name: golden fixtures are current
+        run: python scripts/build_eval_fixtures.py --check
+      # Regression gate. The echo provider makes this free and deterministic, so it
+      # catches a change that breaks matching, scoring or the gate — not a change
+      # in review quality, which only a live run can measure.
+      - name: eval regression gate
+        run: |
+          python -m pr_sentinel.cli eval --provider echo \
+            --baseline tests/eval/baselines/echo.json
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: sentinel
+          POSTGRES_PASSWORD: sentinel
+          POSTGRES_DB: sentinel
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sentinel -d sentinel"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6381:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://sentinel:sentinel@localhost:5434/sentinel
+      REDIS_URL: redis://localhost:6381/0
+      LLM_PROVIDER: echo
+      GITHUB_WEBHOOK_SECRET: ci-secret-not-a-real-credential
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev,langgraph]"
+      - run: python -m pr_sentinel.cli migrate
+      # doctor proves the append-only trail and the vector-dimension contract
+      # against a live database, which no unit test can do.
+      - run: python -m pr_sentinel.cli doctor
+      - run: pytest tests/integration -q -m integration

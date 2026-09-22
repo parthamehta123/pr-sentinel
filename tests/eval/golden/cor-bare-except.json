@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "error_handling",
+      "file_path": "telemetry/push.py",
+      "line": 4,
+      "min_severity": "major",
+      "note": "a bare except also catches KeyboardInterrupt and SystemExit, so the process stops being interruptible"
+    }
+  ],
+  "expected_decision": "auto_post",
+  "files": [
+    {
+      "additions": 4,
+      "deletions": 1,
+      "filename": "telemetry/push.py",
+      "patch": "@@ -1,2 +1,5 @@\n def push_metrics(payload):\n-    return _client.send(payload)\n+    try:\n+        return _client.send(payload)\n+    except:\n+        return None",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-bare-except",
+  "must_not_find": [],
+  "summary": "A bare except that also swallows KeyboardInterrupt and SystemExit.",
+  "title": "Make the metrics push non-fatal"
+}

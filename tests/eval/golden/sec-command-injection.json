@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "injection",
+      "file_path": "export/archive.py",
+      "line": 9,
+      "min_severity": "critical",
+      "note": "shell=True with `name` interpolated, so a name containing a shell metacharacter runs arbitrary commands"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 0,
+      "filename": "export/archive.py",
+      "patch": "@@ -3,3 +3,8 @@\n \n def list_exports(directory):\n     return subprocess.run([\"ls\", directory], capture_output=True, check=True).stdout\n+\n+\n+def create_archive(name, directory):\n+    cmd = f\"tar -czf /exports/{name}.tar.gz {directory}\"\n+    return subprocess.run(cmd, shell=True, check=True)",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-command-injection",
+  "must_not_find": [],
+  "summary": "subprocess with shell=True and an interpolated user-supplied name.",
+  "title": "Add an archive export command"
+}

@@ -1,0 +1,44 @@
+# One durable store, one queue. Nothing else.
+#
+# Host ports are deliberately off the defaults (5434 / 6381): 5432, 5433, 6379
+# and 6380 are routinely occupied by other local stacks, and a container that
+# silently binds nothing while another project's Postgres answers on the same
+# port is a genuinely nasty half hour.
+#
+# timescaledb-ha ships TimescaleDB + pgvector + pgvectorscale in a single image,
+# which is the whole point of ADR-0002: three data shapes, one thing to back up.
+services:
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    container_name: sentinel-postgres
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel
+      POSTGRES_DB: sentinel
+    ports:
+      - "5434:5432"
+    volumes:
+      - sentinel-pgdata:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6381:6379"
+    volumes:
+      - sentinel-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  sentinel-pgdata:
+  sentinel-redisdata:

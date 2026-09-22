@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>pr-sentinel</h1>
+<p class="sub">The queue is the product. Everything else on this page exists to tell you whether the queue can be trusted.</p>
+
+<div class="cards">
+  <div class="card"><div class="n">{{ queue|length }}</div><div class="l">awaiting a human</div></div>
+  <div class="card"><div class="n">{{ '%.0f%%'|format((stats.escalation_rate or 0) * 100) }}</div><div class="l">escalation rate (24h)</div></div>
+  <div class="card"><div class="n">{{ stats.auto_posted or 0 }}</div><div class="l">auto-posted (24h)</div></div>
+  <div class="card"><div class="n">${{ '%.2f'|format(spend_today) }}</div><div class="l">spend today / ${{ '%.0f'|format(caps.daily_cost_cap_usd) }} cap</div></div>
+  <div class="card"><div class="n">{{ '%.2f'|format(stats.avg_confidence or 0) }}</div><div class="l">mean confidence</div></div>
+</div>
+
+<h2>Human queue</h2>
+{% if queue %}
+<table>
+  <tr><th>pri</th><th>reason</th><th>pull request</th><th>summary</th><th>conf</th><th></th></tr>
+  {% for item in queue %}
+  <tr>
+    <td class="{% if item.priority <= 10 %}p1{% endif %}">{{ item.priority }}</td>
+    <td><code>{{ item.reason }}</code></td>
+    <td><a href="/review/{{ item.review_id }}">{{ item.full_name }}#{{ item.pr_number }}</a></td>
+    <td>{{ item.summary }}</td>
+    <td>{{ '%.2f'|format(item.overall_confidence or 0) }}</td>
+    <td>
+      <form method="post" action="/hitl/{{ item.id }}/decide">
+        <input type="hidden" name="verdict" value="accepted"><button>accept</button>
+      </form>
+      <form method="post" action="/hitl/{{ item.id }}/decide">
+        <input type="hidden" name="verdict" value="disputed"><button>dispute</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">Nothing waiting. Either the reviewer is confident or nothing has come in.</div>{% endif %}
+
+<h2>Cost by agent — last 24h</h2>
+{% if costs %}
+<table>
+  <tr><th>agent</th><th>model</th><th>calls</th><th>in</th><th>out</th><th>cached</th><th>cost</th></tr>
+  {% for row in costs %}
+  <tr><td>{{ row.agent }}</td><td><code>{{ row.model }}</code></td><td>{{ row.calls }}</td>
+      <td>{{ row.input_tokens }}</td><td>{{ row.output_tokens }}</td><td>{{ row.cached_tokens }}</td>
+      <td>${{ '%.4f'|format(row.cost_usd|float) }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No model calls recorded yet.</div>{% endif %}
+
+<h2>Latency — last 24h</h2>
+{% if latency %}
+<table>
+  <tr><th>agent</th><th>spans</th><th>p50</th><th>p95</th><th>max</th></tr>
+  {% for row in latency %}
+  <tr><td>{{ row.agent or '—' }}</td><td>{{ row.spans }}</td><td>{{ row.p50_ms }}ms</td>
+      <td>{{ row.p95_ms }}ms</td><td>{{ row.max_ms }}ms</td></tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No spans recorded yet.</div>{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "from users.lookup import lookup_user\n\n\ndef render_row(user_id):\n    \"\"\"Existing caller. Unpacks the tuple lookup_user has always returned.\"\"\"\n    name, email = lookup_user(user_id)\n    return f\"{name} <{email}>\"\n",
+      "path": "reports/weekly.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "users/lookup.py",
+      "line": 6,
+      "min_severity": "major",
+      "note": "the return shape changed from a 2-tuple to a dict; reports/weekly.py still unpacks two values"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 4,
+      "deletions": 2,
+      "filename": "users/lookup.py",
+      "patch": "@@ -1,4 +1,6 @@\n def lookup_user(user_id):\n     \"\"\"Return (name, email) for a user.\"\"\"\n-    row = _db.fetch_one(\"SELECT name, email FROM users WHERE id = %s\", (user_id,))\n-    return row[\"name\"], row[\"email\"]\n+    row = _db.fetch_one(\n+        \"SELECT name, email, tier FROM users WHERE id = %s\", (user_id,)\n+    )\n+    return {\"name\": row[\"name\"], \"email\": row[\"email\"], \"tier\": row[\"tier\"]}",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-contract-break-return-shape",
+  "must_not_find": [],
+  "summary": "Return type changes from a tuple to a dict; an existing caller still unpacks it.",
+  "title": "Return richer data from lookup_user"
+}

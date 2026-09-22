@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "export/pages.py",
+      "line": 12,
+      "min_severity": "major",
+      "note": "the end index is one short, so the last record of every page is silently dropped"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 6,
+      "deletions": 0,
+      "filename": "export/pages.py",
+      "patch": "@@ -4,3 +4,9 @@\n def page_of(records, page):\n     start = page * PAGE_SIZE\n     return records[start : start + PAGE_SIZE]\n+\n+\n+def page_of_sorted(records, page, key):\n+    ordered = sorted(records, key=key)\n+    start = page * PAGE_SIZE\n+    return ordered[start : start + PAGE_SIZE - 1]",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-off-by-one-pagination",
+  "must_not_find": [],
+  "summary": "A slice that drops the last record on every page.",
+  "title": "Add pagination to the export endpoint"
+}

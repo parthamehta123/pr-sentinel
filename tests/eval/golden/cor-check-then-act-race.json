@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "concurrency",
+      "file_path": "limits/ratelimit.py",
+      "line": 18,
+      "min_severity": "major",
+      "note": "the limit is read and then acted on across an await without the lock the sibling function holds, so concurrent callers both pass the check"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 10,
+      "deletions": 0,
+      "filename": "limits/ratelimit.py",
+      "patch": "@@ -2,9 +2,19 @@\n \n _counters = {}\n _lock = asyncio.Lock()\n+LIMIT = 1000\n \n \n async def consume(tenant, cost):\n     async with _lock:\n         _counters[tenant] = _counters.get(tenant, 0) + cost\n         return _counters[tenant]\n+\n+\n+async def try_consume(tenant, cost):\n+    current = _counters.get(tenant, 0)\n+    if current + cost > LIMIT:\n+        return False\n+    await asyncio.sleep(0)\n+    _counters[tenant] = current + cost\n+    return True",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-check-then-act-race",
+  "must_not_find": [],
+  "summary": "Check-then-act on shared state across an await.",
+  "title": "Add a per-tenant rate limiter"
+}

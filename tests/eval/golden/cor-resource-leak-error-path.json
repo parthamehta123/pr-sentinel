@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "resource_leak",
+      "file_path": "importer/csv_import.py",
+      "line": 10,
+      "min_severity": "major",
+      "note": "the handle is opened without a context manager and is never closed on the early-return path"
+    }
+  ],
+  "expected_decision": "auto_post",
+  "files": [
+    {
+      "additions": 11,
+      "deletions": 0,
+      "filename": "importer/csv_import.py",
+      "patch": "@@ -4,3 +4,14 @@\n def read_rows(path):\n     with open(path) as fh:\n         return list(csv.reader(fh))\n+\n+\n+def read_validated(path, expected_header):\n+    fh = open(path)\n+    reader = csv.reader(fh)\n+    header = next(reader)\n+    if header != expected_header:\n+        return None\n+    rows = list(reader)\n+    fh.close()\n+    return rows",
+      "status": "modified"
+    }
+  ],
+  "id": "cor-resource-leak-error-path",
+  "must_not_find": [],
+  "summary": "A file handle that leaks on the validation-failure path.",
+  "title": "Add a CSV importer"
+}

@@ -1,0 +1,32 @@
+{
+  "context_files": [
+    {
+      "content": "def current_user(request):\n    \"\"\"Return the authenticated user. Authentication only \u2014 never authorisation.\"\"\"\n    return request.state.user\n\n\ndef require_owner(user, obj):\n    \"\"\"Raise Forbidden unless `user` owns `obj`. Every object mutation must call this.\"\"\"\n    if obj.user_id != user.id:\n        raise Forbidden()\n",
+      "path": "api/auth.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "authz",
+      "file_path": "api/payment_methods.py",
+      "line": 12,
+      "min_severity": "critical",
+      "note": "loaded by id and mutated with no require_owner call, unlike the getter above"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 8,
+      "deletions": 0,
+      "filename": "api/payment_methods.py",
+      "patch": "@@ -5,3 +5,11 @@\n     pm = PaymentMethod.get(pm_id)\n     require_owner(current_user(request), pm)\n     return pm.to_dict()\n+\n+\n+def update_payment_method(request, pm_id, body):\n+    user = current_user(request)\n+    pm = PaymentMethod.get(pm_id)\n+    pm.billing_name = body[\"billing_name\"]\n+    pm.save()\n+    return pm.to_dict()",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-missing-authz",
+  "must_not_find": [],
+  "summary": "An endpoint that loads an object by id and mutates it without checking ownership.",
+  "title": "Allow updating a saved payment method"
+}

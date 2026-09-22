@@ -1,0 +1,38 @@
+{
+  "context_files": [
+    {
+      "content": "\"\"\"Thin database helpers used across the billing package.\"\"\"\n\n\ndef execute(sql, params=None):\n    \"\"\"Run a parameterised query. `params` must carry every caller value.\"\"\"\n    return _cursor.execute(sql, params)\n",
+      "path": "billing/db.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "injection",
+      "file_path": "billing/queries.py",
+      "line": 9,
+      "min_severity": "critical",
+      "note": "`term` is interpolated straight into the WHERE clause"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 5,
+      "deletions": 0,
+      "filename": "billing/queries.py",
+      "patch": "@@ -3,3 +3,8 @@\n \n def get_customer(customer_id):\n     return execute(\"SELECT * FROM customers WHERE id = %s\", (customer_id,))\n+\n+\n+def search_customers(term, status):\n+    sql = f\"SELECT * FROM customers WHERE name LIKE '%{term}%' AND status = '{status}'\"\n+    return execute(sql)",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-sql-injection-fstring",
+  "must_not_find": [
+    {
+      "file_path": "billing/queries.py",
+      "line": 5,
+      "note": "correctly parameterised; flagging this is a false positive"
+    }
+  ],
+  "summary": "An f-string SQL query one line below a correctly parameterised one.",
+  "title": "Add customer lookup endpoint"
+}

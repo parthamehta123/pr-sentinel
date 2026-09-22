@@ -1,0 +1,299 @@
+{
+  "provider": "echo",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 15,
+  "overall": {
+    "hits": 18,
+    "false_positives": 2,
+    "unlabelled": 1,
+    "misses": 5,
+    "precision_strict": 0.857,
+    "precision_lenient": 0.9,
+    "recall": 0.783,
+    "f1": 0.818
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 2,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+    },
+    "docs": {
+      "hits": 8,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "misses": 1,
+      "precision_strict": 0.889,
+      "precision_lenient": 1.0,
+      "recall": 0.889,
+      "f1": 0.889
+    },
+    "security": {
+      "hits": 1,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.5,
+      "precision_lenient": 0.5,
+      "recall": 1.0,
+      "f1": 0.667
+    },
+    "tests": {
+      "hits": 8,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 2,
+      "precision_strict": 0.889,
+      "precision_lenient": 0.889,
+      "recall": 0.8,
+      "f1": 0.842
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.00-0.50",
+        "n": 9,
+        "mean_confidence": 0.45,
+        "observed_hit_rate": 0.889,
+        "gap": 0.439
+      },
+      {
+        "range": "0.50-0.60",
+        "n": 9,
+        "mean_confidence": 0.55,
+        "observed_hit_rate": 0.889,
+        "gap": 0.339
+      },
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.71,
+        "observed_hit_rate": 1.0,
+        "gap": 0.29
+      },
+      {
+        "range": "0.80-0.90",
+        "n": 2,
+        "mean_confidence": 0.82,
+        "observed_hit_rate": 0.5,
+        "gap": -0.32
+      }
+    ],
+    "expected_calibration_error": 0.378
+  },
+  "category_agreement": 0.111,
+  "agent_attribution": 0.111,
+  "decision_accuracy": 0.667,
+  "cost": {
+    "total_usd": 0.1046,
+    "per_case_usd": 0.007
+  },
+  "per_case": [
+    {
+      "id": "cor-bare-except",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": "auto_post",
+      "confidence": 0.71,
+      "cost_usd": 0.0073,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "cor-check-then-act-race",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0054,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "cor-contract-break-return-shape",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0056,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "cor-off-by-one-pagination",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0064,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "cor-resource-leak-error-path",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "auto_post",
+      "confidence": 0.523,
+      "cost_usd": 0.0068,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "doc-stale-docstring",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "auto_post",
+      "confidence": 1.0,
+      "cost_usd": 0.0048,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "neg-clean-extract-method",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "suppress",
+      "confidence": 0.55,
+      "cost_usd": 0.0085,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-command-injection",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0064,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-hardcoded-credential",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.82,
+      "cost_usd": 0.0124,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-missing-authz",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.55,
+      "cost_usd": 0.0071,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-sql-injection-fstring",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.55,
+      "cost_usd": 0.0064,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-ssrf-webhook-url",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0064,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "sec-weak-password-hash",
+      "hits": 4,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.523,
+      "cost_usd": 0.0086,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "tst-assertion-free-test",
+      "hits": 2,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.45,
+      "cost_usd": 0.0062,
+      "failed_agents": [],
+      "error": null
+    },
+    {
+      "id": "tst-untested-error-branch",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 1,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.45,
+      "cost_usd": 0.0061,
+      "failed_agents": [],
+      "error": null
+    }
+  ]
+}

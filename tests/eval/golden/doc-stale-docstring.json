@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "usage/report.py",
+      "line": 3,
+      "min_severity": "minor",
+      "note": "the docstring above still promises an integer total; this now returns a per-day mapping"
+    }
+  ],
+  "expected_decision": "auto_post",
+  "files": [
+    {
+      "additions": 2,
+      "deletions": 1,
+      "filename": "usage/report.py",
+      "patch": "@@ -1,3 +1,4 @@\n def monthly_usage(account_id):\n     \"\"\"Return the total number of API calls this month as an integer.\"\"\"\n-    return _db.scalar(\"SELECT count(*) FROM calls WHERE account_id = %s\", (account_id,))\n+    rows = _db.fetch(\"SELECT day, count(*) FROM calls WHERE account_id = %s GROUP BY day\", (account_id,))\n+    return {row[\"day\"]: row[\"count\"] for row in rows}",
+      "status": "modified"
+    }
+  ],
+  "id": "doc-stale-docstring",
+  "must_not_find": [],
+  "summary": "The implementation changes; the docstring above it now describes something else.",
+  "title": "Return usage broken down by day"
+}

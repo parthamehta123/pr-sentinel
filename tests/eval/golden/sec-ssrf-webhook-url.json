@@ -1,0 +1,27 @@
+{
+  "context_files": [],
+  "expected": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "integrations/webhooks.py",
+      "line": 14,
+      "min_severity": "major",
+      "note": "caller-supplied URL fetched server-side, bypassing the ALLOWED_HOSTS check the sibling function applies"
+    }
+  ],
+  "expected_decision": "escalate",
+  "files": [
+    {
+      "additions": 4,
+      "deletions": 0,
+      "filename": "integrations/webhooks.py",
+      "patch": "@@ -8,3 +8,7 @@\n     if host not in ALLOWED_HOSTS:\n         raise ValueError(\"destination not allowed\")\n     return requests.post(url, json=payload, timeout=5)\n+\n+\n+def verify_endpoint(url):\n+    return requests.get(url, timeout=5).status_code",
+      "status": "modified"
+    }
+  ],
+  "id": "sec-ssrf-webhook-url",
+  "must_not_find": [],
+  "summary": "A caller-supplied URL fetched server-side with no allowlist or scheme check.",
+  "title": "Let customers register a webhook target"
+}
