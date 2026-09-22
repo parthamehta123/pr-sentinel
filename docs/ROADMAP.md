@@ -39,12 +39,17 @@ Six are in, from tornado, aiohttp, urllib3 and requests, and all six were found 
 the first run. The miner surfaced 27 candidates and six survived reading, so the
 yield is about one in four and the cost is attention rather than money.
 
-Two things to improve next time. Small merged fix commits skew heavily towards
-correctness — there is not a single security defect among the six — so mining
-GitHub security advisories, which link to their fixing commits, would balance it.
-And every case so far is an *inverted* fix rather than the pull request that
-originally introduced the bug; mining the introducing commit instead would be
-closer to what the reviewer actually sees.
+The security gap that left is closed on the input side: `mine_advisories.py`
+walks the GitHub advisory database and six advisory cases are in, covering CWE
+classes the hand-written set never had — XSS, credential leakage into logs, scope
+confusion, declared-length exhaustion. They are **not yet scored**: the credit
+balance ran out before they could run, and the guard refused the partial result.
+Running them is the next thing, and it is one command.
+
+One structural thing still to improve. Every mined case is an *inverted* fix
+rather than the pull request that originally introduced the bug. Mining the
+introducing commit — findable by walking back from the fix with `git log -S` —
+would be closer to what the reviewer actually sees.
 
 ## 2. Grow the hand-written set, again
 

@@ -6,7 +6,7 @@
     "tests": "claude-sonnet-5",
     "docs": "claude-haiku-4-5"
   },
-  "cases": 53,
+  "cases": 59,
   "overall": {
     "hits": 4,
     "allowed": 33,
@@ -15,11 +15,11 @@
     "duplicate_rate": 0.44,
     "false_positives": 2,
     "unlabelled": 0,
-    "misses": 54,
+    "misses": 60,
     "precision_strict": 0.667,
     "precision_lenient": 0.667,
-    "recall": 0.143,
-    "f1": 0.235
+    "recall": 0.13,
+    "f1": 0.218
   },
   "by_agent": {
     "correctness": {
@@ -58,11 +58,11 @@
       "duplicate_rate": 0.0,
       "false_positives": 1,
       "unlabelled": 0,
-      "misses": 14,
+      "misses": 20,
       "precision_strict": 0.5,
       "precision_lenient": 0.5,
-      "recall": 0.067,
-      "f1": 0.118
+      "recall": 0.048,
+      "f1": 0.087
     },
     "tests": {
       "hits": 1,
@@ -114,10 +114,10 @@
   },
   "category_agreement": 0.75,
   "agent_attribution": 1.0,
-  "decision_accuracy": 0.6,
+  "decision_accuracy": 0.45,
   "cost": {
-    "total_usd": 0.3548,
-    "per_case_usd": 0.0067
+    "total_usd": 0.3917,
+    "per_case_usd": 0.0066
   },
   "per_case": [
     {
@@ -519,6 +519,90 @@
       "expected_decision": null,
       "confidence": 1.0,
       "cost_usd": 0.0051,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-jupyter-referer-token-log",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0062,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-mdc-xss-xlink-href",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0055,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-perses-unvalidated-project-path",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.007,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-rclone-declared-length-allocation",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": null,
+      "confidence": 1.0,
+      "cost_usd": 0.0055,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-scrapy-s3-plaintext-default",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0053,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "cve-zot-delete-maps-to-push",
+      "hits": 0,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "escalate",
+      "confidence": 1.0,
+      "cost_usd": 0.0071,
       "failed_agents": [],
       "error": null,
       "findings": []

@@ -95,8 +95,10 @@ instead.
 53 labelled pull requests live in [`tests/eval/`](tests/eval/): 63 required
 findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
 false-positive traps**, seven cases where the right answer is silence, thirteen
-whose defect is invisible without the retrieved repository context, and **six
-mined from real merged pull requests** in tornado, aiohttp, urllib3 and requests.
+whose defect is invisible without the retrieved repository context, **six
+mined from real merged pull requests** in tornado, aiohttp, urllib3 and requests,
+and **six from published security advisories** — a CWE-79 XSS, a CWE-285 scope
+confusion, a CWE-532 credential leak into logs, and three more.
 
 How the numbers below were arrived at — including two passes labelling what the
 models actually find, and four corrections to the scoring itself — is in
@@ -133,10 +135,11 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
   false positives/run  1.000    0.000    2.000
 ```
 
-Six of the 53 cases are mined from real merged pull requests — defects a
-maintainer found in someone else's code and shipped a fix for, inverted so the
-change under review is the one that puts the bug back. All six were found on the
-first run.
+Twelve of the 59 cases are mined rather than written: six from merged fix commits
+and six from published security advisories, inverted so the change under review is
+the one that puts the bug back. The six merged-fix cases were all found on the
+first run; the six advisory cases are not yet scored, so the figures above are
+over the 53 cases that predate them.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the

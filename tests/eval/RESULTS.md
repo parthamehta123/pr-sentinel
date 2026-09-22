@@ -234,6 +234,42 @@ description than my label was. Both are now accepted as alternative categories.
 The third, *"implicit import widens module resolution to sys.path"* at 0.60, is a
 stretch and is left unlabelled on purpose.
 
+## Mined from published security advisories
+
+Mining ordinary merged fix commits produced six good cases and **not one security
+defect**, because small fixes skew heavily towards correctness. Advisories are the
+other end of that: every one is a security defect somebody took seriously enough
+to publish, most link to the commit that fixed it, and the CWE is an independent
+label for the class.
+
+`scripts/mine_advisories.py` walks the GitHub advisory database for pip, npm and
+Go, keeps advisories that reference a fixing commit in a permissively licensed
+repository, and filters to small single-file changes. It surfaced 120 candidates,
+40 distinct, 17 readable. Six were taken:
+
+| case | advisory | the defect |
+|---|---|---|
+| `cve-jupyter-referer-token-log` | GHSA-c3mw-737p-c7g2 · CWE-532 | notebook URLs carry the auth token, so logging the Referer on a 5xx writes a live credential to the log |
+| `cve-scrapy-s3-plaintext-default` | GHSA-76g3-c3x4-crvx · CWE-319 | `"https" if meta.get("is_secure") else "http"` selects plaintext whenever the key is absent, which is almost always |
+| `cve-mdc-xss-xlink-href` | GHSA-mxm6-v9r6-r94c · CWE-79 | SVG `xlink:href` executes script exactly as `href` does and is missing from the sanitiser's list |
+| `cve-zot-delete-maps-to-push` | GHSA-qg67-7m6v-qg25 · CWE-285 | every non-read method maps to `push`, so a push token authorises DELETE |
+| `cve-perses-unvalidated-project-path` | GHSA-vr5f-w35q-98jp · CWE-22 | a query parameter reaches `filepath.Join` unvalidated |
+| `cve-rclone-declared-length-allocation` | GHSA-2p48-j3qc-rx9f · CWE-789 | memory reserved from a client-declared Content-Length before any body is read |
+
+All public, fixed and released. They are here because a reviewer that cannot catch
+a CWE-79 or a CWE-285 is not much of a security reviewer, and nothing in the
+hand-written set was testing either — the set had no XSS, no log leakage, no
+scope confusion and no declared-length exhaustion at all.
+
+The scrapy one is the pick of them. `"https" if request.meta.get("is_secure")
+else "http"` is a line that reads as correct, and is a plaintext default.
+
+**These six are unscored.** The credit balance ran out before they could be run,
+and the guard refused the run rather than saving a partial result. They are
+structurally validated — the builder proves every label lands inside its diff —
+but whether the reviewer finds them is not yet known, and the baseline below is
+the 53-case one that predates them.
+
 ### A partial outage is worse than a total one
 
 The 53-case baseline ran with the credit balance running out part way through the

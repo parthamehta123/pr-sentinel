@@ -2301,3 +2301,281 @@ def merge_kwargs(local_kwarg, default_kwarg):
 ''',
     },
 )
+
+
+# ===========================================================================
+# Fifth tranche — mined from published security advisories.
+#
+# The previous tranche mined ordinary merged fix commits and produced six good
+# cases without a single security defect among them, because small fixes skew
+# heavily towards correctness. Advisories are the other end of that: every one is
+# a security defect somebody took seriously enough to publish, most link to the
+# commit that fixed it, and the CWE is an independent label for the class.
+#
+# Same construction and the same caveat as the tranche above: the change under
+# review is the inverted fix, so it reintroduces the vulnerability rather than
+# being the commit that originally shipped it. `scripts/mine_advisories.py` finds
+# candidates; choosing and labelling them is by hand.
+#
+# Every one of these is public, fixed, and released. They are here because a
+# reviewer that cannot catch a CWE-79 or a CWE-285 is not much of a security
+# reviewer, and nothing in the hand-written set was testing either.
+# ===========================================================================
+
+case(
+    id="cve-jupyter-referer-token-log",
+    title="Log the request headers on a 5xx",
+    summary=(
+        "Logs the Referer verbatim. Inverted from the fix for a token-bearing "
+        "Referer being written to the log."
+    ),
+    provenance="GHSA-c3mw-737p-c7g2 (CWE-532, high) jupyter-server/jupyter_server, BSD-3-Clause",
+    expected_decision="escalate",
+    context={
+        "jupyter_server/auth/identity.py": '''def token_authenticated_url(base, token):
+    """Build a URL carrying the auth token as a query parameter.
+
+    Notebook URLs are handed out in this form, which means the browser sends the
+    token back in the Referer header on every subresource request.
+    """
+    return f"{base}?token={token}"
+''',
+    },
+    before={
+        "jupyter_server/log.py": """    if status >= 500:
+        headers = {}
+        for header in ["Host", "Accept", "Referer", "User-Agent"]:
+            if header in request.headers:
+                value = request.headers[header]
+                if header == "Referer":
+                    value = _scrub_uri(value, extra_param_keys)
+                headers[header] = value
+        log_method(json.dumps(headers, indent=2))
+""",
+    },
+    after={
+        "jupyter_server/log.py": """    if status >= 500:
+        headers = {}
+        for header in ["Host", "Accept", "Referer", "User-Agent"]:
+            if header in request.headers:
+                #!EXPECT agent=security category=secrets severity>=major :: notebook URLs carry the auth token as a query parameter, so the browser puts it in the Referer and this writes a live credential into the log on every 5xx
+                headers[header] = request.headers[header]
+        log_method(json.dumps(headers, indent=2))
+""",
+    },
+)
+
+case(
+    id="cve-scrapy-s3-plaintext-default",
+    title="Simplify the S3 scheme selection",
+    summary=(
+        "A scheme that defaults to plaintext when the flag is absent. Inverted "
+        "from the fix for signed S3 requests going over HTTP."
+    ),
+    provenance="GHSA-76g3-c3x4-crvx (CWE-319, high) scrapy/scrapy, BSD-3-Clause",
+    expected_decision="escalate",
+    before={
+        "scrapy/core/downloader/handlers/s3.py": """    async def download_request(self, request: Request) -> Response:
+        p = urlparse_cached(request)
+        scheme = "http" if request.meta.get("is_secure") is False else "https"
+        bucket = p.hostname
+        path = p.path + "?" + p.query if p.query else p.path
+        url = f"{scheme}://{bucket}.s3.amazonaws.com{path}"
+""",
+    },
+    after={
+        "scrapy/core/downloader/handlers/s3.py": """    async def download_request(self, request: Request) -> Response:
+        p = urlparse_cached(request)
+        #!EXPECT agent=security category=crypto|input_validation severity>=major :: is_secure is absent on almost every request, so this selects plaintext by default and the AWS signature and payload travel unencrypted
+        scheme = "https" if request.meta.get("is_secure") else "http"
+        bucket = p.hostname
+        path = p.path + "?" + p.query if p.query else p.path
+        url = f"{scheme}://{bucket}.s3.amazonaws.com{path}"
+""",
+    },
+)
+
+case(
+    id="cve-mdc-xss-xlink-href",
+    title="Trim the sanitiser's attribute list",
+    summary=(
+        "Drops xlinkhref from the sanitised attributes. Inverted from the fix "
+        "for XSS through SVG xlink:href in untrusted markdown."
+    ),
+    provenance="GHSA-mxm6-v9r6-r94c (CWE-79, high) nuxt-content/mdc, MIT",
+    expected_decision="escalate",
+    context={
+        "src/runtime/parser/utils/props.ts": """// Rendered attributes are taken from author-supplied markdown, which in this
+// product includes content submitted by end users. `validateProp` is the only
+// thing standing between that markdown and the DOM.
+export const unsafeLinkPrefix = ['javascript:', 'data:text/html', 'vbscript:']
+""",
+    },
+    before={
+        "src/runtime/parser/utils/props.ts": """export const validateProp = (attribute: string, value: string) => {
+  if (typeof value !== 'string') {
+    return false
+  }
+
+  if (attribute === 'href' || attribute === 'src' || attribute === 'xlinkhref') {
+    return isAnchorLinkAllowed(value)
+  }
+
+  return true
+}
+""",
+    },
+    after={
+        "src/runtime/parser/utils/props.ts": """export const validateProp = (attribute: string, value: string) => {
+  if (typeof value !== 'string') {
+    return false
+  }
+
+  //!EXPECT agent=security category=injection severity>=major :: SVG xlink:href executes script exactly as href does, so dropping it from the sanitised list lets attacker-supplied markdown run javascript: in the page
+  if (attribute === 'href' || attribute === 'src') {
+    return isAnchorLinkAllowed(value)
+  }
+
+  return true
+}
+""",
+    },
+)
+
+case(
+    id="cve-zot-delete-maps-to-push",
+    title="Collapse the method-to-action mapping",
+    summary=(
+        "Every non-read method maps to push. Inverted from the fix for a push "
+        "token being accepted for DELETE."
+    ),
+    provenance="GHSA-qg67-7m6v-qg25 (CWE-285, high) project-zot/zot, Apache-2.0",
+    expected_decision="escalate",
+    context={
+        "pkg/api/config/config.go": """// Access is granted per repository and per action. The three actions are
+// distinct on purpose: an account may be allowed to push new tags without being
+// allowed to delete existing ones.
+//
+//     ActionPull   = "pull"
+//     ActionPush   = "push"
+//     ActionDelete = "delete"
+""",
+    },
+    before={
+        "pkg/api/authn.go": """            vars := mux.Vars(request)
+            name := vars["name"]
+
+            var action string
+            switch m := request.Method; m {
+            case http.MethodHead, http.MethodGet:
+                action = "pull"
+            case http.MethodPost, http.MethodPatch, http.MethodPut:
+                action = "push"
+            case http.MethodDelete:
+                action = "delete"
+            default:
+                action = "pull"
+            }
+
+            requestedAccess = &ResourceAction{Name: name, Action: action}
+""",
+    },
+    after={
+        "pkg/api/authn.go": """            vars := mux.Vars(request)
+            name := vars["name"]
+
+            //!EXPECT agent=security category=authz severity>=critical :: DELETE falls into the push branch, so a token granting only push authorises deletion; push and delete are separate actions precisely because they are not the same permission
+            action := "pull"
+            if m := request.Method; m != http.MethodGet && m != http.MethodHead {
+                action = "push"
+            }
+
+            requestedAccess = &ResourceAction{Name: name, Action: action}
+""",
+    },
+)
+
+case(
+    id="cve-perses-unvalidated-project-path",
+    title="Skip the project name validation",
+    summary=(
+        "Drops the identifier check on a query parameter that becomes a "
+        "filesystem path. Inverted from the fix for path traversal."
+    ),
+    provenance="GHSA-vr5f-w35q-98jp (CWE-22, high) perses/perses, Apache-2.0",
+    expected_decision="escalate",
+    context={
+        "internal/api/database/file/file.go": """// buildPath joins the storage root with the project and resource names to reach
+// the document on disk. It does no validation of its own: callers are required
+// to have validated the names before this point.
+func (d *DAO) buildPath(project string, kind string) string {
+    return filepath.Join(d.Folder, project, kind)
+}
+""",
+    },
+    before={
+        "internal/api/toolbox/list.go": """func (t *toolbox[T, K, V]) list(ctx echo.Context, parameters apiInterface.Parameters, query V) (any, error) {
+    projectQueryParameter := query.GetProjectQueryParam()
+    if len(projectQueryParameter) > 0 {
+        if err := common.ValidateID(projectQueryParameter); err != nil {
+            return nil, apiInterface.HandleBadRequestError("the project name in the query parameter is invalid")
+        }
+        if len(parameters.Project) > 0 && parameters.Project != projectQueryParameter {
+            return nil, apiInterface.HandleBadRequestError("the project name in the path and the query differ")
+        }
+        parameters.Project = projectQueryParameter
+    }
+    return t.service.List(ctx, query, parameters)
+}
+""",
+    },
+    after={
+        "internal/api/toolbox/list.go": """func (t *toolbox[T, K, V]) list(ctx echo.Context, parameters apiInterface.Parameters, query V) (any, error) {
+    projectQueryParameter := query.GetProjectQueryParam()
+    if len(projectQueryParameter) > 0 {
+        //!EXPECT agent=security category=injection severity>=critical :: the project name reaches filepath.Join unvalidated, and buildPath documents that callers must validate it, so ../ in the query parameter escapes the storage root
+        if len(parameters.Project) > 0 && parameters.Project != projectQueryParameter {
+            return nil, apiInterface.HandleBadRequestError("the project name in the path and the query differ")
+        }
+        parameters.Project = projectQueryParameter
+    }
+    return t.service.List(ctx, query, parameters)
+}
+""",
+    },
+)
+
+case(
+    id="cve-rclone-declared-length-allocation",
+    title="Pre-reserve the multipart buffer",
+    summary=(
+        "Allocates from a client-declared length before reading the body. "
+        "Inverted from the fix for memory exhaustion."
+    ),
+    provenance="GHSA-2p48-j3qc-rx9f (CWE-789, high) rclone/rclone, MIT",
+    expected_decision=None,
+    before={
+        "cmd/serve/s3/multipart.go": """func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName string,
+    partNumber int, contentLength int64, body io.Reader) (string, error) {
+
+    // Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
+    // stream it once it is this part's turn. The RW grows a page at a time as
+    // the body is read.
+    rw := multipart.NewRW()
+    hasher := md5.New()
+    n, err := io.Copy(rw, io.TeeReader(body, hasher))
+""",
+    },
+    after={
+        "cmd/serve/s3/multipart.go": """func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName string,
+    partNumber int, contentLength int64, body io.Reader) (string, error) {
+
+    // Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
+    // stream it once it is this part's turn.
+    //!EXPECT agent=security category=input_validation severity>=major :: contentLength is the value the client declared, so an unauthenticated request announcing a huge part reserves that much memory before a single byte of body is read
+    rw := multipart.NewRW().Reserve(contentLength)
+    hasher := md5.New()
+    n, err := io.Copy(rw, io.TeeReader(body, hasher))
+""",
+    },
+)
