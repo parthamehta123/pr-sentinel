@@ -15,6 +15,15 @@ defects in them, which the models duly found. A scoped trap claims only that a
 positive, while observing that it lacks a test is not. Traps in this set are
 scoped where the case is testing one specific reflex.
 
+**A hit needs the right concern, not just the right line.** Matching on location
+alone credited any finding that landed near a labelled line, whatever it said —
+the tests agent noting "no test covers this" on a line labelled for SQL injection
+scored as a hit on the injection. Measured over three runs, 56.6% of hits were a
+different agent describing a different concern. That inflated precision from a
+true 0.40 to a reported 0.98 and made every per-agent number meaningless. A
+finding must now agree with the label's *family* of concern; landing nearby while
+talking about something else makes it unlabelled, which is what it is.
+
 **A finding may satisfy several labels.** The aggregator folds a repeated
 recommendation into one comment carrying every location as evidence. That comment
 does cover all of those defects, and scoring it as covering only the first would
@@ -25,6 +34,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ..domain.enums import Category, family_of
 from ..domain.models import Finding
 from .fixtures import SEVERITY_ORDER, Label
 
@@ -63,19 +73,54 @@ def _locates(finding: Finding, label: Label) -> bool:
     )
 
 
+def _covers(finding: Finding, label: Label) -> bool:
+    """Strictly: does this finding actually talk about that line?
+
+    No snapping tolerance. The tolerance exists because models miscount their own
+    line inside a hunk, and it is the right call when deciding whether a real
+    defect was found. Applied to a trap it manufactures false positives: measured
+    over the recorded runs, twelve of thirteen "false positives" were findings
+    three to five lines away, aimed squarely at the defective function below the
+    clean one and dragged onto it by the tolerance.
+    """
+    if finding.file_path == label.file_path and (finding.line_start <= label.line <= finding.line_end):
+        return True
+    return any(
+        e.file_path == label.file_path
+        and e.line_start is not None
+        and e.line_start <= label.line <= (e.line_end or e.line_start)
+        for e in finding.evidence
+    )
+
+
 def _traps(finding: Finding, trap: Label) -> bool:
-    """A trap fires only within its scope, if it declares one."""
-    if not _locates(finding, trap):
+    """A trap fires only on the line it declares clean, and only within its scope."""
+    if not _covers(finding, trap):
         return False
     if trap.agent is not None and str(finding.agent) != trap.agent:
         return False
     return not (trap.category is not None and str(finding.category) != trap.category)
 
 
+def _same_concern(finding: Finding, label: Label) -> bool:
+    """Is the finding about the kind of thing the label describes?
+
+    A label with no category makes no claim about the concern, so location is
+    enough. Otherwise the families must agree — `injection` and `authz` are both
+    security and count; `test_coverage` on the same line does not.
+    """
+    if label.category is None:
+        return True
+    try:
+        return family_of(Category(label.category)) == family_of(finding.category)
+    except ValueError:
+        return True
+
+
 def classify(findings: list[Finding], expected: list[Label], forbidden: list[Label]) -> list[Match]:
     matches: list[Match] = []
     for finding in findings:
-        covered = [x for x in expected if _locates(finding, x)]
+        covered = [x for x in expected if _locates(finding, x) and _same_concern(finding, x)]
         if covered:
             primary = covered[0]
             matches.append(

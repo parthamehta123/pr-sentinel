@@ -13,9 +13,80 @@ Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
 
 ---
 
+## The matcher was measuring the wrong thing
+
+`agent_attribution` had sat at 0.33 for every run — only a third of findings came
+from the specialist that should have found them — and it was reported in passing
+several times without being investigated. It should have been.
+
+Splitting the hits over three recorded runs:
+
+| | count | share |
+|---|---|---|
+| expected agent, same concern | 92 | 35.7% |
+| **different agent, different concern** | **146** | **56.6%** |
+| different agent, same concern | 20 | 7.8% |
+
+Only 7.8% was genuine cross-agent overlap. The majority were findings that landed
+near a labelled line while talking about something else entirely — the tests agent
+noting "no test covers this" on a line labelled for SQL injection, scored as a hit
+on the injection. Labelled *security* defects were credited to correctness 36% of
+the time, tests 28%, and security 21%.
+
+**The architecture was fine; the metric was broken.** Two corrections:
+
+- **A hit now requires the finding to be about the label's family of concern.**
+  Landing nearby while discussing something else makes it unlabelled, which is
+  what it is.
+- **A trap fires only on the line it declares clean**, with no snapping tolerance.
+  Twelve of thirteen recorded "false positives" were three to five lines away,
+  aimed squarely at the defective function below the clean one and dragged onto it
+  by the ±3 window. That tolerance is right for deciding whether a real defect was
+  found and wrong for deciding whether a clean line was flagged.
+
+Re-scored over the same recorded findings — the models were not re-run, only the
+arithmetic changed:
+
+| | before | after |
+|---|---|---|
+| agent attribution | 0.331 | **0.808** |
+| category agreement | 0.387 | **0.947** |
+| recall | 1.000 | 0.964 |
+| precision strict | 0.983 | **0.402** |
+| precision lenient | 0.983 | 0.879 |
+| false positives per run | ~1 | 4.3 |
+
+Recall barely moved, so the specialists really do describe almost every labelled
+defect. **Precision was the inflated number** — 0.983 was measuring "did a finding
+land near a labelled line", not "was it about the defect".
+
+`scripts/rescore.py` exists because of this. Scoring has now changed four times,
+and each time the recorded numbers quietly stopped meaning what the current code
+would produce. Re-running the models to find out costs about ten dollars and
+twenty minutes; the findings have not changed, only the arithmetic over them, so
+re-scoring does it for nothing.
+
+### What the honest precision number is telling us
+
+0.402 strict against 0.879 lenient, with roughly 42 unlabelled findings per run,
+means **about sixty per cent of what the system produces is not described by any
+label**. Those are mostly legitimate observations the set does not cover: a real
+missing test, a real undocumented parameter, on a line labelled for something
+else. They are neither right nor wrong as far as the set is concerned.
+
+That is now the clearest direction for the set — not more planted defects, but
+labelling more of what the models already find. It is also why precision is
+reported twice, and why quoting the strict figure alone would be as misleading as
+quoting 0.983 was.
+
+---
+
 ## Current
 
-Mean over three runs of the 34-case set, after the evidence-citation fix:
+Mean over three runs of the 34-case set. **These are pre-fix scores** — the
+committed baseline JSON was produced by the old matcher. `scripts/rescore.py`
+prints the current-matcher numbers over the same findings, and they are in the
+table above.
 
 ```
                         mean      min      max   spread

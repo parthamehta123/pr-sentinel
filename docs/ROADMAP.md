@@ -10,6 +10,17 @@ matching and scoring, and `make eval` gates against a saved baseline. It measure
 calibration first, precision strictly and leniently, recall, category agreement,
 agent attribution, gate-decision match and cost.
 
+## 0. Label what the models already find
+
+About sixty per cent of findings match no label — 42 per run, against 0.402 strict
+and 0.879 lenient precision. Most are legitimate observations the set does not
+cover: a real missing test or undocumented parameter on a line labelled for
+something else. The set cannot say whether they are right.
+
+That is a more valuable direction than planting more defects. Every one labelled
+moves a finding out of the unlabelled column and makes strict precision mean
+something; the raw material is already sitting in the recorded runs.
+
 ## 1. Grow the eval set
 
 Run against real models: precision 0.886/0.975, recall 0.933, calibration error

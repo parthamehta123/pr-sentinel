@@ -97,8 +97,12 @@ findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
 false-positive traps**, seven cases where the right answer is silence, and
 thirteen whose defect is invisible without the retrieved repository context.
 
-The headline numbers below are from the 34-case set; the 47-case baseline is
-pending an API credit top-up.
+The headline numbers below are from the 34-case set, scored by an earlier matcher.
+Investigating why `agent_attribution` sat at 0.33 found that matching on location
+alone was crediting any finding that landed near a labelled line, whatever it
+said. Corrected, attribution is 0.81 and precision is 0.402 strict / 0.879
+lenient — see [RESULTS.md](tests/eval/RESULTS.md). `scripts/rescore.py` recomputes
+any recorded run under the current matcher without calling a model.
 
 Sixteen of the cases put a real defect next to a plausible look-alike — a path
 join with no confinement check one function below one with `realpath`; a signature

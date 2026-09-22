@@ -280,14 +280,16 @@ def test_per_agent_recall_also_counts_distinct_defects():
 def test_duplicate_rate_counts_concerns_not_labels():
     """A docs finding and a tests finding on one line are two concerns, not a duplicate.
 
-    Counting per label over-reported duplication: the label marks one defect, but
-    a different-family finding on the same line is a separate observation the
-    aggregator is right to keep apart.
+    The label here carries no category, so it matches on location alone — which is
+    the only way two different-family findings can both be hits now that a hit
+    requires concern agreement. The denominator still has to be concerns, because
+    the alternative over-reports duplication.
     """
     findings = [
         finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor"),
         finding(line=10, agent=AgentType.DOCS, category="documentation", severity="info"),
     ]
+    uncategorised = Label(file_path="a.py", line=10, agent="tests", note="n")
     case = EvalCase(
         id="c",
         title="t",
@@ -295,7 +297,7 @@ def test_duplicate_rate_counts_concerns_not_labels():
         expected_decision=None,
         files=[],
         context_chunks=[],
-        expected=[label(line=10)],
+        expected=[uncategorised],
         must_not_find=[],
     )
     rep = score(
@@ -443,3 +445,65 @@ def test_most_traps_in_the_set_stay_unscoped():
     traps = [t for c in cases for t in c.must_not_find]
     unscoped = [t for t in traps if t.agent is None and t.category is None]
     assert len(unscoped) / len(traps) > 0.7
+
+
+# --- a hit needs the right concern, not just the right line -----------------
+#
+# Investigating agent attribution 0.33 found the cause: matching on location
+# alone. Over three recorded runs, 56.6% of "hits" were a different agent
+# describing a different concern that happened to land on the same line — the
+# tests agent noting "no test covers this" on a line labelled for SQL injection.
+# Corrected, attribution is 0.81 and the four-specialist split is fine; it was the
+# metric that was broken, not the architecture.
+
+
+def test_a_finding_about_another_concern_is_not_a_hit():
+    injection = label(line=10, agent="security", category="injection")
+    coverage = finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor")
+    assert classify([coverage], [injection], [])[0].kind == "unlabelled"
+
+
+def test_a_different_agent_on_the_same_concern_is_still_a_hit():
+    """Cross-agent agreement is the signal the aggregator is built on; keep it."""
+    injection = label(line=10, agent="security", category="injection")
+    from_correctness = finding(line=10, agent=AgentType.CORRECTNESS, category="input_validation")
+    m = classify([from_correctness], [injection], [])[0]
+    assert m.kind == "hit" and not m.agent_correct
+
+
+def test_a_label_without_a_category_matches_on_location_alone():
+    loose = Label(file_path="a.py", line=10, agent="security", note="n")
+    assert classify([finding(line=10, category="documentation")], [loose], [])[0].kind == "hit"
+
+
+# --- traps fire only on the line they declare clean -------------------------
+
+
+def test_a_trap_does_not_catch_a_finding_aimed_at_a_nearby_line():
+    """Regression: the +/-3 snapping tolerance manufactured false positives.
+
+    Twelve of thirteen recorded "false positives" were three to five lines from
+    the trap, aimed squarely at the defective function below the clean one. The
+    tolerance is right for deciding whether a real defect was found and wrong for
+    deciding whether a clean line was flagged.
+    """
+    trap = Label(file_path="a.py", line=5, note="this line is fine")
+    nearby = finding(line=8)
+    nearby.line_end = 10
+    assert classify([nearby], [], [trap])[0].kind == "unlabelled"
+
+
+def test_a_trap_catches_a_finding_whose_range_covers_it():
+    trap = Label(file_path="a.py", line=8, note="this line is fine")
+    spanning = finding(line=5)
+    spanning.line_end = 12
+    assert classify([spanning], [], [trap])[0].kind == "false_positive"
+
+
+def test_a_trap_catches_a_finding_that_cites_it_as_evidence():
+    from pr_sentinel.domain.models import Evidence
+
+    trap = Label(file_path="b.py", line=40, note="this line is fine")
+    citing = finding(path="a.py", line=10)
+    citing.evidence = [Evidence(kind="diff", file_path="b.py", line_start=40, line_end=40)]
+    assert classify([citing], [], [trap])[0].kind == "false_positive"

@@ -8,17 +8,17 @@
   },
   "cases": 47,
   "overall": {
-    "hits": 33,
-    "labels_found": 26,
-    "concerns": 36,
-    "duplicate_rate": 0.92,
+    "hits": 4,
+    "labels_found": 9,
+    "concerns": 9,
+    "duplicate_rate": 0.44,
     "false_positives": 2,
-    "unlabelled": 4,
-    "misses": 21,
-    "precision_strict": 0.846,
-    "precision_lenient": 0.943,
-    "recall": 0.553,
-    "f1": 0.669
+    "unlabelled": 33,
+    "misses": 38,
+    "precision_strict": 0.103,
+    "precision_lenient": 0.667,
+    "recall": 0.191,
+    "f1": 0.134
   },
   "by_agent": {
     "correctness": {
@@ -28,24 +28,24 @@
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 0,
-      "misses": 8,
+      "misses": 14,
       "precision_strict": 1.0,
       "precision_lenient": 1.0,
-      "recall": 0.111,
-      "f1": 0.2
+      "recall": 0.067,
+      "f1": 0.125
     },
     "docs": {
-      "hits": 14,
-      "labels_found": 13,
+      "hits": 1,
+      "labels_found": 1,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 14,
       "misses": 4,
-      "precision_strict": 0.933,
+      "precision_strict": 0.067,
       "precision_lenient": 1.0,
-      "recall": 0.765,
-      "f1": 0.841
+      "recall": 0.2,
+      "f1": 0.1
     },
     "security": {
       "hits": 1,
@@ -54,24 +54,24 @@
       "duplicate_rate": 0.0,
       "false_positives": 1,
       "unlabelled": 0,
-      "misses": 6,
+      "misses": 14,
       "precision_strict": 0.5,
       "precision_lenient": 0.5,
-      "recall": 0.143,
-      "f1": 0.222
+      "recall": 0.067,
+      "f1": 0.118
     },
     "tests": {
-      "hits": 17,
-      "labels_found": 21,
+      "hits": 1,
+      "labels_found": 6,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 1,
-      "unlabelled": 3,
-      "misses": 3,
-      "precision_strict": 0.81,
-      "precision_lenient": 0.944,
-      "recall": 0.875,
-      "f1": 0.841
+      "unlabelled": 19,
+      "misses": 6,
+      "precision_strict": 0.048,
+      "precision_lenient": 0.5,
+      "recall": 0.5,
+      "f1": 0.087
     }
   },
   "calibration": {
@@ -80,15 +80,15 @@
         "range": "0.00-0.50",
         "n": 15,
         "mean_confidence": 0.45,
-        "observed_hit_rate": 0.933,
-        "gap": 0.483
+        "observed_hit_rate": 0.067,
+        "gap": -0.383
       },
       {
         "range": "0.50-0.60",
         "n": 21,
         "mean_confidence": 0.55,
-        "observed_hit_rate": 0.81,
-        "gap": 0.26
+        "observed_hit_rate": 0.048,
+        "gap": -0.502
       },
       {
         "range": "0.70-0.80",
@@ -105,10 +105,10 @@
         "gap": -0.32
       }
     ],
-    "expected_calibration_error": 0.349
+    "expected_calibration_error": 0.442
   },
-  "category_agreement": 0.091,
-  "agent_attribution": 0.121,
+  "category_agreement": 0.75,
+  "agent_attribution": 1.0,
   "decision_accuracy": 0.6,
   "cost": {
     "total_usd": 0.3225,
@@ -206,10 +206,10 @@
     },
     {
       "id": "cor-mutable-default-arg",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -218,7 +218,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -227,16 +227,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "notify/batch.py:7",
-          "matched_labels": [
-            "notify/batch.py:7"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "notify/batch.py:7"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -245,10 +243,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "notify/batch.py:7",
-          "matched_labels": [
-            "notify/batch.py:7"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "notify/batch.py:7"
           ]
@@ -295,10 +291,10 @@
     },
     {
       "id": "cor-off-by-one-pagination",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -307,7 +303,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -316,16 +312,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "export/pages.py:12",
-          "matched_labels": [
-            "export/pages.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/pages.py:9"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -334,10 +328,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "export/pages.py:12",
-          "matched_labels": [
-            "export/pages.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/pages.py:9"
           ]
@@ -360,10 +352,10 @@
     },
     {
       "id": "cor-resource-leak-error-path",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -372,7 +364,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -381,16 +373,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "importer/csv_import.py:10",
-          "matched_labels": [
-            "importer/csv_import.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "importer/csv_import.py:9"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -399,10 +389,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "importer/csv_import.py:10",
-          "matched_labels": [
-            "importer/csv_import.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "importer/csv_import.py:9"
           ]
@@ -411,10 +399,10 @@
     },
     {
       "id": "cor-retry-non-idempotent",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -423,7 +411,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -432,10 +420,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "billing/resilient.py:11",
-          "matched_labels": [
-            "billing/resilient.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "billing/resilient.py:11"
           ]
@@ -444,10 +430,10 @@
     },
     {
       "id": "cor-timezone-naive-comparison",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -456,7 +442,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -465,10 +451,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "invites/expiry.py:9",
-          "matched_labels": [
-            "invites/expiry.py:9"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "invites/expiry.py:8"
           ]
@@ -491,10 +475,10 @@
     },
     {
       "id": "ctx-changed-default-breaks-caller",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -503,7 +487,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -512,10 +496,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "clients/http.py:1",
-          "matched_labels": [
-            "clients/http.py:1"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "clients/http.py:1"
           ]
@@ -538,10 +520,10 @@
     },
     {
       "id": "doc-misleading-name",
-      "hits": 2,
+      "hits": 1,
       "missed": 0,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -550,7 +532,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -559,10 +541,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "cache/lookup.py:8",
-          "matched_labels": [
-            "cache/lookup.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "cache/lookup.py:8"
           ]
@@ -754,10 +734,10 @@
     },
     {
       "id": "sec-command-injection",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.523,
@@ -766,7 +746,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -775,16 +755,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "export/archive.py:9",
-          "matched_labels": [
-            "export/archive.py:9"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/archive.py:8"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -793,10 +771,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "export/archive.py:9",
-          "matched_labels": [
-            "export/archive.py:9"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/archive.py:8"
           ]
@@ -870,10 +846,10 @@
     },
     {
       "id": "sec-jwt-unverified",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.523,
@@ -882,7 +858,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -891,16 +867,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "auth/tokens.py:11",
-          "matched_labels": [
-            "auth/tokens.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/tokens.py:10"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -909,10 +883,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "auth/tokens.py:11",
-          "matched_labels": [
-            "auth/tokens.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/tokens.py:10"
           ]
@@ -921,10 +893,10 @@
     },
     {
       "id": "sec-missing-authz",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.55,
@@ -933,7 +905,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -942,10 +914,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "api/payment_methods.py:12",
-          "matched_labels": [
-            "api/payment_methods.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "api/payment_methods.py:10"
           ]
@@ -968,10 +938,10 @@
     },
     {
       "id": "sec-path-traversal",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.523,
@@ -980,7 +950,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -989,16 +959,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "exports/serve.py:20",
-          "matched_labels": [
-            "exports/serve.py:20"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "exports/serve.py:19"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1007,10 +975,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "exports/serve.py:20",
-          "matched_labels": [
-            "exports/serve.py:20"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "exports/serve.py:19"
           ]
@@ -1033,10 +999,10 @@
     },
     {
       "id": "sec-sql-injection-fstring",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.55,
@@ -1045,7 +1011,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1054,10 +1020,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "billing/queries.py:9",
-          "matched_labels": [
-            "billing/queries.py:9"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "billing/queries.py:8"
           ]
@@ -1066,10 +1030,10 @@
     },
     {
       "id": "sec-ssrf-webhook-url",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1078,7 +1042,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1087,16 +1051,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "integrations/webhooks.py:14",
-          "matched_labels": [
-            "integrations/webhooks.py:14"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "integrations/webhooks.py:13"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1105,10 +1067,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "integrations/webhooks.py:14",
-          "matched_labels": [
-            "integrations/webhooks.py:14"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "integrations/webhooks.py:13"
           ]
@@ -1131,10 +1091,10 @@
     },
     {
       "id": "sec-timing-unsafe-compare",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1143,7 +1103,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1152,16 +1112,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "webhooks/verify.py:12",
-          "matched_labels": [
-            "webhooks/verify.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "webhooks/verify.py:10"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1170,10 +1128,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "webhooks/verify.py:12",
-          "matched_labels": [
-            "webhooks/verify.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "webhooks/verify.py:10"
           ]
@@ -1196,10 +1152,10 @@
     },
     {
       "id": "sec-weak-password-hash",
-      "hits": 4,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 4,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1208,7 +1164,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1217,16 +1173,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11",
-          "matched_labels": [
-            "auth/passwords.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/passwords.py:10"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1235,16 +1189,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11",
-          "matched_labels": [
-            "auth/passwords.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/passwords.py:14"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1253,16 +1205,14 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11",
-          "matched_labels": [
-            "auth/passwords.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/passwords.py:10"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1271,10 +1221,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "auth/passwords.py:11",
-          "matched_labels": [
-            "auth/passwords.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/passwords.py:14"
           ]
@@ -1325,10 +1273,10 @@
     },
     {
       "id": "tst-assertion-free-test",
-      "hits": 2,
-      "missed": 0,
+      "hits": 0,
+      "missed": 2,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 2,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.45,
@@ -1337,7 +1285,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1346,16 +1294,14 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "tests/test_invoice.py:8",
-          "matched_labels": [
-            "tests/test_invoice.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "tests/test_invoice.py:5"
           ]
         },
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1364,11 +1310,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "tests/test_invoice.py:8",
-          "matched_labels": [
-            "tests/test_invoice.py:8",
-            "tests/test_invoice.py:12"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "tests/test_invoice.py:11"
           ]
@@ -1448,10 +1391,10 @@
     },
     {
       "id": "tst-time-dependent-flaky",
-      "hits": 1,
-      "missed": 0,
+      "hits": 0,
+      "missed": 1,
       "false_positives": 0,
-      "unlabelled": 0,
+      "unlabelled": 1,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.45,
@@ -1460,7 +1403,7 @@
       "error": null,
       "findings": [
         {
-          "match": "hit",
+          "match": "unlabelled",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1469,10 +1412,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "tests/test_tokens.py:10",
-          "matched_labels": [
-            "tests/test_tokens.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "tests/test_tokens.py:9"
           ]
