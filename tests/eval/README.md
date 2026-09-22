@@ -66,6 +66,20 @@ schema carried numeric range constraints the API rejects, so every agent call
 duplicate-rate metric counted per label, which made co-located findings from
 different concerns look like duplication when they are not.
 
+## Three kinds of label
+
+```
+EXPECT   a defect that must be found; missing it costs recall
+ALLOW    a legitimate observation that is optional; it counts neither way
+CLEAN    flagging this is a false positive
+```
+
+`ALLOW` exists because most of what a competent reviewer could say about a diff is
+neither required nor wrong. Fifteen of the findings it covers are the tests agent
+correctly noting that a new function has no test, on a line labelled for something
+else. Requiring those would encode "always ask for tests" and penalise restraint;
+calling them false positives would label a true statement a lie.
+
 ## Traps, and scoping them
 
 A `CLEAN` marker claims a finding at that line would be a false positive. Unscoped,

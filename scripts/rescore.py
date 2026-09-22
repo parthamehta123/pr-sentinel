@@ -89,6 +89,7 @@ def main() -> int:
         ("recall", lambda r: r.overall.recall),
         ("agent attribution", lambda r: r.agent_attribution),
         ("category agreement", lambda r: r.category_agreement),
+        ("permitted findings", lambda r: float(r.overall.allowed)),
         ("unlabelled findings", lambda r: float(r.overall.unlabelled)),
         ("false positives", lambda r: float(r.overall.false_positives)),
     ]:

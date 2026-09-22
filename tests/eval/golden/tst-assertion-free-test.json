@@ -29,6 +29,7 @@
     }
   ],
   "id": "tst-assertion-free-test",
+  "may_find": [],
   "must_not_find": [],
   "summary": "One test asserts on a mock instead of behaviour; another asserts nothing at all.",
   "title": "Add tests for the invoice renderer"

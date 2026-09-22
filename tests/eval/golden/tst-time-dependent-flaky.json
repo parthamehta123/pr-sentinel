@@ -21,6 +21,7 @@
     }
   ],
   "id": "tst-time-dependent-flaky",
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "tests/test_tokens.py",

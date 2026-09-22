@@ -15,6 +15,14 @@
       "note": "new public function with no test in this change"
     },
     {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "reports/csv_export.py",
+      "line": 5,
+      "min_severity": "major",
+      "note": "csv_rows joins raw values and never calls csv_escape, so any value containing a comma corrupts the output"
+    },
+    {
       "agent": "tests",
       "category": "test_coverage",
       "file_path": "reports/csv_export.py",
@@ -80,6 +88,7 @@
     }
   ],
   "id": "tst-repeated-coverage-gap",
+  "may_find": [],
   "must_not_find": [],
   "summary": "Six new public functions across three files, none tested. One comment naming the gap is the right review; six comments is the failure mode.",
   "title": "Add the reporting exporters"

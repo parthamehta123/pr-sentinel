@@ -21,6 +21,15 @@
     }
   ],
   "id": "cor-bare-except",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "telemetry/push.py",
+      "line": 2,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [],
   "summary": "A bare except that also swallows KeyboardInterrupt and SystemExit.",
   "title": "Make the metrics push non-fatal"

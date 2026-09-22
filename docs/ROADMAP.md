@@ -10,16 +10,21 @@ matching and scoring, and `make eval` gates against a saved baseline. It measure
 calibration first, precision strictly and leniently, recall, category agreement,
 agent attribution, gate-decision match and cost.
 
-## 0. Label what the models already find
+## 0. Keep labelling what the models find
 
-About sixty per cent of findings match no label — 42 per run, against 0.402 strict
-and 0.879 lenient precision. Most are legitimate observations the set does not
-cover: a real missing test or undocumented parameter on a line labelled for
-something else. The set cannot say whether they are right.
+Done once: 28 stable unlabelled findings mined from the recorded runs, six of them
+real defects the set had missed, fifteen legitimate-but-optional. Unlabelled
+findings fell from 42 per run to 15.7 and strict precision from a misleading 0.402
+to 0.653.
 
-That is a more valuable direction than planting more defects. Every one labelled
-moves a finding out of the unlabelled column and makes strict precision mean
-something; the raw material is already sitting in the recorded runs.
+It also produced the `ALLOW` label — an observation that is legitimate but not
+required, counting neither for recall nor against precision — which is what the
+set needed to stop choosing between demanding every true statement and calling it
+noise.
+
+About fifteen findings per run are still unlabelled. The loop is cheap now:
+`scripts/rescore.py` re-scores any recorded run for nothing, so a labelling pass
+costs no API calls at all.
 
 ## 1. Grow the eval set
 

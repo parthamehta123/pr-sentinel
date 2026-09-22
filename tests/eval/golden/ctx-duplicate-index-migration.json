@@ -26,6 +26,7 @@
     }
   ],
   "id": "ctx-duplicate-index-migration",
+  "may_find": [],
   "must_not_find": [],
   "summary": "A migration that is unremarkable on its own and duplicates an index an earlier migration already created. Only the retrieved context shows it.",
   "title": "Add an index for the tenant lookup"

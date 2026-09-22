@@ -38,6 +38,9 @@ class EvalCase:
     context_chunks: list[CodeChunk]
     expected: list[Label]
     must_not_find: list[Label] = field(default_factory=list)
+    # Legitimate but optional: neither required for recall nor counted against
+    # precision. Most of what a good reviewer could say lives here.
+    may_find: list[Label] = field(default_factory=list)
 
     def pull_request(self) -> PullRequestContext:
         return PullRequestContext(
@@ -71,6 +74,7 @@ def load_cases(directory: Path | None = None, only: list[str] | None = None) -> 
                 context_chunks=[_chunk(c) for c in raw.get("context_files", [])],
                 expected=[Label(**_label(x)) for x in raw["expected"]],
                 must_not_find=[Label(**_label(x)) for x in raw.get("must_not_find", [])],
+                may_find=[Label(**_label(x)) for x in raw.get("may_find", [])],
             )
         )
     if not cases:

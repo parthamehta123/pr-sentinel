@@ -21,6 +21,22 @@
     }
   ],
   "id": "sec-command-injection",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "export/archive.py",
+      "line": 8,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "export/archive.py",
+      "line": 8,
+      "note": "the new function is undocumented; true, and optional on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [],
   "summary": "subprocess with shell=True and an interpolated user-supplied name.",
   "title": "Add an archive export command"

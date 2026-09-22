@@ -21,6 +21,7 @@
     }
   ],
   "id": "cor-off-by-one-pagination",
+  "may_find": [],
   "must_not_find": [],
   "summary": "A slice that drops the last record on every page.",
   "title": "Add pagination to the export endpoint"

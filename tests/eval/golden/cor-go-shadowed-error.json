@@ -21,6 +21,7 @@
     }
   ],
   "id": "cor-go-shadowed-error",
+  "may_find": [],
   "must_not_find": [],
   "summary": "Go. An error shadowed inside an if-scope, so the failure is dropped.",
   "title": "Add the settlement writer"

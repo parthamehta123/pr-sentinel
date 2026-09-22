@@ -19,6 +19,7 @@
     }
   ],
   "id": "neg-clean-extract-method",
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "billing/totals.py",

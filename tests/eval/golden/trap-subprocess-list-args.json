@@ -19,6 +19,7 @@
     }
   ],
   "id": "trap-subprocess-list-args",
+  "may_find": [],
   "must_not_find": [
     {
       "agent": "security",

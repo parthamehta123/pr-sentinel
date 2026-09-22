@@ -26,6 +26,22 @@
     }
   ],
   "id": "cor-retry-non-idempotent",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "billing/resilient.py",
+      "line": 11,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "billing/resilient.py",
+      "line": 11,
+      "note": "the retry wrapper's safety contract is undocumented; a fair observation, not a required one"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "billing/resilient.py",

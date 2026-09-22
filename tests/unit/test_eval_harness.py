@@ -507,3 +507,83 @@ def test_a_trap_catches_a_finding_that_cites_it_as_evidence():
     citing = finding(path="a.py", line=10)
     citing.evidence = [Evidence(kind="diff", file_path="b.py", line_start=40, line_end=40)]
     assert classify([citing], [], [trap])[0].kind == "false_positive"
+
+
+# --- legitimate but optional -------------------------------------------------
+#
+# Mining 28 stable unlabelled findings out of the recorded runs found that most
+# were neither required nor wrong: fifteen were the tests agent correctly noting a
+# new function has no test, on a line labelled for something else. Requiring them
+# would encode "always ask for tests" and penalise restraint; calling them false
+# positives would label a true statement a lie.
+
+
+def _case_with_allowed():
+    return EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10, agent="security", category="injection")],
+        must_not_find=[],
+        may_find=[Label(file_path="a.py", line=10, agent="tests", category="test_coverage", note="optional")],
+    )
+
+
+def test_a_permitted_finding_costs_nothing():
+    """It is not a hit, not a false positive, and not held against precision."""
+    optional = finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor")
+    required = finding(line=10, agent=AgentType.SECURITY, category="injection")
+    case = _case_with_allowed()
+    rep = score(
+        [
+            score_case(
+                case, [required, optional], decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1
+            )
+        ],
+        "t",
+        {},
+    )
+    assert rep.overall.hits == 1
+    assert rep.overall.allowed == 1
+    assert rep.overall.unlabelled == 0
+    assert rep.overall.precision_strict == pytest.approx(1.0)
+
+
+def test_not_making_a_permitted_finding_costs_nothing_either():
+    """Restraint must not be punished: recall is over required labels only."""
+    case = _case_with_allowed()
+    rep = score(
+        [
+            score_case(
+                case,
+                [finding(line=10, agent=AgentType.SECURITY, category="injection")],
+                decision="auto_post",
+                confidence=0.9,
+                cost_usd=0.0,
+                duration_ms=1,
+            )
+        ],
+        "t",
+        {},
+    )
+    assert rep.overall.recall == pytest.approx(1.0)
+    assert rep.overall.allowed == 0
+
+
+def test_a_permitted_label_does_not_rescue_an_unrelated_finding():
+    case = _case_with_allowed()
+    unrelated = finding(line=10, agent=AgentType.DOCS, category="documentation", severity="info")
+    rep = score(
+        [score_case(case, [unrelated], decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1)],
+        "t",
+        {},
+    )
+    assert rep.overall.unlabelled == 1 and rep.overall.allowed == 0
+
+
+def test_the_set_actually_uses_permitted_labels():
+    cases = load_cases()
+    assert sum(len(c.may_find) for c in cases) >= 15

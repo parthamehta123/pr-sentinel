@@ -24,6 +24,13 @@ true 0.40 to a reported 0.98 and made every per-agent number meaningless. A
 finding must now agree with the label's *family* of concern; landing nearby while
 talking about something else makes it unlabelled, which is what it is.
 
+**Three outcomes, not two.** Most of what a competent reviewer could say about a
+diff is neither a required finding nor a mistake. An `ALLOW` label marks an
+observation that is legitimate but optional — it is not needed for recall and does
+not count against precision. Without it the set had to either demand every true
+observation, penalising restraint, or treat it as noise, which is a lie about
+true code.
+
 **A finding may satisfy several labels.** The aggregator folds a repeated
 recommendation into one comment carrying every location as evidence. That comment
 does cover all of those defects, and scoring it as covering only the first would
@@ -117,7 +124,12 @@ def _same_concern(finding: Finding, label: Label) -> bool:
         return True
 
 
-def classify(findings: list[Finding], expected: list[Label], forbidden: list[Label]) -> list[Match]:
+def classify(
+    findings: list[Finding],
+    expected: list[Label],
+    forbidden: list[Label],
+    allowed: list[Label] | None = None,
+) -> list[Match]:
     matches: list[Match] = []
     for finding in findings:
         covered = [x for x in expected if _locates(finding, x) and _same_concern(finding, x)]
@@ -140,6 +152,14 @@ def classify(findings: list[Finding], expected: list[Label], forbidden: list[Lab
         trap = next((x for x in forbidden if _traps(finding, x)), None)
         if trap is not None:
             matches.append(Match(finding=finding, label=trap, kind="false_positive", labels=[trap]))
+            continue
+
+        permitted = next(
+            (x for x in (allowed or []) if _locates(finding, x) and _same_concern(finding, x)),
+            None,
+        )
+        if permitted is not None:
+            matches.append(Match(finding=finding, label=permitted, kind="allowed", labels=[permitted]))
             continue
 
         matches.append(Match(finding=finding, label=None, kind="unlabelled"))

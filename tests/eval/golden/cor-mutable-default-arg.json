@@ -21,6 +21,15 @@
     }
   ],
   "id": "cor-mutable-default-arg",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "notify/batch.py",
+      "line": 7,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "notify/batch.py",

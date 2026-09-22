@@ -26,6 +26,15 @@
     }
   ],
   "id": "cor-timezone-naive-comparison",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "invites/expiry.py",
+      "line": 8,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "invites/expiry.py",

@@ -21,6 +21,7 @@
     }
   ],
   "id": "sec-verbose-error-leak",
+  "may_find": [],
   "must_not_find": [],
   "summary": "Internals leaked to the client. Real, and `major`, not `critical`.",
   "title": "Return the exception text to help debugging"

@@ -12,6 +12,7 @@
     }
   ],
   "id": "neg-typescript-type-narrowing",
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "web/src/events.ts",

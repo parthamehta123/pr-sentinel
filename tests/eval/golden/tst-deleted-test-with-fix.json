@@ -21,6 +21,7 @@
     }
   ],
   "id": "tst-deleted-test-with-fix",
+  "may_find": [],
   "must_not_find": [],
   "summary": "The test that would have caught the change is deleted in the same commit.",
   "title": "Fix the rounding and drop the failing test"

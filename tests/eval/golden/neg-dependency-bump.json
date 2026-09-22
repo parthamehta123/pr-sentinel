@@ -19,6 +19,7 @@
     }
   ],
   "id": "neg-dependency-bump",
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "pyproject.toml",

@@ -21,6 +21,15 @@
     }
   ],
   "id": "sec-path-traversal",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "exports/serve.py",
+      "line": 19,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "exports/serve.py",

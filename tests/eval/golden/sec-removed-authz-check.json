@@ -26,6 +26,7 @@
     }
   ],
   "id": "sec-removed-authz-check",
+  "may_find": [],
   "must_not_find": [],
   "summary": "An ownership check deleted for performance. Critical: the control is gone.",
   "title": "Speed up the bulk export endpoint"

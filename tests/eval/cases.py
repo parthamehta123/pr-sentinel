@@ -73,6 +73,7 @@ def get_customer(customer_id):
     return execute("SELECT * FROM customers WHERE id = %s", (customer_id,))
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def search_customers(term, status):
     #!EXPECT agent=security category=injection severity>=critical :: `term` is interpolated straight into the WHERE clause
     sql = f"SELECT * FROM customers WHERE name LIKE '%{term}%' AND status = '{status}'"
@@ -154,6 +155,7 @@ def client():
 
 
 #!EXPECT agent=security category=secrets severity>=critical :: a live secret key committed to the repository, replacing an environment lookup
+#!EXPECT agent=correctness category=logic severity>=minor :: the environment lookup is gone, so every environment now shares one key and rotating it means a deploy
 ACMEPAY_SECRET_KEY = "acme_live_7f3c9d2e8b1a45061f2d8c9e3b7a5140"
 
 
@@ -167,6 +169,7 @@ def client():
 TEST_KEY = "acme_test_00000000000000000000000000"
 
 
+#!ALLOW agent=correctness category=api_contract :: the fake's return shape does not match the real client; true of the fixture, and minor
 def fake_client():
     return {"api_key": TEST_KEY}
 ''',
@@ -230,6 +233,8 @@ def list_exports(directory):
     return subprocess.run(["ls", directory], capture_output=True, check=True).stdout
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
+#!ALLOW agent=docs category=documentation :: the new function is undocumented; true, and optional on a change whose point is elsewhere
 def create_archive(name, directory):
     #!EXPECT agent=security category=injection severity>=critical :: shell=True with `name` interpolated, so a name containing a shell metacharacter runs arbitrary commands
     cmd = f"tar -czf /exports/{name}.tar.gz {directory}"
@@ -269,8 +274,10 @@ def deliver(url, payload):
     return requests.post(url, json=payload, timeout=5)
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def verify_endpoint(url):
     #!EXPECT agent=security category=input_validation severity>=major :: caller-supplied URL fetched server-side, bypassing the ALLOWED_HOSTS check the sibling function applies
+    #!ALLOW agent=correctness category=error_handling :: network failures escape as exceptions rather than a status; defensible either way for a verify helper
     return requests.get(url, timeout=5).status_code
 """,
     },
@@ -331,6 +338,7 @@ case(
     },
     after={
         "telemetry/push.py": """def push_metrics(payload):
+    #!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
     try:
         return _client.send(payload)
     #!EXPECT agent=correctness category=error_handling severity>=major :: a bare except also catches KeyboardInterrupt and SystemExit, so the process stops being interruptible
@@ -395,6 +403,7 @@ def read_rows(path):
         return list(csv.reader(fh))
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def read_validated(path, expected_header):
     #!EXPECT agent=correctness category=resource_leak severity>=major :: the handle is opened without a context manager and is never closed on the early-return path
     fh = open(path)
@@ -474,13 +483,17 @@ case(
 """,
     },
     after={
-        "billing/coupons.py": """class CouponExpired(Exception):
+        "billing/coupons.py": """from datetime import datetime, timezone
+
+
+class CouponExpired(Exception):
     pass
 
 
+#!ALLOW agent=docs category=documentation :: the newly raised CouponExpired is not documented; a fair observation, not a required one
 def apply_coupon(order, coupon):
     #!EXPECT agent=tests category=test_coverage severity>=major :: the new CouponExpired branch has no test; the only test added covers the unexpired path
-    if coupon.expires_at < now():
+    if coupon.expires_at < datetime.now(timezone.utc):
         raise CouponExpired(coupon.code)
     order.total -= coupon.amount
     return order
@@ -541,6 +554,8 @@ case(
         "usage/report.py": '''def monthly_usage(account_id):
     """Return the total number of API calls this month as an integer."""
     #!EXPECT agent=docs category=documentation severity>=minor :: the docstring above still promises an integer total; this now returns a per-day mapping
+    #!EXPECT agent=correctness category=api_contract severity>=major :: the return type changed from an integer to a mapping, so every existing caller of monthly_usage breaks
+    #!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
     rows = _db.fetch("SELECT day, count(*) FROM calls WHERE account_id = %s GROUP BY day", (account_id,))
     return {row["day"]: row["count"] for row in rows}
 ''',
@@ -646,6 +661,7 @@ def dump(rows):
 
 
 #!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+#!EXPECT agent=correctness category=logic severity>=major :: csv_rows joins raw values and never calls csv_escape, so any value containing a comma corrupts the output
 def csv_rows(rows, columns):
     """Render `rows` as CSV lines, in `columns` order."""
     return [",".join(str(r.get(c, "")) for c in columns) for r in rows]
@@ -754,6 +770,7 @@ def read_export(name):
         return fh.read()
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def read_export_preview(name, limit=4096):
     #!EXPECT agent=security category=injection severity>=critical :: joins the caller's name with no realpath and no confinement check, so ../ escapes EXPORT_ROOT
     path = os.path.join(EXPORT_ROOT, name)
@@ -791,6 +808,7 @@ def verify_stripe(secret, body, header):
     return hmac.compare_digest(expected, header)
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def verify_acmepay(secret, body, header):
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     #!EXPECT agent=security category=crypto severity>=major :: == on a signature is not constant time and leaks the expected value a byte at a time, unlike the compare_digest call above
@@ -824,6 +842,8 @@ def claims_for(token):
     return jwt.decode(token, public_key(), algorithms=["RS256"])
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
+#!ALLOW agent=docs category=documentation :: the new function is undocumented; true, and optional on a change whose point is elsewhere
 def tenant_of(token):
     #!EXPECT agent=security category=authz severity>=critical :: signature verification disabled, so any caller can forge a tenant id and the value is then trusted
     unverified = jwt.decode(token, options={"verify_signature": False})
@@ -908,6 +928,7 @@ export const corsMiddleware = cors({
 });
 
 //!EXPECT agent=security category=authz severity>=critical :: a wildcard origin together with credentials lets any site read authenticated responses
+//!EXPECT agent=correctness category=logic severity>=major :: browsers reject a wildcard origin combined with credentials, so this configuration does not work at all
 export const dashboardCors = cors({
   origin: "*",
   credentials: true,
@@ -944,6 +965,7 @@ async def fetch_plan(client: httpx.AsyncClient, tenant_id):
     return response.json()
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 async def fetch_plan_limits(tenant_id):
     #!EXPECT agent=correctness category=concurrency severity>=major :: a synchronous request inside a coroutine blocks the whole event loop for the duration of the call
     response = requests.get(f"https://billing.internal/limits/{tenant_id}", timeout=5)
@@ -973,6 +995,7 @@ case(
 
 
 #!EXPECT agent=correctness category=logic severity>=major :: the default list is created once at import and shared by every call, so failures accumulate across calls
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def send_with_retries(recipients, attempted=[]):
     for recipient in recipients:
         if not _dispatch([recipient], {}):
@@ -1024,6 +1047,8 @@ def fetch_charge(charge_id):
 
 @retry(attempts=3)
 #!EXPECT agent=correctness category=logic severity>=critical :: charge() is not idempotent and no Idempotency-Key is passed, so a timeout followed by a retry bills the customer twice
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
+#!ALLOW agent=docs category=documentation :: the retry wrapper's safety contract is undocumented; a fair observation, not a required one
 def charge_card(card_token, amount_cents):
     return charge(card_token, amount_cents)
 """,
@@ -1059,6 +1084,7 @@ def is_expired(invite):
     return invite.expires_at < datetime.now(timezone.utc)
 
 
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def expires_within(invite, hours):
     #!EXPECT agent=correctness category=logic severity>=major :: datetime.now() is naive while expires_at is tz-aware, so this raises TypeError at runtime
     cutoff = datetime.now().replace(microsecond=0)
@@ -1096,6 +1122,7 @@ export function bannerFor(account: Account): string {
   return account.billingContact?.name ?? "No billing contact";
 }
 
+//!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 export function contactEmail(account: Account): string {
   //!EXPECT agent=correctness category=logic severity>=major :: billingContact is optional and absent before onboarding, so this throws on any account that has not completed it
   return account.billingContact.email.toLowerCase();
@@ -1200,7 +1227,8 @@ case(
 ''',
     },
     after={
-        "api/listing.py": '''def list_invoices(tenant_id, limit=50, cursor=None):
+        "api/listing.py": '''#!EXPECT agent=correctness category=api_contract severity>=major :: page_size is a keyword parameter; renaming it to limit breaks every caller passing it by name
+def list_invoices(tenant_id, limit=50, cursor=None):
     """List invoices for a tenant.
 
     Args:
@@ -1376,6 +1404,7 @@ def parser():
 
 def parser():
     p = argparse.ArgumentParser()
+    #!EXPECT agent=correctness category=api_contract severity>=major :: renaming --workers to --concurrency breaks every existing invocation and any caller reading args.workers
     p.add_argument("--concurrency", type=int, default=4)
     p.add_argument("--verbose", action="store_true")
     return p
@@ -1417,6 +1446,7 @@ def get_tenant(tenant_id):
 
 
 #!EXPECT agent=docs category=readability severity>=minor :: named get_, but it writes to the shared cache and evicts entries; a caller will not expect a read to mutate
+#!ALLOW agent=tests category=test_coverage :: a new public function with no test; true, and not required on a change whose point is elsewhere
 def get_tenant_fresh(tenant_id):
     tenant = _fetch(tenant_id)
     _CACHE[tenant_id] = tenant

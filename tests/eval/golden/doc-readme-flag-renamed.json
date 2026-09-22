@@ -2,6 +2,14 @@
   "context_files": [],
   "expected": [
     {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "cli.py",
+      "line": 6,
+      "min_severity": "major",
+      "note": "renaming --workers to --concurrency breaks every existing invocation and any caller reading args.workers"
+    },
+    {
       "agent": "docs",
       "category": "documentation",
       "file_path": "README.md",
@@ -28,6 +36,7 @@
     }
   ],
   "id": "doc-readme-flag-renamed",
+  "may_find": [],
   "must_not_find": [],
   "summary": "The CLI flag is renamed; the README still documents the old one.",
   "title": "Rename the --workers flag"

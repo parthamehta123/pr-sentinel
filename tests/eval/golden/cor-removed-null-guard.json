@@ -26,6 +26,7 @@
     }
   ],
   "id": "cor-removed-null-guard",
+  "may_find": [],
   "must_not_find": [],
   "summary": "A guard removed during cleanup, on a field that is genuinely optional.",
   "title": "Tidy up the invoice renderer"

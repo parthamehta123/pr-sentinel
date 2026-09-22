@@ -8,6 +8,14 @@
       "line": 3,
       "min_severity": "minor",
       "note": "the docstring above still promises an integer total; this now returns a per-day mapping"
+    },
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "usage/report.py",
+      "line": 3,
+      "min_severity": "major",
+      "note": "the return type changed from an integer to a mapping, so every existing caller of monthly_usage breaks"
     }
   ],
   "expected_decision": null,
@@ -21,6 +29,15 @@
     }
   ],
   "id": "doc-stale-docstring",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "usage/report.py",
+      "line": 3,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [],
   "summary": "The implementation changes; the docstring above it now describes something else.",
   "title": "Return usage broken down by day"

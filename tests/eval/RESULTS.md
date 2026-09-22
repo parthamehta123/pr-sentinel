@@ -66,6 +66,58 @@ would produce. Re-running the models to find out costs about ten dollars and
 twenty minutes; the findings have not changed, only the arithmetic over them, so
 re-scoring does it for nothing.
 
+### Labelling what the models already find
+
+0.402 strict against 0.879 lenient meant about sixty per cent of findings matched
+no label. Those were mined out of the recorded runs — 71 distinct unlabelled
+findings, 28 of which appeared in all three runs and so were worth a decision.
+
+Judging them turned up something the set had no way to express. Six were **real
+defects nobody had labelled**, including several worth having:
+
+- renaming `--workers` to `--concurrency` breaks every existing invocation and any
+  caller reading `args.workers` — a contract break the case only labelled as a
+  documentation problem
+- a wildcard CORS origin with `credentials: true` is *rejected by browsers*, so
+  the configuration does not work at all; the case labelled the security problem
+  and missed that it is also simply broken
+- `csv_rows` joins raw values and never calls `csv_escape`, in a case written to
+  be about test coverage
+
+But fifteen were the tests agent correctly noting that a new function has no test,
+on a line labelled for something else. **Neither `EXPECT` nor `CLEAN` was right.**
+Requiring them would encode "always ask for tests" and penalise exactly the
+restraint the system is built around; calling them false positives would label a
+true statement a lie.
+
+So the set gained a third kind of label:
+
+```
+EXPECT   a defect that must be found; missing it costs recall
+ALLOW    a legitimate observation that is optional; it counts neither way
+CLEAN    flagging this is a false positive
+```
+
+`ALLOW` findings are excluded from both precision denominators and from recall.
+Making one costs nothing; not making one costs nothing.
+
+Re-scored over the same recorded findings:
+
+| | before labelling | after |
+|---|---|---|
+| precision strict | 0.402 | **0.653** |
+| precision lenient | 0.879 | 0.898 |
+| recall | 0.964 | 0.969 |
+| agent attribution | 0.808 | **0.841** |
+| unlabelled findings per run | 42.3 | **15.7** |
+
+The set is now 53 required findings, 21 permitted, 21 traps. Strict precision
+moved because the labels got more honest, not because the reviewer got better —
+worth remembering when reading the number.
+
+Fifteen or so findings per run are still unlabelled, and they are the next batch
+to judge.
+
 ### What the honest precision number is telling us
 
 0.402 strict against 0.879 lenient, with roughly 42 unlabelled findings per run,
@@ -74,10 +126,9 @@ label**. Those are mostly legitimate observations the set does not cover: a real
 missing test, a real undocumented parameter, on a line labelled for something
 else. They are neither right nor wrong as far as the set is concerned.
 
-That is now the clearest direction for the set — not more planted defects, but
-labelling more of what the models already find. It is also why precision is
-reported twice, and why quoting the strict figure alone would be as misleading as
-quoting 0.983 was.
+That was the clearest direction for the set, and it is what the section above
+acted on. Precision is still reported twice, and quoting the strict figure alone
+would be as misleading as quoting 0.983 was.
 
 ---
 

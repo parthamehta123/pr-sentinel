@@ -5,7 +5,7 @@
       "agent": "tests",
       "category": "test_coverage",
       "file_path": "billing/coupons.py",
-      "line": 6,
+      "line": 9,
       "min_severity": "major",
       "note": "the new CouponExpired branch has no test; the only test added covers the unexpired path"
     }
@@ -13,10 +13,10 @@
   "expected_decision": null,
   "files": [
     {
-      "additions": 6,
+      "additions": 9,
       "deletions": 0,
       "filename": "billing/coupons.py",
-      "patch": "@@ -1,3 +1,9 @@\n+class CouponExpired(Exception):\n+    pass\n+\n+\n def apply_coupon(order, coupon):\n+    if coupon.expires_at < now():\n+        raise CouponExpired(coupon.code)\n     order.total -= coupon.amount\n     return order",
+      "patch": "@@ -1,3 +1,12 @@\n+from datetime import datetime, timezone\n+\n+\n+class CouponExpired(Exception):\n+    pass\n+\n+\n def apply_coupon(order, coupon):\n+    if coupon.expires_at < datetime.now(timezone.utc):\n+        raise CouponExpired(coupon.code)\n     order.total -= coupon.amount\n     return order",
       "status": "modified"
     },
     {
@@ -28,6 +28,15 @@
     }
   ],
   "id": "tst-untested-error-branch",
+  "may_find": [
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "billing/coupons.py",
+      "line": 8,
+      "note": "the newly raised CouponExpired is not documented; a fair observation, not a required one"
+    }
+  ],
   "must_not_find": [],
   "summary": "A new error branch; the test added in the same PR only covers the happy path.",
   "title": "Reject expired coupons"

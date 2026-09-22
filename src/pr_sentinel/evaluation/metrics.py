@@ -50,6 +50,10 @@ class CaseResult:
         return [m for m in self.matches if m.kind == "unlabelled"]
 
     @property
+    def allowed(self) -> list[Match]:
+        return [m for m in self.matches if m.kind == "allowed"]
+
+    @property
     def decision_correct(self) -> bool | None:
         if self.expected_decision is None:
             return None
@@ -59,6 +63,7 @@ class CaseResult:
 @dataclass
 class Bucket:
     hits: int = 0  # findings that matched a label (several may match one label)
+    allowed: int = 0  # legitimate but optional; excluded from precision entirely
     labels_found: int = 0  # distinct labels that at least one finding matched
     concerns: int = 0  # distinct (label, concern family) pairs
     false_positives: int = 0
@@ -107,6 +112,7 @@ class Bucket:
     def as_dict(self) -> dict:
         return {
             "hits": self.hits,
+            "allowed": self.allowed,
             "labels_found": self.labels_found,
             "concerns": self.concerns,
             "duplicate_rate": round(self.duplicate_rate, 2),
@@ -224,7 +230,7 @@ class EvalReport:
 
 
 def score_case(case: EvalCase, findings: list[Finding], **meta) -> CaseResult:
-    matches = classify(findings, case.expected, case.must_not_find)
+    matches = classify(findings, case.expected, case.must_not_find, case.may_find)
     return CaseResult(
         case_id=case.id,
         matches=matches,
@@ -265,6 +271,9 @@ def score(results: list[CaseResult], provider: str, models: dict[str, str]) -> E
             elif match.kind == "false_positive":
                 overall.false_positives += 1
                 bucket.false_positives += 1
+            elif match.kind == "allowed":
+                overall.allowed += 1
+                bucket.allowed += 1
             else:
                 overall.unlabelled += 1
                 bucket.unlabelled += 1

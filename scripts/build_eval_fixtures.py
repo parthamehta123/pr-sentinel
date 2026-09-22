@@ -30,7 +30,7 @@ from cases import CASES  # noqa: E402
 from pr_sentinel.forge.diff import build_diff_file  # noqa: E402
 
 GOLDEN = ROOT / "tests" / "eval" / "golden"
-MARKER = re.compile(r"^\s*(?:#!|//!)\s*(EXPECT|CLEAN)\b(?P<attrs>[^:]*?)(?:\s*::\s*(?P<note>.*))?$")
+MARKER = re.compile(r"^\s*(?:#!|//!)\s*(EXPECT|CLEAN|ALLOW)\b(?P<attrs>[^:]*?)(?:\s*::\s*(?P<note>.*))?$")
 SEVERITY_ORDER = ["info", "minor", "major", "critical"]
 
 
@@ -102,6 +102,7 @@ def build_case(case: dict) -> dict:
     files: list[dict] = []
     expected: list[dict] = []
     forbidden: list[dict] = []
+    allowed: list[dict] = []
 
     for path, raw_after in after_raw.items():
         after, labels = strip_markers(raw_after)
@@ -129,7 +130,7 @@ def build_case(case: dict) -> dict:
                     f"in the diff (addressable: {sorted(addressable)[:12]}…). "
                     "Give the marker more surrounding change, or move it."
                 )
-            (expected if label["kind"] == "EXPECT" else forbidden).append(entry)
+            {"EXPECT": expected, "CLEAN": forbidden, "ALLOW": allowed}[label["kind"]].append(entry)
 
     # Files that exist only so retrieval has a repository to find. Never diffed.
     context = [{"path": p, "content": c} for p, c in (case.get("context") or {}).items()]
@@ -143,6 +144,7 @@ def build_case(case: dict) -> dict:
         "context_files": context,
         "expected": expected,
         "must_not_find": forbidden,
+        "may_find": allowed,
     }
 
 
@@ -154,12 +156,13 @@ def main() -> int:
     GOLDEN.mkdir(parents=True, exist_ok=True)
     stale: list[str] = []
     built = 0
-    expected_total = forbidden_total = 0
+    expected_total = forbidden_total = allowed_total = 0
 
     for case in CASES:
         fixture = build_case(case)
         expected_total += len(fixture["expected"])
         forbidden_total += len(fixture["must_not_find"])
+        allowed_total += len(fixture["may_find"])
         target = GOLDEN / f"{fixture['id']}.json"
         rendered = json.dumps(fixture, indent=2, sort_keys=True) + "\n"
 
@@ -179,7 +182,8 @@ def main() -> int:
         return 0
 
     print(
-        f"built {built} fixtures — {expected_total} labelled findings, {forbidden_total} false-positive traps"
+        f"built {built} fixtures — {expected_total} required, "
+        f"{allowed_total} permitted, {forbidden_total} false-positive traps"
     )
     return 0
 

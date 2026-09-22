@@ -2,6 +2,14 @@
   "context_files": [],
   "expected": [
     {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "api/listing.py",
+      "line": 1,
+      "min_severity": "major",
+      "note": "page_size is a keyword parameter; renaming it to limit breaks every caller passing it by name"
+    },
+    {
       "agent": "docs",
       "category": "documentation",
       "file_path": "api/listing.py",
@@ -21,6 +29,7 @@
     }
   ],
   "id": "doc-wrong-parameter-name",
+  "may_find": [],
   "must_not_find": [],
   "summary": "The parameter is renamed; the docstring documenting it is not.",
   "title": "Rename the pagination parameter"

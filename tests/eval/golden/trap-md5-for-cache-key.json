@@ -19,6 +19,7 @@
     }
   ],
   "id": "trap-md5-for-cache-key",
+  "may_find": [],
   "must_not_find": [
     {
       "agent": "security",

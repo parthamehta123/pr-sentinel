@@ -26,6 +26,7 @@
     }
   ],
   "id": "sec-missing-authz",
+  "may_find": [],
   "must_not_find": [],
   "summary": "An endpoint that loads an object by id and mutates it without checking ownership.",
   "title": "Allow updating a saved payment method"

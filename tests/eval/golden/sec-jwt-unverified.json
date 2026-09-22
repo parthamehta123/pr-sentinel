@@ -21,6 +21,22 @@
     }
   ],
   "id": "sec-jwt-unverified",
+  "may_find": [
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "auth/tokens.py",
+      "line": 10,
+      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation",
+      "file_path": "auth/tokens.py",
+      "line": 10,
+      "note": "the new function is undocumented; true, and optional on a change whose point is elsewhere"
+    }
+  ],
   "must_not_find": [],
   "summary": "Signature verification disabled to avoid a key lookup.",
   "title": "Read the tenant id straight from the token"
