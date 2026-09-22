@@ -77,3 +77,48 @@ def test_the_bundle_version_changes_when_a_prompt_changes(tmp_path, monkeypatch)
 def test_a_missing_prompt_fails_loudly():
     with pytest.raises(FileNotFoundError):
         load_prompt("nonexistent-agent")
+
+
+# --- structured-output schema ----------------------------------------------
+
+
+def _walk(node):
+    if isinstance(node, dict):
+        yield node
+        for value in node.values():
+            yield from _walk(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _walk(item)
+
+
+def test_the_schema_carries_no_numeric_range_constraints():
+    """Regression: the API 400s on `minimum`/`maximum` for a `number`.
+
+    Every agent call failed with `output_config.format.schema: For 'number' type,
+    properties maximum, minimum are not supported`. Ranges belong in the
+    description; enforcement belongs in the Pydantic model.
+    """
+    from pr_sentinel.agents.schema import AGENT_OUTPUT_SCHEMA
+
+    for node in _walk(AGENT_OUTPUT_SCHEMA):
+        if node.get("type") in {"number", "integer"}:
+            assert "minimum" not in node and "maximum" not in node, node
+
+
+def test_every_object_in_the_schema_is_closed_and_fully_required():
+    """The API requires `additionalProperties: false` and an exhaustive `required`."""
+    from pr_sentinel.agents.schema import AGENT_OUTPUT_SCHEMA
+
+    for node in _walk(AGENT_OUTPUT_SCHEMA):
+        if node.get("type") == "object":
+            assert node.get("additionalProperties") is False, node
+            assert set(node.get("required", [])) == set(node.get("properties", {})), node
+
+
+def test_rationale_and_confidence_are_not_optional():
+    """INVARIANT-3, enforced at the schema as well as at the model."""
+    from pr_sentinel.agents.schema import AGENT_OUTPUT_SCHEMA
+
+    finding = AGENT_OUTPUT_SCHEMA["properties"]["findings"]["items"]
+    assert {"rationale", "confidence", "line_start", "file_path"} <= set(finding["required"])

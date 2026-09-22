@@ -7,6 +7,13 @@ and AFTER, and labels are attached with marker lines that are stripped before th
 diff is generated — so a label cannot drift away from its line, and the marker text
 never reaches the model.
 
+`expected_decision` is set only where the gate's precedence rules determine the
+outcome regardless of model confidence — a critical security finding always
+escalates, and a diff with no findings always suppresses. Everywhere else the
+decision turns on confidence, which is a property of the model under test rather
+than of the case, so labelling it would be scoring the gate against a guess. Seven
+such labels were removed after the first live run showed exactly that.
+
 Markers sit on their own line, immediately above the line they describe:
 
     #!EXPECT agent=security category=injection severity>=critical :: why this is real
@@ -170,7 +177,7 @@ case(
     id="sec-weak-password-hash",
     title="Add a password reset path",
     summary="MD5 used for password storage; SHA-256 used correctly for a file checksum.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "auth/passwords.py": """import bcrypt
 
@@ -235,7 +242,7 @@ case(
     id="sec-ssrf-webhook-url",
     title="Let customers register a webhook target",
     summary="A caller-supplied URL fetched server-side with no allowlist or scheme check.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "integrations/webhooks.py": """import requests
 
@@ -278,7 +285,7 @@ case(
     id="cor-contract-break-return-shape",
     title="Return richer data from lookup_user",
     summary="Return type changes from a tuple to a dict; an existing caller still unpacks it.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     context={
         "reports/weekly.py": '''from users.lookup import lookup_user
 
@@ -312,7 +319,7 @@ case(
     id="cor-bare-except",
     title="Make the metrics push non-fatal",
     summary="A bare except that also swallows KeyboardInterrupt and SystemExit.",
-    expected_decision="auto_post",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "telemetry/push.py": """def push_metrics(payload):
     return _client.send(payload)
@@ -333,7 +340,7 @@ case(
     id="cor-off-by-one-pagination",
     title="Add pagination to the export endpoint",
     summary="A slice that drops the last record on every page.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "export/pages.py": """PAGE_SIZE = 100
 
@@ -365,7 +372,7 @@ case(
     id="cor-resource-leak-error-path",
     title="Add a CSV importer",
     summary="A file handle that leaks on the validation-failure path.",
-    expected_decision="auto_post",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "importer/csv_import.py": """import csv
 
@@ -402,7 +409,7 @@ case(
     id="cor-check-then-act-race",
     title="Add a per-tenant rate limiter",
     summary="Check-then-act on shared state across an await.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "limits/ratelimit.py": """import asyncio
 
@@ -451,7 +458,7 @@ case(
     id="tst-untested-error-branch",
     title="Reject expired coupons",
     summary="A new error branch; the test added in the same PR only covers the happy path.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "billing/coupons.py": """def apply_coupon(order, coupon):
     order.total -= coupon.amount
@@ -485,7 +492,7 @@ case(
     id="tst-assertion-free-test",
     title="Add tests for the invoice renderer",
     summary="One test asserts on a mock instead of behaviour; another asserts nothing at all.",
-    expected_decision="escalate",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "tests/test_invoice.py": """def test_renders_total():
     assert render(Invoice(total=100)).endswith("100.00")
@@ -519,7 +526,7 @@ case(
     id="doc-stale-docstring",
     title="Return usage broken down by day",
     summary="The implementation changes; the docstring above it now describes something else.",
-    expected_decision="auto_post",
+    expected_decision=None,  # depends on model confidence, not on the case
     before={
         "usage/report.py": '''def monthly_usage(account_id):
     """Return the total number of API calls this month as an integer."""

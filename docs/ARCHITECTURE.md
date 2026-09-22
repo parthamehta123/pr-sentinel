@@ -252,9 +252,6 @@ allowed to be the source of truth for "what happened".
 
 ## 9. What is deliberately absent
 
-- **Eval numbers from a real model.** The harness is built (`make eval`, 15
-  labelled cases, calibration measured), but it has only ever been run against the
-  offline fake. Until `make eval-live` has run, prompt quality is unmeasured.
 - **A harder eval set.** The cases are hand-authored, not mined from real merged
   pull requests. Good enough to catch a regression, not enough for a confident
   absolute number.

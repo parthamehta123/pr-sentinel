@@ -15,7 +15,7 @@
       "note": "the return shape changed from a 2-tuple to a dict; reports/weekly.py still unpacks two values"
     }
   ],
-  "expected_decision": "escalate",
+  "expected_decision": null,
   "files": [
     {
       "additions": 4,

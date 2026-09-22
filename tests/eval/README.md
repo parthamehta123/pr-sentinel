@@ -48,6 +48,20 @@ wrong finding costs credibility, which is harder to get back.
 Also: category agreement (right problem, right name), agent attribution (found by
 the specialist that should have found it), gate-decision match, and cost per case.
 
+## Measured
+
+Against `claude-opus-5` / `claude-sonnet-5` / `claude-haiku-4-5`: precision 0.886
+strict and 0.975 lenient, recall 0.933 (14 of 15 defects), calibration error
+0.110, gate decision match 1.000, $0.07 per review. Recorded in
+`baselines/anthropic.json`, which carries every individual finding so a run can be
+diagnosed without paying to reproduce it.
+
+Three bugs the live runs found that no offline test could: the structured-output
+schema carried numeric range constraints the API rejects, so every agent call
+400'd; recall was computed over matches rather than distinct defects; and the
+duplicate-rate metric counted per label, which made co-located findings from
+different concerns look like duplication when they are not.
+
 ## The traps matter as much as the labels
 
 Five lines are labelled `CLEAN` — a correctly parameterised query one line above an

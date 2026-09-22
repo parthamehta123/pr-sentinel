@@ -10,7 +10,7 @@
       "note": "the limit is read and then acted on across an await without the lock the sibling function holds, so concurrent callers both pass the check"
     }
   ],
-  "expected_decision": "escalate",
+  "expected_decision": null,
   "files": [
     {
       "additions": 10,

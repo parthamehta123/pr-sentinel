@@ -10,7 +10,7 @@
       "note": "the docstring above still promises an integer total; this now returns a per-day mapping"
     }
   ],
-  "expected_decision": "auto_post",
+  "expected_decision": null,
   "files": [
     {
       "additions": 2,

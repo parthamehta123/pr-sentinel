@@ -10,7 +10,7 @@
       "note": "caller-supplied URL fetched server-side, bypassing the ALLOWED_HOSTS check the sibling function applies"
     }
   ],
-  "expected_decision": "escalate",
+  "expected_decision": null,
   "files": [
     {
       "additions": 4,

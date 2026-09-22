@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ..domain.enums import family_of
 from ..domain.models import Finding
 from .fixtures import EvalCase, Label
 from .matching import Match, classify, missed
@@ -57,7 +58,9 @@ class CaseResult:
 
 @dataclass
 class Bucket:
-    hits: int = 0
+    hits: int = 0  # findings that matched a label (several may match one label)
+    labels_found: int = 0  # distinct labels that at least one finding matched
+    concerns: int = 0  # distinct (label, concern family) pairs
     false_positives: int = 0
     unlabelled: int = 0
     misses: int = 0
@@ -74,17 +77,39 @@ class Bucket:
 
     @property
     def recall(self) -> float:
-        total = self.hits + self.misses
-        return self.hits / total if total else 0.0
+        """Over distinct labels, never over matches.
+
+        Agents routinely produce several findings on one line — the same defect
+        described four ways. Counting each as a separate hit in the denominator
+        would let a duplicate-happy run report high recall while missing real
+        labels, which is exactly backwards.
+        """
+        total = self.labels_found + self.misses
+        return self.labels_found / total if total else 0.0
 
     @property
     def f1(self) -> float:
         p, r = self.precision_strict, self.recall
         return 2 * p * r / (p + r) if (p + r) else 0.0
 
+    @property
+    def duplicate_rate(self) -> float:
+        """Findings per distinct *concern*, not per label.
+
+        Counting per label over-reports: a `tests` finding and a `docs` finding on
+        one line are two different observations that the aggregator is right to
+        keep separate, and the label only marks one of them. The denominator is
+        therefore (label, concern family) pairs — so this measures what it claims
+        to, which is the same concern said more than once.
+        """
+        return self.hits / self.concerns if self.concerns else 0.0
+
     def as_dict(self) -> dict:
         return {
             "hits": self.hits,
+            "labels_found": self.labels_found,
+            "concerns": self.concerns,
+            "duplicate_rate": round(self.duplicate_rate, 2),
             "false_positives": self.false_positives,
             "unlabelled": self.unlabelled,
             "misses": self.misses,
@@ -161,6 +186,26 @@ class EvalReport:
                     "cost_usd": round(c.cost_usd, 4),
                     "failed_agents": c.failed_agents,
                     "error": c.error,
+                    # Every finding, so a saved run can be diagnosed without
+                    # paying to reproduce it. This is what turns "duplicate rate
+                    # 2.71" from a number into something you can act on.
+                    "findings": [
+                        {
+                            "match": m.kind,
+                            "agent": str(m.finding.agent),
+                            "category": str(m.finding.category),
+                            "severity": str(m.finding.severity),
+                            "confidence": round(m.finding.confidence, 3),
+                            "where": f"{m.finding.file_path}:{m.finding.line_start}"
+                            + (
+                                f"-{m.finding.line_end}" if m.finding.line_end != m.finding.line_start else ""
+                            ),
+                            "title": m.finding.title,
+                            "agreeing": m.finding.agreeing,
+                            "matched_label": (f"{m.label.file_path}:{m.label.line}" if m.label else None),
+                        }
+                        for m in c.matches
+                    ],
                 }
                 for c in self.cases
             ],
@@ -183,12 +228,26 @@ def score(results: list[CaseResult], provider: str, models: dict[str, str]) -> E
     by_agent: dict[str, Bucket] = {}
 
     for result in results:
+        seen_labels: set[int] = set()
+        seen_concerns: set[tuple[int, str]] = set()
+        seen_per_agent: dict[str, set[int]] = {}
         for match in result.matches:
             agent = str(match.finding.agent)
             bucket = by_agent.setdefault(agent, Bucket())
             if match.kind == "hit":
                 overall.hits += 1
                 bucket.hits += 1
+                if id(match.label) not in seen_labels:
+                    seen_labels.add(id(match.label))
+                    overall.labels_found += 1
+                concern = (id(match.label), family_of(match.finding.category))
+                if concern not in seen_concerns:
+                    seen_concerns.add(concern)
+                    overall.concerns += 1
+                agent_seen = seen_per_agent.setdefault(agent, set())
+                if id(match.label) not in agent_seen:
+                    agent_seen.add(id(match.label))
+                    bucket.labels_found += 1
             elif match.kind == "false_positive":
                 overall.false_positives += 1
                 bucket.false_positives += 1

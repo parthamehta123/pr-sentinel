@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..domain.enums import family_of
 from .metrics import EvalReport
 
 
@@ -40,11 +41,16 @@ def render(report: EvalReport, verbose: bool = False) -> str:
     add("ACCURACY")
     add(f"  precision (strict)  : {b.precision_strict:.3f}   unlabelled findings count against")
     add(f"  precision (lenient) : {b.precision_lenient:.3f}   only labelled traps count against")
-    add(f"  recall              : {b.recall:.3f}")
+    add(f"  recall              : {b.recall:.3f}   over distinct labels, not matches")
     add(f"  f1                  : {b.f1:.3f}")
     add(
-        f"  hits {b.hits} · missed {b.misses} · false positives {b.false_positives} "
-        f"· unlabelled {b.unlabelled}"
+        f"  {b.labels_found} of {b.labels_found + b.misses} defects found by "
+        f"{b.hits} finding(s) · {b.false_positives} false positive(s) "
+        f"· {b.unlabelled} unlabelled"
+    )
+    add(
+        f"  findings per concern: {b.duplicate_rate:.2f}"
+        + ("   ← the aggregator is under-merging" if b.duplicate_rate > 1.5 else "")
     )
     add(f"  category agreement  : {report.category_agreement:.3f}   right problem, right name")
     add(f"  agent attribution   : {report.agent_attribution:.3f}   found by the expected specialist")
@@ -85,6 +91,30 @@ def render(report: EvalReport, verbose: bool = False) -> str:
             )
             if match.label:
                 add(f"    why it is clean: {match.label.note}")
+
+    if b.duplicate_rate > 1.5:
+        add("")
+        add(
+            f"DUPLICATES  — {b.hits} findings across {b.concerns} distinct concerns. "
+            "Same concern, same lines, said more than once:"
+        )
+        for case in report.cases:
+            per_concern: dict[tuple, list] = {}
+            for m in case.hits:
+                per_concern.setdefault((id(m.label), family_of(m.finding.category)), []).append(m)
+            for group in per_concern.values():
+                if len(group) < 2:
+                    continue
+                first = group[0]
+                add(
+                    f"  {case.case_id:<34} {first.finding.file_path}:"
+                    f"{first.finding.line_start} — {len(group)} findings"
+                )
+                for m in group:
+                    add(
+                        f"      [{m.finding.agent!s:<11} {m.finding.category!s:<17} "
+                        f"{m.finding.confidence:.2f}] {m.finding.title}"
+                    )
 
     wrong_gate = [c for c in report.cases if c.decision_correct is False]
     if wrong_gate:

@@ -234,3 +234,149 @@ def test_summary_names_unavailable_agents():
         ],
     )
     assert "security" in text and "1 critical" in text
+
+
+# --- concern families -------------------------------------------------------
+#
+# Regression tests from the first live run: matching on identical category alone
+# produced 3.5 findings per labelled defect, because four specialists name the
+# same problem four different ways.
+
+
+def test_agents_naming_one_defect_differently_still_merge():
+    """security says `injection`, correctness says `input_validation`. One defect."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [
+                    finding(
+                        AgentType.SECURITY,
+                        category="injection",
+                        title="SQL built by string interpolation",
+                        confidence=0.9,
+                    )
+                ],
+            ),
+            verdict(
+                AgentType.CORRECTNESS,
+                [
+                    finding(
+                        AgentType.CORRECTNESS,
+                        category="input_validation",
+                        title="Unvalidated identifier reaches the query",
+                        confidence=0.7,
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 1
+    assert merged[0].agreeing == ["correctness", "security"]
+    assert merged[0].confidence > 0.9  # agreement still boosts
+
+
+def test_correctness_concerns_on_one_line_collapse():
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.CORRECTNESS,
+                [
+                    finding(AgentType.CORRECTNESS, category="logic", title="Off by one"),
+                    finding(AgentType.CORRECTNESS, category="error_handling", title="Unhandled failure"),
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 1
+
+
+def test_different_families_on_the_same_line_stay_separate():
+    """A missing docstring and an injection are two things. Merging buries one."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [finding(AgentType.SECURITY, category="injection", title="SQL injection here")],
+            ),
+            verdict(
+                AgentType.DOCS,
+                [
+                    finding(
+                        AgentType.DOCS,
+                        category="documentation",
+                        severity="info",
+                        title="No docstring on this function",
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 2
+
+
+def test_test_concerns_do_not_absorb_security_concerns():
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [finding(AgentType.SECURITY, category="secrets", title="Hardcoded credential")],
+            ),
+            verdict(
+                AgentType.TESTS,
+                [
+                    finding(
+                        AgentType.TESTS,
+                        category="test_coverage",
+                        severity="minor",
+                        title="No test covers this",
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 2
+
+
+def test_the_other_category_does_not_act_as_a_universal_solvent():
+    """`other` is the fallback for an unparseable category; it must not swallow things."""
+    merged, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [finding(AgentType.SECURITY, category="other", title="Something unusual here")],
+            ),
+            verdict(
+                AgentType.DOCS,
+                [
+                    finding(
+                        AgentType.DOCS,
+                        category="other",
+                        severity="info",
+                        title="A completely different observation",
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged) == 1  # same category still merges
+    merged2, _ = aggregator.aggregate(
+        [
+            verdict(
+                AgentType.SECURITY,
+                [finding(AgentType.SECURITY, category="other", title="Something unusual here")],
+            ),
+            verdict(
+                AgentType.DOCS,
+                [
+                    finding(
+                        AgentType.DOCS,
+                        category="documentation",
+                        severity="info",
+                        title="A different observation",
+                    )
+                ],
+            ),
+        ]
+    )
+    assert len(merged2) == 2  # other + a real family does not merge

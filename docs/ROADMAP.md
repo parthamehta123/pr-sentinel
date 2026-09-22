@@ -10,20 +10,32 @@ matching and scoring, and `make eval` gates against a saved baseline. It measure
 calibration first, precision strictly and leniently, recall, category agreement,
 agent attribution, gate-decision match and cost.
 
-## 1. Run the eval against real models, and grow the set
+## 1. Grow the eval set
 
-The harness exists; the numbers that matter do not, because the reviewer has never
-been run against a real model. `make eval-live` produces them.
+Run against real models: precision 0.886/0.975, recall 0.933, calibration error
+0.110, $0.07 per review. Recorded in `tests/eval/baselines/anthropic.json`.
 
-Then the set needs to get harder. The 15 cases are hand-authored from patterns
+Calibration came out better than feared and in an unexpected direction — the
+models are mildly *under*confident in the middle of the range rather than over.
+That means the auto-post threshold of 0.70 is, if anything, conservative, and
+there is room to lower it once the set is big enough for the number to be
+trustworthy.
+
+Which is the actual next step: the set needs to get bigger and harder. The 15 cases are hand-authored from patterns
 that recur in review — clean, unambiguous, and easier than reality. Mining
 labelled cases from real merged pull requests is what turns a regression gate into
 a measurement. Thirty to fifty, split train/test, is the target.
 
-Watch the calibration number above everything else. If a stated 0.8 turns out
-right 50% of the time, every threshold in the gate is arbitrary and no amount of
-prompt tuning fixes it — the fix is to tell the models what the confidence field
-is for, which is a prompt change the harness can now score.
+Two things the first live runs already showed, both of which need more data
+before acting on them:
+
+- **The docs agent is the weakest link.** Precision 0.73, three unlabelled
+  findings — it is the one generating noise, exactly as its prompt predicted it
+  would. Either the prompt needs to be harsher about staying quiet, or
+  `claude-haiku-4-5` is the wrong model for it.
+- **The one consistent miss** is an assertion-free test. The tests agent finds
+  the *missing* test every time and misses the test that cannot fail. That is a
+  prompt gap, and the harness can now score a fix for it.
 
 ## 2. Learning from recorded disputes
 

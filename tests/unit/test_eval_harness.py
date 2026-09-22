@@ -225,3 +225,109 @@ def test_the_committed_fixtures_match_their_source():
         text=True,
     )
     assert proc.returncode == 0, proc.stderr
+
+
+def test_recall_counts_distinct_defects_not_matches():
+    """Regression: four agents describing one defect must not read as four hits.
+
+    Recall over matches lets a duplicate-happy run score well while missing real
+    labels. Seen live: five findings landed on one labelled line.
+    """
+    findings = [
+        finding(line=10, agent=a)
+        for a in (AgentType.SECURITY, AgentType.CORRECTNESS, AgentType.TESTS, AgentType.DOCS)
+    ]
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10), label(line=900)],
+        must_not_find=[],
+    )
+    r = score_case(case, findings, decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1)
+    rep = score([r], "test", {})
+    assert rep.overall.hits == 4
+    assert rep.overall.labels_found == 1
+    assert rep.overall.misses == 1
+    assert rep.overall.recall == pytest.approx(0.5)  # one of two defects, not 4/5
+    assert rep.overall.duplicate_rate == pytest.approx(4.0)
+
+
+def test_per_agent_recall_also_counts_distinct_defects():
+    findings = [finding(line=10), finding(line=11), finding(line=12)]
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10)],
+        must_not_find=[],
+    )
+    rep = score(
+        [score_case(case, findings, decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1)],
+        "test",
+        {},
+    )
+    assert rep.by_agent["security"].labels_found == 1
+    assert rep.by_agent["security"].recall == pytest.approx(1.0)
+
+
+def test_duplicate_rate_counts_concerns_not_labels():
+    """A docs finding and a tests finding on one line are two concerns, not a duplicate.
+
+    Counting per label over-reported duplication: the label marks one defect, but
+    a different-family finding on the same line is a separate observation the
+    aggregator is right to keep apart.
+    """
+    findings = [
+        finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor"),
+        finding(line=10, agent=AgentType.DOCS, category="documentation", severity="info"),
+    ]
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10)],
+        must_not_find=[],
+    )
+    rep = score(
+        [score_case(case, findings, decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1)],
+        "test",
+        {},
+    )
+    assert rep.overall.hits == 2
+    assert rep.overall.labels_found == 1
+    assert rep.overall.concerns == 2
+    assert rep.overall.duplicate_rate == pytest.approx(1.0)  # not 2.0
+
+
+def test_the_same_concern_said_twice_does_count_as_duplication():
+    findings = [
+        finding(line=10, agent=AgentType.SECURITY, category="injection"),
+        finding(line=10, agent=AgentType.CORRECTNESS, category="input_validation"),
+    ]
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label(line=10)],
+        must_not_find=[],
+    )
+    rep = score(
+        [score_case(case, findings, decision="auto_post", confidence=0.9, cost_usd=0.0, duration_ms=1)],
+        "test",
+        {},
+    )
+    assert rep.overall.concerns == 1
+    assert rep.overall.duplicate_rate == pytest.approx(2.0)

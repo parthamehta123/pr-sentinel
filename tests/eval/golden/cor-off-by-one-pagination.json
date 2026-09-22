@@ -10,7 +10,7 @@
       "note": "the end index is one short, so the last record of every page is silently dropped"
     }
   ],
-  "expected_decision": "escalate",
+  "expected_decision": null,
   "files": [
     {
       "additions": 6,

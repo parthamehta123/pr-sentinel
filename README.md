@@ -104,13 +104,34 @@ The headline number is **calibration**, not precision: does a stated confidence 
 0.8 turn out right about 80% of the time? Every threshold in the gate assumes it
 does, and that assumption is otherwise untested.
 
+Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
+(tests) and `claude-haiku-4-5` (docs):
+
 ```
 CALIBRATION   does a confidence of X turn out right X of the time?
-  expected calibration error : 0.378   (lower is better; <0.10 is good)
+  expected calibration error : 0.110   (lower is better; <0.10 is good)
 
   confidence        n    stated   observed      gap
-  0.80-0.90         2      0.82       0.50    -0.32  ← overconfident
+  0.50-0.60         1      0.50       1.00    +0.50
+  0.70-0.80        14      0.73       0.79    +0.05
+  0.80-0.90        13      0.83       1.00    +0.17
+  0.90-1.01        16      0.96       0.88    -0.09
+
+ACCURACY
+  precision (strict)  : 0.886   unlabelled findings count against
+  precision (lenient) : 0.975   only labelled traps count against
+  recall              : 0.933   over distinct labels, not matches
+  14 of 15 defects found by 39 finding(s) · 1 false positive · 4 unlabelled
+  findings per concern: 1.05
+  gate decision match : 1.000
+
+COST
+  per case  : $0.0702   ($1.05 for the set)
 ```
+
+The models are mildly **under**confident in the middle of the range and slightly
+over at the top — the opposite of the usual worry, and the reason to measure
+rather than assume. `tests/eval/baselines/anthropic.json` is the recorded run.
 
 Precision is reported twice — strictly (a finding matching no label counts
 against) and leniently (it does not) — because a model can find a real defect
@@ -238,9 +259,20 @@ real pull requests on github.com, which found two bugs that no test had:
   tsquery parser stack and, when it did not crash, demanded all two hundred terms
   in a single chunk — so that half of retrieval was silently doing nothing.
 
-Both are fixed with regression tests. Still open: the reviewer has never been run
-against a real model, so **prompt quality is unmeasured** — the plumbing is proven
-and the reviewing is not. `make eval-live` is the one command that changes that.
+The eval has also been run against real models, which found three more:
+
+- The structured-output schema carried `minimum`/`maximum` on `confidence`. The
+  API rejects numeric range constraints, so **every agent call 400'd**. The
+  reliability layer handled it correctly — retried, opened the circuit breaker,
+  spent nothing — which is how the bug stayed cheap.
+- Recall was computed over matches rather than over distinct defects, so a run
+  producing four findings for one defect would have reported inflated recall.
+- Seven of the fifteen `expected_decision` labels were ill-defined: the gate's
+  outcome there depends on model confidence, which is a property of the model
+  under test, not of the case. They are now set only where a structural rule
+  determines the answer, and match 5/5.
+
+All fixed with regression tests.
 
 What is deliberately not built — GitHub App auth, incremental re-indexing, mining
 the eval set from real merged PRs, and learning from recorded disputes — is in

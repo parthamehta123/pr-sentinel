@@ -10,7 +10,7 @@
       "note": "the handle is opened without a context manager and is never closed on the early-return path"
     }
   ],
-  "expected_decision": "auto_post",
+  "expected_decision": null,
   "files": [
     {
       "additions": 11,

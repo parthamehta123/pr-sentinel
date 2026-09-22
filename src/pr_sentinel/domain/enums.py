@@ -50,6 +50,33 @@ SECURITY_CATEGORIES = frozenset(
     {Category.INJECTION, Category.AUTHZ, Category.SECRETS, Category.CRYPTO, Category.INPUT_VALIDATION}
 )
 
+# Categories that describe the same *kind* of concern. Two findings on the same
+# lines from the same family are one defect described twice — which is what four
+# specialists reading one diff actually produce. Across families they are not: a
+# missing docstring and an injection on one line are two different things.
+CATEGORY_FAMILY: dict[Category, str] = {
+    Category.INJECTION: "security",
+    Category.AUTHZ: "security",
+    Category.SECRETS: "security",
+    Category.CRYPTO: "security",
+    Category.INPUT_VALIDATION: "security",
+    Category.LOGIC: "correctness",
+    Category.CONCURRENCY: "correctness",
+    Category.ERROR_HANDLING: "correctness",
+    Category.RESOURCE_LEAK: "correctness",
+    Category.API_CONTRACT: "correctness",
+    Category.TEST_COVERAGE: "testing",
+    Category.TEST_QUALITY: "testing",
+    Category.DOCUMENTATION: "docs",
+    Category.READABILITY: "docs",
+    Category.CONVENTION: "docs",
+    Category.OTHER: "other",
+}
+
+
+def family_of(category: Category) -> str:
+    return CATEGORY_FAMILY.get(category, "other")
+
 
 class Decision(StrEnum):
     AUTO_POST = "auto_post"

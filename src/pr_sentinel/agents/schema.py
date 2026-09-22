@@ -31,7 +31,15 @@ _FINDING = {
         "line_end": {"type": "integer"},
         "category": {"type": "string", "enum": [c.value for c in Category]},
         "severity": {"type": "string", "enum": [s.value for s in Severity]},
-        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        # No `minimum`/`maximum`: the API rejects numeric range constraints in a
+        # structured-output schema ("For 'number' type, properties maximum, minimum
+        # are not supported"). The range goes in the description, and the Pydantic
+        # model clamps it on the way in — which it has to do anyway, because a
+        # schema constraint is a request, not a guarantee.
+        "confidence": {
+            "type": "number",
+            "description": "Between 0.0 and 1.0. See the confidence calibration guidance.",
+        },
         "title": {"type": "string", "description": "One line, under 80 characters."},
         "body": {"type": "string", "description": "What is wrong and what to do about it."},
         "rationale": {

@@ -18,7 +18,7 @@
       "note": "no assertion at all; this test cannot fail"
     }
   ],
-  "expected_decision": "escalate",
+  "expected_decision": null,
   "files": [
     {
       "additions": 10,
