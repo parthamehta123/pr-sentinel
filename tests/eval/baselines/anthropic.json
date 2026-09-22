@@ -8,17 +8,17 @@
   },
   "cases": 15,
   "overall": {
-    "hits": 35,
+    "hits": 39,
     "labels_found": 15,
-    "concerns": 33,
-    "duplicate_rate": 1.06,
-    "false_positives": 1,
-    "unlabelled": 1,
+    "concerns": 38,
+    "duplicate_rate": 1.03,
+    "false_positives": 0,
+    "unlabelled": 0,
     "misses": 1,
-    "precision_strict": 0.946,
-    "precision_lenient": 0.972,
+    "precision_strict": 1.0,
+    "precision_lenient": 1.0,
     "recall": 0.938,
-    "f1": 0.942
+    "f1": 0.968
   },
   "by_agent": {
     "correctness": {
@@ -35,8 +35,8 @@
       "f1": 1.0
     },
     "docs": {
-      "hits": 3,
-      "labels_found": 3,
+      "hits": 7,
+      "labels_found": 7,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 0,
@@ -62,64 +62,64 @@
     },
     "tests": {
       "hits": 13,
-      "labels_found": 12,
+      "labels_found": 13,
       "concerns": 0,
       "duplicate_rate": 0.0,
-      "false_positives": 1,
-      "unlabelled": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
       "misses": 1,
-      "precision_strict": 0.867,
-      "precision_lenient": 0.929,
-      "recall": 0.923,
-      "f1": 0.894
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 0.929,
+      "f1": 0.963
     }
   },
   "calibration": {
     "bins": [
       {
         "range": "0.50-0.60",
-        "n": 2,
-        "mean_confidence": 0.54,
+        "n": 1,
+        "mean_confidence": 0.55,
         "observed_hit_rate": 1.0,
-        "gap": 0.46
+        "gap": 0.45
       },
       {
         "range": "0.60-0.70",
-        "n": 2,
-        "mean_confidence": 0.64,
+        "n": 7,
+        "mean_confidence": 0.613,
         "observed_hit_rate": 1.0,
-        "gap": 0.36
+        "gap": 0.387
       },
       {
         "range": "0.70-0.80",
-        "n": 6,
-        "mean_confidence": 0.737,
-        "observed_hit_rate": 0.833,
-        "gap": 0.097
+        "n": 11,
+        "mean_confidence": 0.733,
+        "observed_hit_rate": 1.0,
+        "gap": 0.267
       },
       {
         "range": "0.80-0.90",
-        "n": 10,
-        "mean_confidence": 0.843,
+        "n": 4,
+        "mean_confidence": 0.865,
         "observed_hit_rate": 1.0,
-        "gap": 0.157
+        "gap": 0.135
       },
       {
         "range": "0.90-1.01",
-        "n": 17,
-        "mean_confidence": 0.959,
-        "observed_hit_rate": 0.941,
-        "gap": -0.018
+        "n": 16,
+        "mean_confidence": 0.97,
+        "observed_hit_rate": 1.0,
+        "gap": 0.03
       }
     ],
-    "expected_calibration_error": 0.111
+    "expected_calibration_error": 0.183
   },
-  "category_agreement": 0.4,
-  "agent_attribution": 0.371,
+  "category_agreement": 0.41,
+  "agent_attribution": 0.359,
   "decision_accuracy": 1.0,
   "cost": {
-    "total_usd": 1.0675,
-    "per_case_usd": 0.0712
+    "total_usd": 1.0499,
+    "per_case_usd": 0.07
   },
   "per_case": [
     {
@@ -130,8 +130,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.889,
-      "cost_usd": 0.0551,
+      "confidence": 0.829,
+      "cost_usd": 0.0564,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -140,12 +140,12 @@
           "agent": "correctness",
           "category": "error_handling",
           "severity": "major",
-          "confidence": 0.968,
+          "confidence": 0.96,
           "where": "telemetry/push.py:4-5",
           "title": "Bare except swallows KeyboardInterrupt and SystemExit",
           "agreeing": [
             "correctness",
-            "tests"
+            "security"
           ],
           "matched_label": "telemetry/push.py:4"
         },
@@ -154,9 +154,9 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
-          "confidence": 0.75,
+          "confidence": 0.6,
           "where": "telemetry/push.py:2-5",
-          "title": "No test exercises the new exception-swallowing path",
+          "title": "No test covers push_metrics' new fallback behavior",
           "agreeing": [],
           "matched_label": "telemetry/push.py:4"
         }
@@ -170,8 +170,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.918,
-      "cost_usd": 0.0958,
+      "confidence": 0.845,
+      "cost_usd": 0.0877,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -180,9 +180,9 @@
           "agent": "correctness",
           "category": "concurrency",
           "severity": "major",
-          "confidence": 0.986,
+          "confidence": 0.99,
           "where": "limits/ratelimit.py:14-20",
-          "title": "try_consume check-then-act across await without _lock",
+          "title": "try_consume races on _counters: limit can be exceeded, updates lost",
           "agreeing": [
             "correctness",
             "security"
@@ -194,12 +194,10 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.85,
+          "confidence": 0.7,
           "where": "limits/ratelimit.py:14-20",
-          "title": "No test covers concurrent try_consume calls exposing the race",
-          "agreeing": [
-            "tests"
-          ],
+          "title": "try_consume race condition and limit logic are untested",
+          "agreeing": [],
           "matched_label": "limits/ratelimit.py:18"
         }
       ]
@@ -212,8 +210,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.932,
-      "cost_usd": 0.0605,
+      "confidence": 0.903,
+      "cost_usd": 0.0549,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -235,11 +233,10 @@
           "severity": "major",
           "confidence": 0.99,
           "where": "users/lookup.py:2",
-          "title": "Docstring describes old tuple return, function now returns dict",
+          "title": "Docstring describes old return type after contract change",
           "agreeing": [
             "correctness",
-            "docs",
-            "tests"
+            "docs"
           ],
           "matched_label": "users/lookup.py:2"
         },
@@ -248,24 +245,24 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.85,
-          "where": "users/lookup.py:1-6",
-          "title": "No test exercises lookup_user's changed return shape",
+          "confidence": 0.75,
+          "where": "users/lookup.py:6",
+          "title": "Return-shape change to lookup_user has no test guarding callers",
           "agreeing": [],
-          "matched_label": "users/lookup.py:2"
+          "matched_label": "users/lookup.py:6"
         }
       ]
     },
     {
       "id": "cor-off-by-one-pagination",
-      "hits": 2,
+      "hits": 1,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.92,
-      "cost_usd": 0.0523,
+      "confidence": 0.99,
+      "cost_usd": 0.0549,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -276,22 +273,12 @@
           "severity": "major",
           "confidence": 0.99,
           "where": "export/pages.py:9-12",
-          "title": "Off-by-one slice drops the last record of every page",
+          "title": "page_of_sorted drops one record per page (off-by-one slice)",
           "agreeing": [
             "correctness",
-            "docs"
+            "docs",
+            "tests"
           ],
-          "matched_label": "export/pages.py:12"
-        },
-        {
-          "match": "hit",
-          "agent": "tests",
-          "category": "test_coverage",
-          "severity": "major",
-          "confidence": 0.85,
-          "where": "export/pages.py:9-12",
-          "title": "No test guards page_of_sorted against off-by-one slice bug",
-          "agreeing": [],
           "matched_label": "export/pages.py:12"
         }
       ]
@@ -304,8 +291,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.914,
-      "cost_usd": 0.0765,
+      "confidence": 0.868,
+      "cost_usd": 0.0748,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -314,9 +301,9 @@
           "agent": "correctness",
           "category": "resource_leak",
           "severity": "major",
-          "confidence": 0.978,
+          "confidence": 0.986,
           "where": "importer/csv_import.py:10-16",
-          "title": "File handle leaks on header-mismatch return and on exceptions",
+          "title": "File handle leaks on header-mismatch and exception paths",
           "agreeing": [
             "correctness",
             "security"
@@ -328,9 +315,9 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.85,
-          "where": "importer/csv_import.py:9-17",
-          "title": "No test exercises read_validated's failure branch (or success branch)",
+          "confidence": 0.75,
+          "where": "importer/csv_import.py:13-14",
+          "title": "Untested validation-failure path leaks file handle",
           "agreeing": [],
           "matched_label": "importer/csv_import.py:10"
         }
@@ -344,8 +331,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.843,
-      "cost_usd": 0.0652,
+      "confidence": 0.81,
+      "cost_usd": 0.076,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -354,9 +341,9 @@
           "agent": "docs",
           "category": "documentation",
           "severity": "major",
-          "confidence": 0.98,
+          "confidence": 0.95,
           "where": "usage/report.py:2",
-          "title": "Docstring describes old return type, not new dictionary",
+          "title": "Docstring contradicts new return type",
           "agreeing": [],
           "matched_label": "usage/report.py:3"
         },
@@ -365,7 +352,7 @@
           "agent": "correctness",
           "category": "api_contract",
           "severity": "major",
-          "confidence": 0.8,
+          "confidence": 0.88,
           "where": "usage/report.py:3-4",
           "title": "Return type changed from int to dict, breaking existing callers",
           "agreeing": [
@@ -378,9 +365,9 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.75,
+          "confidence": 0.6,
           "where": "usage/report.py:3-4",
-          "title": "No test covers new dict-shaped return value of monthly_usage",
+          "title": "No test covers the new dict-based return shape of monthly_usage",
           "agreeing": [],
           "matched_label": "usage/report.py:3"
         }
@@ -395,21 +382,21 @@
       "decision": "suppress",
       "expected_decision": "suppress",
       "confidence": 1.0,
-      "cost_usd": 0.0235,
+      "cost_usd": 0.0231,
       "failed_agents": [],
       "error": null,
       "findings": []
     },
     {
       "id": "sec-command-injection",
-      "hits": 3,
+      "hits": 4,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
-      "confidence": 0.865,
-      "cost_usd": 0.084,
+      "confidence": 0.832,
+      "cost_usd": 0.0855,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -418,22 +405,12 @@
           "agent": "security",
           "category": "injection",
           "severity": "critical",
-          "confidence": 0.9,
+          "confidence": 0.99,
           "where": "export/archive.py:8-10",
           "title": "Command injection via shell=True with interpolated name/directory",
-          "agreeing": [],
-          "matched_label": "export/archive.py:9"
-        },
-        {
-          "match": "hit",
-          "agent": "correctness",
-          "category": "logic",
-          "severity": "major",
-          "confidence": 0.88,
-          "where": "export/archive.py:9-10",
-          "title": "Unquoted interpolation breaks for names/directories with spaces",
           "agreeing": [
-            "correctness"
+            "correctness",
+            "security"
           ],
           "matched_label": "export/archive.py:9"
         },
@@ -442,9 +419,31 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.8,
+          "confidence": 0.75,
           "where": "export/archive.py:8-10",
-          "title": "No test exercises create_archive, including its injection-prone path",
+          "title": "create_archive has no test coverage",
+          "agreeing": [],
+          "matched_label": "export/archive.py:9"
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "export/archive.py:8-10",
+          "title": "Public function contract does not warn of injection risk",
+          "agreeing": [],
+          "matched_label": "export/archive.py:9"
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "info",
+          "confidence": 0.55,
+          "where": "export/archive.py:10",
+          "title": "Returns CompletedProcess where sibling returns bytes",
           "agreeing": [],
           "matched_label": "export/archive.py:9"
         }
@@ -452,14 +451,14 @@
     },
     {
       "id": "sec-hardcoded-credential",
-      "hits": 2,
+      "hits": 3,
       "missed": 0,
-      "false_positives": 1,
+      "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
-      "confidence": 0.813,
-      "cost_usd": 0.072,
+      "confidence": 0.81,
+      "cost_usd": 0.0728,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -470,29 +469,29 @@
           "severity": "critical",
           "confidence": 0.95,
           "where": "billing/acmepay_client.py:4-8",
-          "title": "Live payments API key hardcoded in source, replacing env lookup",
+          "title": "Live payments API key hardcoded in source",
           "agreeing": [],
           "matched_label": "billing/acmepay_client.py:4"
-        },
-        {
-          "match": "false_positive",
-          "agent": "tests",
-          "category": "test_coverage",
-          "severity": "major",
-          "confidence": 0.75,
-          "where": "tests/fixtures/acmepay.py:1-7",
-          "title": "No test asserts client() reads the credential correctly",
-          "agreeing": [],
-          "matched_label": "tests/fixtures/acmepay.py:3"
         },
         {
           "match": "hit",
           "agent": "correctness",
           "category": "logic",
           "severity": "major",
-          "confidence": 0.68,
+          "confidence": 0.72,
           "where": "billing/acmepay_client.py:4-8",
-          "title": "Per-environment key override removed; all envs now use one live key",
+          "title": "Environment-based key selection removed; live key now used everywhere",
+          "agreeing": [],
+          "matched_label": "billing/acmepay_client.py:4"
+        },
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.7,
+          "where": "billing/acmepay_client.py:7-9",
+          "title": "client() behavior change has no test verifying its effect",
           "agreeing": [],
           "matched_label": "billing/acmepay_client.py:4"
         }
@@ -500,14 +499,14 @@
     },
     {
       "id": "sec-missing-authz",
-      "hits": 2,
+      "hits": 3,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
-      "confidence": 0.932,
-      "cost_usd": 0.0895,
+      "confidence": 0.87,
+      "cost_usd": 0.0824,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -518,7 +517,7 @@
           "severity": "critical",
           "confidence": 0.99,
           "where": "api/payment_methods.py:10-15",
-          "title": "update_payment_method mutates object without ownership check (IDOR)",
+          "title": "Missing ownership check lets any user rename others' payment methods",
           "agreeing": [
             "correctness",
             "security"
@@ -527,12 +526,23 @@
         },
         {
           "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "major",
+          "confidence": 0.92,
+          "where": "api/payment_methods.py:10-15",
+          "title": "Public endpoint lacks documented authorization contract",
+          "agreeing": [],
+          "matched_label": "api/payment_methods.py:12"
+        },
+        {
+          "match": "hit",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.85,
-          "where": "api/payment_methods.py:10-14",
-          "title": "No test guards missing ownership check on update endpoint",
+          "confidence": 0.65,
+          "where": "api/payment_methods.py:10-15",
+          "title": "New update endpoint has no test covering ownership enforcement",
           "agreeing": [],
           "matched_label": "api/payment_methods.py:12"
         }
@@ -540,14 +550,14 @@
     },
     {
       "id": "sec-sql-injection-fstring",
-      "hits": 3,
+      "hits": 4,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
-      "confidence": 0.912,
-      "cost_usd": 0.084,
+      "confidence": 0.856,
+      "cost_usd": 0.0772,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -567,9 +577,9 @@
           "agent": "correctness",
           "category": "api_contract",
           "severity": "major",
-          "confidence": 0.92,
-          "where": "billing/queries.py:9-10",
-          "title": "search_customers builds SQL by interpolation, breaking execute()'s contract",
+          "confidence": 0.88,
+          "where": "billing/queries.py:8-10",
+          "title": "search_customers bypasses execute()'s params contract and breaks on quotes/None",
           "agreeing": [],
           "matched_label": "billing/queries.py:9"
         },
@@ -578,9 +588,20 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.85,
+          "confidence": 0.72,
           "where": "billing/queries.py:8-10",
-          "title": "No test covers search_customers, so the injection bug is unguarded",
+          "title": "search_customers has no test coverage at all",
+          "agreeing": [],
+          "matched_label": "billing/queries.py:9"
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.75,
+          "where": "billing/queries.py:8-10",
+          "title": "Public function lacks documentation of parameters and return type",
           "agreeing": [],
           "matched_label": "billing/queries.py:9"
         }
@@ -588,25 +609,25 @@
     },
     {
       "id": "sec-ssrf-webhook-url",
-      "hits": 3,
+      "hits": 4,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.802,
-      "cost_usd": 0.0868,
+      "confidence": 0.763,
+      "cost_usd": 0.0885,
       "failed_agents": [],
       "error": null,
       "findings": [
         {
           "match": "hit",
           "agent": "correctness",
-          "category": "authz",
+          "category": "input_validation",
           "severity": "major",
-          "confidence": 0.982,
+          "confidence": 0.988,
           "where": "integrations/webhooks.py:13-14",
-          "title": "verify_endpoint skips the ALLOWED_HOSTS check the sibling path enforces",
+          "title": "verify_endpoint bypasses the ALLOWED_HOSTS invariant enforced above",
           "agreeing": [
             "correctness",
             "security"
@@ -618,12 +639,10 @@
           "agent": "tests",
           "category": "test_coverage",
           "severity": "major",
-          "confidence": 0.75,
+          "confidence": 0.6,
           "where": "integrations/webhooks.py:13-14",
-          "title": "No test exercises verify_endpoint's missing host allowlist check",
-          "agreeing": [
-            "tests"
-          ],
+          "title": "New verify_endpoint has no test coverage and skips the allowlist check",
+          "agreeing": [],
           "matched_label": "integrations/webhooks.py:14"
         },
         {
@@ -631,9 +650,20 @@
           "agent": "correctness",
           "category": "error_handling",
           "severity": "minor",
-          "confidence": 0.58,
+          "confidence": 0.62,
           "where": "integrations/webhooks.py:14",
-          "title": "verify_endpoint raises instead of reporting an unreachable endpoint",
+          "title": "verify_endpoint raises on connection failure instead of reporting it",
+          "agreeing": [],
+          "matched_label": "integrations/webhooks.py:14"
+        },
+        {
+          "match": "hit",
+          "agent": "docs",
+          "category": "documentation",
+          "severity": "info",
+          "confidence": 0.85,
+          "where": "integrations/webhooks.py:13-14",
+          "title": "Public function `verify_endpoint` lacks documentation of contract",
           "agreeing": [],
           "matched_label": "integrations/webhooks.py:14"
         }
@@ -641,14 +671,14 @@
     },
     {
       "id": "sec-weak-password-hash",
-      "hits": 5,
+      "hits": 4,
       "missed": 0,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.76,
-      "cost_usd": 0.0873,
+      "confidence": 0.725,
+      "cost_usd": 0.0777,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -657,9 +687,31 @@
           "agent": "security",
           "category": "crypto",
           "severity": "major",
-          "confidence": 0.92,
+          "confidence": 0.95,
           "where": "auth/passwords.py:10-11",
-          "title": "Reset-path passwords hashed with unsalted MD5 instead of bcrypt",
+          "title": "Reset passwords hashed with unsalted MD5 instead of bcrypt",
+          "agreeing": [],
+          "matched_label": "auth/passwords.py:11"
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.62,
+          "where": "auth/passwords.py:10-11",
+          "title": "Reset path stores a hash format bcrypt verification cannot check",
+          "agreeing": [],
+          "matched_label": "auth/passwords.py:11"
+        },
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "auth/passwords.py:10-11",
+          "title": "No test coverage for new hash_reset_password function",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11"
         },
@@ -667,43 +719,10 @@
           "match": "hit",
           "agent": "docs",
           "category": "documentation",
-          "severity": "major",
-          "confidence": 0.85,
+          "severity": "info",
+          "confidence": 0.75,
           "where": "auth/passwords.py:10-11",
-          "title": "hash_reset_password name misleads about security",
-          "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
-        },
-        {
-          "match": "hit",
-          "agent": "correctness",
-          "category": "api_contract",
-          "severity": "major",
-          "confidence": 0.72,
-          "where": "auth/passwords.py:10-11",
-          "title": "Reset path produces MD5 digest incompatible with bcrypt verification",
-          "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
-        },
-        {
-          "match": "hit",
-          "agent": "tests",
-          "category": "test_coverage",
-          "severity": "major",
-          "confidence": 0.7,
-          "where": "auth/passwords.py:10-11",
-          "title": "New reset-password hashing path has no test coverage",
-          "agreeing": [],
-          "matched_label": "auth/passwords.py:11"
-        },
-        {
-          "match": "hit",
-          "agent": "tests",
-          "category": "test_coverage",
-          "severity": "minor",
-          "confidence": 0.5,
-          "where": "auth/passwords.py:14-16",
-          "title": "checksum() function added without any test",
+          "title": "Public password function lacks a docstring",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11"
         }
@@ -717,8 +736,8 @@
       "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.976,
-      "cost_usd": 0.0567,
+      "confidence": 0.984,
+      "cost_usd": 0.0529,
       "failed_agents": [],
       "error": null,
       "findings": [
@@ -729,7 +748,7 @@
           "severity": "major",
           "confidence": 0.99,
           "where": "tests/test_invoice.py:11-12",
-          "title": "test_renders_empty_invoice contains no assertion",
+          "title": "test_renders_empty_invoice has no assertion",
           "agreeing": [
             "correctness",
             "tests"
@@ -741,9 +760,9 @@
           "agent": "tests",
           "category": "test_quality",
           "severity": "major",
-          "confidence": 0.963,
+          "confidence": 0.978,
           "where": "tests/test_invoice.py:5-8",
-          "title": "Test asserts mock call count, not rendered output",
+          "title": "Test asserts on mock call count, not rendered output",
           "agreeing": [
             "correctness",
             "tests"
@@ -754,39 +773,39 @@
     },
     {
       "id": "tst-untested-error-branch",
-      "hits": 1,
+      "hits": 2,
       "missed": 0,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "auto_post",
       "expected_decision": null,
-      "confidence": 0.75,
-      "cost_usd": 0.0782,
+      "confidence": 0.774,
+      "cost_usd": 0.085,
       "failed_agents": [],
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
-          "agent": "tests",
-          "category": "test_coverage",
-          "severity": "major",
-          "confidence": 0.9,
-          "where": "tests/test_coupons.py:1-3",
-          "title": "No test for expired coupon raising CouponExpired",
-          "agreeing": [],
-          "matched_label": null
-        },
-        {
           "match": "hit",
           "agent": "correctness",
           "category": "logic",
-          "severity": "major",
-          "confidence": 0.6,
-          "where": "billing/coupons.py:6-7",
-          "title": "`expires_at` of None raises TypeError instead of applying coupon",
+          "severity": "critical",
+          "confidence": 0.72,
+          "where": "billing/coupons.py:6",
+          "title": "`now()` appears undefined in billing/coupons.py",
           "agreeing": [
             "correctness"
           ],
+          "matched_label": "billing/coupons.py:6"
+        },
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.85,
+          "where": "billing/coupons.py:6-7",
+          "title": "Expired-coupon branch has no test coverage",
+          "agreeing": [],
           "matched_label": "billing/coupons.py:6"
         }
       ]

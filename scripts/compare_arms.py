@@ -22,14 +22,13 @@ import statistics as st
 import sys
 from pathlib import Path
 
-NOISE_PHRASES = (
-    "lacks",
-    "missing",
-    "no docstring",
-    "undocumented",
-    "has no",
-    "not documented",
-)
+# Low-value phrasing, per agent. Deliberately NOT shared: "has no test covering X"
+# is the tests agent doing its job, while "lacks a docstring" is the docs agent
+# generating noise. An earlier version applied the docs phrases to every agent and
+# reported a large false regression on the tests agent because of it.
+NOISE_PHRASES: dict[str, tuple[str, ...]] = {
+    "docs": ("lacks", "missing", "no docstring", "undocumented", "has no", "not documented"),
+}
 DOCS_CATEGORIES = ("documentation", "readability", "convention")
 
 # Lower is better for these; for everything else higher is better.
@@ -54,7 +53,12 @@ def per_run(report: dict, agent: str | None) -> dict:
     bucket = report["by_agent"].get(agent, {}) if agent else report["overall"]
     return {
         "findings_total": len(scoped),
-        "noise_notes": sum(1 for f in scoped if any(w in f["title"].lower() for w in NOISE_PHRASES)),
+        # -1 means "not defined for this agent"; filtered out of the table.
+        "noise_notes": (
+            sum(1 for f in scoped if any(w in f["title"].lower() for w in NOISE_PHRASES[agent]))
+            if agent in NOISE_PHRASES
+            else -1
+        ),
         "out_of_lane": sum(1 for f in scoped if agent == "docs" and f["category"] not in DOCS_CATEGORIES),
         "posted": sum(1 for f in scoped if postable(f)),
         "precision": bucket.get("precision_strict", 0.0),
@@ -85,6 +89,8 @@ def render(a: list[dict], b: list[dict], label_a: str, label_b: str, scope: str)
     verdicts: dict[str, str] = {}
     for key in a[0]:
         va, vb = [r[key] for r in a], [r[key] for r in b]
+        if va[0] == -1 or vb[0] == -1:
+            continue  # metric not defined for this agent
         am, bm = st.mean(va), st.mean(vb)
         alo, ahi, blo, bhi = min(va), max(va), min(vb), max(vb)
         if not (ahi < blo or bhi < alo):
@@ -118,6 +124,21 @@ def main() -> int:
 
     print("\n  Ranges that overlap mean the change has not been demonstrated.")
     print("  With three samples per arm, 'separated' is suggestive, not significant.")
+
+    # Calibration error saturates as an objective once precision approaches 1.0:
+    # you cannot be both right 99% of the time and state 0.8, without that showing
+    # up as error. Measured: precision 0.948 -> 0.992 moved ECE 0.122 -> 0.179, and
+    # reading that as a regression is exactly backwards.
+    for label, rows in ((label_a, load(a_path, None)), (label_b, load(b_path, None))):
+        precision = st.mean([r["precision"] for r in rows])
+        if precision > 0.95:
+            print(
+                f"\n  NOTE: {label} has precision {precision:.3f}. Above ~0.95 the calibration\n"
+                "  error mostly measures how far stated confidence sits below an\n"
+                "  observed accuracy near 1.0 — that is underconfidence, not\n"
+                "  miscalibration, and driving it down would mean asking the model to\n"
+                "  claim near-certainty. Read ECE alongside precision, never alone."
+            )
     return 0
 
 

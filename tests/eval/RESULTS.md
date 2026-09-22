@@ -88,14 +88,93 @@ single runs did not survive, and the one that did survived convincingly.
 
 ---
 
+## A/B: the tests agent prompt
+
+Three runs per arm; arm A is the `ab-docs-prompt-new.json` configuration, which is
+identical apart from the tests prompt. Raw data in `baselines/ab-tests-prompt-new.json`.
+
+The diagnosis: across 45 findings in three runs, **every one was a coverage
+complaint** — around 13 per pull request of "no test covers X". The agent produced
+exactly one test-*quality* finding, never the second quality defect in the same
+file, and anchored coverage findings on the test file rather than on the untested
+code.
+
+The rewrite puts quality first (a test that exists and cannot fail creates false
+confidence; a missing test only leaves you where you were), tells it to report
+every quality defect in a file rather than the first, limits coverage complaints
+to one per pull request, and anchors them on the changed code.
+
+| metric | old (range) | new (range) | verdict |
+|---|---|---|---|
+| precision — whole panel | 0.948 (0.95) | **0.992 (0.98–1.00)** | separated, better |
+| precision — tests agent | 0.866 (0.86–0.88) | **1.000 (1.00)** | separated, better |
+| recall | 0.938 | 0.938 | within noise |
+| findings produced | 15.0 (14–16) | 14.0 (13–15) | within noise |
+| findings posted | 14.0 | 14.0 | within noise |
+| cost | $0.072 | $0.073 | within noise |
+
+**The main goal failed.** The point of the rewrite was to stop the agent filing a
+coverage complaint per function. "Say this once per pull request" did not take:
+the count is unchanged. Precision improved because the false positive and the
+mislocated finding disappeared, not because the agent got quieter.
+
+**Two specific fixes did land:**
+
+- *Anchoring*, cleanly and in all three runs. The "no test for the `CouponExpired`
+  branch" finding moved from `tests/test_coupons.py:1` to `billing/coupons.py:6` —
+  from a comment on line 1 of a test file to a comment on the untested branch,
+  which is where the fix happens. It also stopped scoring as unlabelled, because
+  it now lands on the defect it describes.
+- *The assertion-free test*, partially. Missed in all seven runs before, found in
+  one of three after. Better, not fixed.
+
+### The calibration number went up, and that is not a regression
+
+`calibration_error` reads 0.122 → 0.179, "separated, WORSE". It is an artifact,
+and an instructive one:
+
+```
+             observed accuracy   mean stated confidence   gap
+  old              0.948                 0.843           +0.105
+  new              0.992                 0.813           +0.179
+```
+
+Every gap is positive: the model is *under*confident, and it became more so
+because it became more accurate while claiming slightly less. Expected calibration
+error cannot be small when observed accuracy sits near 1.0 unless stated
+confidence is also near 1.0 — and asking a model to claim near-certainty is the
+last thing this system wants, because the confidence field is what the gate
+depends on when a case is genuinely hard.
+
+**Calibration error saturates as an objective once precision approaches 1.0 on a
+small set.** `compare_arms.py` now prints a warning above 0.95 precision. Read ECE
+alongside precision, never alone.
+
+### A tooling bug this A/B exposed
+
+The first comparison reported `noise_notes` as "separated, WORSE" for the tests
+agent — 5.7 → 13.3. The heuristic matched phrases like "has no", which is the docs
+agent generating noise and the tests agent *doing its job* ("has no test covering
+the race"). The script applied a docs-specific phrase list to every agent. It is
+now per-agent, and undefined metrics are omitted rather than scored.
+
+---
+
 ## What the data says to do next
 
-- **The tests agent is now the weakest**: precision 0.866, and it misses the same
-  labelled defect in every run — an assertion-free test. It reliably finds the
-  *missing* test and never the test that cannot fail. That gap has held across
-  seven live runs, which makes it the strongest signal in this file.
-- **Calibration is drifting slightly worse** and is the one metric where the new
-  prompt may have cost something. Within noise at n=3; worth watching.
+- **Precision has run out of room.** 0.992 on 15 cases with 16 labels means the
+  set can no longer tell a good change from a great one. Every remaining question
+  needs harder cases, not more tuning against these.
+- **The tests agent still files one coverage comment per function.** Two attempts
+  at instructing it otherwise have not worked. The next thing to try is structural
+  rather than textual: have the aggregator collapse same-agent coverage findings
+  across a pull request into one, which does not depend on the model complying.
+- **The assertion-free test is found one run in three.** That is the clearest
+  remaining quality gap and the one a larger set would let us fix with confidence.
+- **Matching is location-based**, so a coverage complaint that happens to land on
+  a line labelled for security counts as a hit. It inflates per-agent numbers for
+  whichever agent comments most. Agent attribution (0.33) is the honest view; a
+  family-aware matcher would be better.
 - **The set is too small.** Run-to-run spread on an unchanged configuration is
-  ±0.04 overall precision and ±0.15 for a single agent. Anything smaller than
-  that cannot be measured here. More cases, not more repetitions.
+  ±0.04 overall precision and ±0.15 for a single agent. Anything smaller than that
+  cannot be measured here. More cases, not more repetitions.

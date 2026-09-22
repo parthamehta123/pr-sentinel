@@ -37,13 +37,17 @@ arm and is real — six fewer posted comments per pull request at identical reca
 Two further claims made from single runs turned out to be coincidence. Tables in
 [tests/eval/RESULTS.md](../tests/eval/RESULTS.md).
 
-## 2. The tests agent
+## 2. Collapse coverage findings structurally, not by asking
 
-Now the weakest specialist: precision 0.866, and it misses the same labelled
-defect in every run — an assertion-free test. It reliably finds the *missing*
-test and never the test that cannot fail. That gap has held across seven live
-runs, which makes it the strongest signal available and the obvious next
-prompt to work on. The A/B harness can settle whether a fix works.
+The tests agent files one "no test covers X" comment per changed function — around
+13 per pull request. Two prompt rewrites have failed to change that; the count is
+unchanged across three runs per arm.
+
+The next attempt should not be textual. The aggregator already merges findings
+that overlap within a family of concern; extending it to collapse *same-agent
+coverage findings across a whole pull request* into one comment does not depend on
+the model complying with an instruction. Prompt changes are the right tool for
+what a model looks for; they are a poor tool for how many times it says it.
 
 ## 2. Learning from recorded disputes
 

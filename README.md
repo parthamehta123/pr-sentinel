@@ -108,10 +108,20 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 (tests) and `claude-haiku-4-5` (docs):
 
 ```
-precision  0.948 strict / 0.973 lenient     recall  0.938  (15 of 16 defects)
-calibration error  0.111                  findings per concern  1.06
-gate decision match  1.000                  $0.071 per review
+                      mean     range over 3 runs
+  precision strict   0.992    0.976 - 1.000
+  precision lenient  1.000    1.000 - 1.000
+  recall             0.938    15 of 16 labelled defects
+  calibration error  0.179    0.165 - 0.190
+  findings/concern   1.02
+  cost per review    $0.073   $0.070 - $0.078
 ```
+
+Reported as a mean over three runs, because a single run on 15 cases is not a
+measurement — an identical configuration has been seen to vary by 0.04 in
+precision. Read the calibration error next to the precision, never alone: above
+~0.95 precision it mostly measures how far a stated confidence sits below an
+observed accuracy near 1.0, which is underconfidence rather than miscalibration.
 
 Single runs on 15 cases are noisy, so changes are measured over repeats:
 
