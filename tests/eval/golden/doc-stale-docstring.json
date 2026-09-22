@@ -29,16 +29,18 @@
     }
   ],
   "id": "doc-stale-docstring",
-  "may_find": [
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
     {
       "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "usage/report.py",
-      "line": 3,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
-  "must_not_find": [],
   "summary": "The implementation changes; the docstring above it now describes something else.",
   "title": "Return usage broken down by day"
 }

@@ -8,6 +8,14 @@
       "line": 9,
       "min_severity": "major",
       "note": "the new CouponExpired branch has no test; the only test added covers the unexpired path"
+    },
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "billing/coupons.py",
+      "line": 9,
+      "min_severity": "minor",
+      "note": "apply_coupon now requires expires_at on every coupon, so any caller passing one without it breaks"
     }
   ],
   "expected_decision": null,
@@ -28,16 +36,18 @@
     }
   ],
   "id": "tst-untested-error-branch",
-  "may_find": [
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
     {
       "agent": "docs",
-      "category": "documentation",
-      "file_path": "billing/coupons.py",
-      "line": 8,
-      "note": "the newly raised CouponExpired is not documented; a fair observation, not a required one"
+      "category": "documentation"
     }
   ],
-  "must_not_find": [],
   "summary": "A new error branch; the test added in the same PR only covers the happy path.",
   "title": "Reject expired coupons"
 }

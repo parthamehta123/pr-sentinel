@@ -23,13 +23,6 @@
   "id": "sec-ssrf-webhook-url",
   "may_find": [
     {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "integrations/webhooks.py",
-      "line": 13,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    },
-    {
       "agent": "correctness",
       "category": "error_handling",
       "file_path": "integrations/webhooks.py",
@@ -38,6 +31,16 @@
     }
   ],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A caller-supplied URL fetched server-side with no allowlist or scheme check.",
   "title": "Let customers register a webhook target"
 }

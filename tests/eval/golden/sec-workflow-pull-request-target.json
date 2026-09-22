@@ -23,6 +23,16 @@
   "id": "sec-workflow-pull-request-target",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "GitHub Actions. `pull_request_target` runs with repository secrets and this checks out the fork's code before running it.",
   "title": "Run the size check on forked pull requests"
 }

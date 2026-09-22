@@ -584,6 +584,55 @@ def test_a_permitted_label_does_not_rescue_an_unrelated_finding():
     assert rep.overall.unlabelled == 1 and rep.overall.allowed == 0
 
 
-def test_the_set_actually_uses_permitted_labels():
+def test_every_case_carries_the_standing_permission_policy():
+    """The two observations that are legitimate anywhere and required nowhere.
+
+    Stated once in the builder rather than as a marker on every line they could
+    apply to — nineteen such markers were removed when this replaced them.
+    """
     cases = load_cases()
-    assert sum(len(c.may_find) for c in cases) >= 15
+    assert cases
+    for case in cases:
+        assert ("tests", "test_coverage") in case.permitted_concerns, case.id
+        assert ("docs", "documentation") in case.permitted_concerns, case.id
+
+
+def test_a_permitted_concern_is_still_overridden_by_a_trap():
+    """A case can declare a line where even a normally-permitted observation is wrong.
+
+    Traps are checked before permissions, so `neg-clean-extract-method` still
+    penalises asking for a test on a documented, tested pure extraction.
+    """
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[],
+        must_not_find=[Label(file_path="a.py", line=10, note="nothing here")],
+        permitted_concerns=[("tests", "test_coverage")],
+    )
+    normally_fine = finding(line=10, agent=AgentType.TESTS, category="test_coverage", severity="minor")
+    rep = score(
+        [score_case(case, [normally_fine], decision="escalate", confidence=0.5, cost_usd=0.0, duration_ms=1)],
+        "t",
+        {},
+    )
+    assert rep.overall.false_positives == 1 and rep.overall.allowed == 0
+
+
+def test_a_label_accepts_alternative_categories():
+    """One defect can have more than one fair reading.
+
+    A traceback returned to a client is information disclosure and an
+    error-handling mistake; rejecting the second cost a correct finding at 0.99.
+    """
+    either = Label(
+        file_path="a.py", line=10, agent="security", category="input_validation|error_handling", note="n"
+    )
+    for cat in ("input_validation", "error_handling"):
+        m = classify([finding(line=10, category=cat)], [either], [])[0]
+        assert m.kind == "hit" and m.category_correct, cat
+    assert classify([finding(line=10, category="documentation")], [either], [])[0].kind == "unlabelled"

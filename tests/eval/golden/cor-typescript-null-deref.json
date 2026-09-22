@@ -26,16 +26,18 @@
     }
   ],
   "id": "cor-typescript-null-deref",
-  "may_find": [
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
     {
       "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "web/src/banner.ts",
-      "line": 7,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
-  "must_not_find": [],
   "summary": "TypeScript. Optional chaining removed from a value that is genuinely optional.",
   "title": "Simplify the account banner"
 }

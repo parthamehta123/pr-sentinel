@@ -26,20 +26,22 @@
     }
   ],
   "id": "cor-timezone-naive-comparison",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "invites/expiry.py",
-      "line": 8,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "invites/expiry.py",
       "line": 5,
       "note": "aware-to-aware comparison, which is correct"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "A naive datetime compared against an aware one.",

@@ -74,6 +74,16 @@ ALLOW    a legitimate observation that is optional; it counts neither way
 CLEAN    flagging this is a false positive
 ```
 
+Two of these are declared once for the whole set rather than marked per line — the
+tests agent noting new code has no test, and the docs agent noting it is
+undocumented. Both are legitimate anywhere and required nowhere. A `CLEAN` trap
+still overrides them, because traps are checked first.
+
+A label may also name alternative categories, `category=injection|logic`, because
+one defect genuinely has more than one fair reading: a traceback returned to a
+client is information disclosure *and* an error-handling mistake, and rejecting
+the second reading cost a correct finding at confidence 0.99.
+
 `ALLOW` exists because most of what a competent reviewer could say about a diff is
 neither required nor wrong. Fifteen of the findings it covers are the tests agent
 correctly noting that a new function has no test, on a line labelled for something

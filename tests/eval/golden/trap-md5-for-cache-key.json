@@ -28,6 +28,16 @@
       "note": "MD5 over the template's own source and a canonical encoding of the context; no secret, no adversary, and a collision costs one re-render"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "MD5, used to key a cache. Not a password, not a signature, not integrity against an adversary. Flagging it is the reflex this case exists to catch.",
   "title": "Key the render cache by template digest"
 }

@@ -28,6 +28,16 @@
       "note": "both interpolated values are module-owned literals chosen by a membership test; nothing caller-controlled reaches the query"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "Dynamic SQL built by string formatting \u2014 and correct, because the only interpolated values are literals the module owns. Documented, validated and tested in the same change, so there is genuinely nothing to say.",
   "title": "Allow sorting the invoice list"
 }

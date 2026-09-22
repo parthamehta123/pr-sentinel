@@ -36,6 +36,16 @@
   "id": "cor-contract-break-return-shape",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "Return type changes from a tuple to a dict. An existing caller still unpacks it, and the docstring above still describes the old shape.",
   "title": "Return richer data from lookup_user"
 }

@@ -38,6 +38,16 @@
   "id": "doc-readme-flag-renamed",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "The CLI flag is renamed; the README still documents the old one.",
   "title": "Rename the --workers flag"
 }

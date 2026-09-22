@@ -21,20 +21,22 @@
     }
   ],
   "id": "cor-mutable-default-arg",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "notify/batch.py",
-      "line": 7,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "notify/batch.py",
       "line": 2,
       "note": "None sentinel with a fresh dict per call; this is the correct pattern"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "A mutable default argument next to a correct None default.",

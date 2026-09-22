@@ -34,6 +34,16 @@
       "note": "patches the lookup site, notify.sender.deliver, which is correct"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A test that patches where the symbol is defined rather than where it is looked up, so the real function still runs and the test proves nothing.",
   "title": "Test the notification retry path"
 }

@@ -22,9 +22,16 @@ required, counting neither for recall nor against precision — which is what th
 set needed to stop choosing between demanding every true statement and calling it
 noise.
 
-About fifteen findings per run are still unlabelled. The loop is cheap now:
-`scripts/rescore.py` re-scores any recorded run for nothing, so a labelling pass
-costs no API calls at all.
+Done twice. The second pass found almost nothing left to judge and instead five
+faults in the labels themselves — three correct findings rejected because my
+category differed from the model's equally fair one, and four real defects the set
+had never labelled at all. Unlabelled findings are now 2 per run out of about
+eighty.
+
+Worth keeping in view: strict precision went 0.402 → 0.653 → 0.898 across those
+two passes while **the reviewer did not change at all**. Every point came from the
+labels getting less wrong, which is an argument for distrusting a single absolute
+number and watching deltas under a fixed set instead.
 
 ## 1. Grow the eval set
 

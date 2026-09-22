@@ -16,7 +16,7 @@
     },
     {
       "agent": "correctness",
-      "category": "logic",
+      "category": "logic|injection",
       "file_path": "reports/csv_export.py",
       "line": 5,
       "min_severity": "major",
@@ -90,6 +90,16 @@
   "id": "tst-repeated-coverage-gap",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "Six new public functions across three files, none tested. One comment naming the gap is the right review; six comments is the failure mode.",
   "title": "Add the reporting exporters"
 }

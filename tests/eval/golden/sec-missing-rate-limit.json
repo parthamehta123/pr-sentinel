@@ -23,6 +23,16 @@
   "id": "sec-missing-rate-limit",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A rate limit removed. Real, and `major` rather than `critical`: it makes an attack cheaper without granting anyone access.",
   "title": "Drop the limiter from the password reset endpoint"
 }

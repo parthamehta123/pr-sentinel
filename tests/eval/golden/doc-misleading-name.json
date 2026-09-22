@@ -8,6 +8,14 @@
       "line": 8,
       "min_severity": "minor",
       "note": "named get_, but it writes to the shared cache and evicts entries; a caller will not expect a read to mutate"
+    },
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "cache/lookup.py",
+      "line": 11,
+      "min_severity": "major",
+      "note": "the size-bound eviction clears the whole cache, discarding the entry just written and every other tenant's"
     }
   ],
   "expected_decision": null,
@@ -21,20 +29,22 @@
     }
   ],
   "id": "doc-misleading-name",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "cache/lookup.py",
-      "line": 8,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "cache/lookup.py",
       "line": 5,
       "note": "a pure read, which is what the name promises"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "A get_* that mutates, alongside a get_* that does not.",

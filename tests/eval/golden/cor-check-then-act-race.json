@@ -23,6 +23,16 @@
   "id": "cor-check-then-act-race",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "Check-then-act on shared state across an await.",
   "title": "Add a per-tenant rate limiter"
 }

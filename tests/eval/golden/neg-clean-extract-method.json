@@ -32,6 +32,16 @@
       "note": "a real assertion on real behaviour"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A pure refactor with a test and a docstring. Any finding here is a false positive, and this case is the one that stops the set rewarding noise.",
   "title": "Extract the discount calculation"
 }

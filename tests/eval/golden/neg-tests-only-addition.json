@@ -25,6 +25,16 @@
       "note": "a real assertion on real behaviour, covering a previously untested branch"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A pull request that only adds good tests to existing, unchanged code. Every agent should be silent; the tests agent especially.",
   "title": "Add tests for the discount rules"
 }

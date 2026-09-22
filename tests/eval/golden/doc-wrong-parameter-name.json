@@ -31,6 +31,16 @@
   "id": "doc-wrong-parameter-name",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "The parameter is renamed; the docstring documenting it is not.",
   "title": "Rename the pagination parameter"
 }

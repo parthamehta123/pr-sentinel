@@ -29,6 +29,16 @@
       "note": "a frozen instant passed in explicitly; deterministic"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A test that will fail at a midnight boundary and pass every other time.",
   "title": "Test the token expiry window"
 }

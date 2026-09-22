@@ -3,7 +3,7 @@
   "expected": [
     {
       "agent": "security",
-      "category": "input_validation",
+      "category": "input_validation|error_handling",
       "file_path": "api/errors.py",
       "line": 9,
       "min_severity": "minor",
@@ -23,6 +23,16 @@
   "id": "sec-verbose-error-leak",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "Internals leaked to the client. Real, and `major`, not `critical`.",
   "title": "Return the exception text to help debugging"
 }

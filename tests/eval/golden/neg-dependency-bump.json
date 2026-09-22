@@ -27,6 +27,16 @@
       "note": "a routine version bump; there is nothing here to find"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A routine dependency bump with a changelog entry. Nothing to review, and the docs agent in particular should not invent something.",
   "title": "Bump httpx and record it"
 }

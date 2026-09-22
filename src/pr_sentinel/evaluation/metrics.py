@@ -230,7 +230,7 @@ class EvalReport:
 
 
 def score_case(case: EvalCase, findings: list[Finding], **meta) -> CaseResult:
-    matches = classify(findings, case.expected, case.must_not_find, case.may_find)
+    matches = classify(findings, case.expected, case.must_not_find, case.may_find, case.permitted_concerns)
     return CaseResult(
         case_id=case.id,
         matches=matches,

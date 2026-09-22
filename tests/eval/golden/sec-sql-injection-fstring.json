@@ -26,20 +26,22 @@
     }
   ],
   "id": "sec-sql-injection-fstring",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "billing/queries.py",
-      "line": 8,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "billing/queries.py",
       "line": 5,
       "note": "correctly parameterised; flagging this is a false positive"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "An f-string SQL query one line below a correctly parameterised one.",

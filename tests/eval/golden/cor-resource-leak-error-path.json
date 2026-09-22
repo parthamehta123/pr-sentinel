@@ -21,16 +21,18 @@
     }
   ],
   "id": "cor-resource-leak-error-path",
-  "may_find": [
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
     {
       "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "importer/csv_import.py",
-      "line": 9,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
-  "must_not_find": [],
   "summary": "A file handle that leaks on the validation-failure path.",
   "title": "Add a CSV importer"
 }

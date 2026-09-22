@@ -9,17 +9,17 @@
   "cases": 47,
   "overall": {
     "hits": 4,
-    "allowed": 13,
+    "allowed": 33,
     "labels_found": 9,
     "concerns": 9,
     "duplicate_rate": 0.44,
     "false_positives": 2,
-    "unlabelled": 20,
-    "misses": 44,
-    "precision_strict": 0.154,
+    "unlabelled": 0,
+    "misses": 48,
+    "precision_strict": 0.667,
     "precision_lenient": 0.667,
-    "recall": 0.17,
-    "f1": 0.161
+    "recall": 0.158,
+    "f1": 0.255
   },
   "by_agent": {
     "correctness": {
@@ -30,25 +30,25 @@
       "duplicate_rate": 0.0,
       "false_positives": 0,
       "unlabelled": 0,
-      "misses": 20,
+      "misses": 24,
       "precision_strict": 1.0,
       "precision_lenient": 1.0,
-      "recall": 0.048,
-      "f1": 0.091
+      "recall": 0.04,
+      "f1": 0.077
     },
     "docs": {
       "hits": 1,
-      "allowed": 2,
+      "allowed": 14,
       "labels_found": 1,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 0,
-      "unlabelled": 12,
+      "unlabelled": 0,
       "misses": 4,
-      "precision_strict": 0.077,
+      "precision_strict": 1.0,
       "precision_lenient": 1.0,
       "recall": 0.2,
-      "f1": 0.111
+      "f1": 0.333
     },
     "security": {
       "hits": 1,
@@ -66,17 +66,17 @@
     },
     "tests": {
       "hits": 1,
-      "allowed": 11,
+      "allowed": 19,
       "labels_found": 6,
       "concerns": 0,
       "duplicate_rate": 0.0,
       "false_positives": 1,
-      "unlabelled": 8,
+      "unlabelled": 0,
       "misses": 6,
-      "precision_strict": 0.1,
+      "precision_strict": 0.5,
       "precision_lenient": 0.5,
       "recall": 0.5,
-      "f1": 0.167
+      "f1": 0.5
     }
   },
   "calibration": {
@@ -214,7 +214,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -232,16 +232,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "notify/batch.py:7",
-          "matched_labels": [
-            "notify/batch.py:7"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "notify/batch.py:7"
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -263,7 +261,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -272,7 +270,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -301,7 +299,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 2,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -310,7 +308,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -326,7 +324,7 @@
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -362,7 +360,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -380,16 +378,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "importer/csv_import.py:9",
-          "matched_labels": [
-            "importer/csv_import.py:9"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "importer/csv_import.py:9"
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -429,10 +425,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "billing/resilient.py:11",
-          "matched_labels": [
-            "billing/resilient.py:11"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "billing/resilient.py:11"
           ]
@@ -462,10 +456,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "invites/expiry.py:8",
-          "matched_labels": [
-            "invites/expiry.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "invites/expiry.py:8"
           ]
@@ -491,7 +483,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -500,7 +492,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -534,7 +526,7 @@
     {
       "id": "doc-misleading-name",
       "hits": 1,
-      "missed": 0,
+      "missed": 1,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
@@ -554,10 +546,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "cache/lookup.py:8",
-          "matched_labels": [
-            "cache/lookup.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "cache/lookup.py:8"
           ]
@@ -615,7 +605,7 @@
       "hits": 0,
       "missed": 2,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.55,
@@ -624,7 +614,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -646,7 +636,7 @@
       "hits": 0,
       "missed": 0,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "suppress",
       "confidence": 0.55,
@@ -655,7 +645,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -750,7 +740,7 @@
     {
       "id": "sec-command-injection",
       "hits": 0,
-      "missed": 1,
+      "missed": 2,
       "false_positives": 0,
       "unlabelled": 0,
       "decision": "escalate",
@@ -770,10 +760,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "export/archive.py:8",
-          "matched_labels": [
-            "export/archive.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/archive.py:8"
           ]
@@ -788,10 +776,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "export/archive.py:8",
-          "matched_labels": [
-            "export/archive.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "export/archive.py:8"
           ]
@@ -886,10 +872,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "auth/tokens.py:10",
-          "matched_labels": [
-            "auth/tokens.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/tokens.py:10"
           ]
@@ -904,10 +888,8 @@
           "title": "Public definition has no docstring",
           "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
-          "matched_label": "auth/tokens.py:10",
-          "matched_labels": [
-            "auth/tokens.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "auth/tokens.py:10"
           ]
@@ -919,7 +901,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.55,
@@ -928,7 +910,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -964,7 +946,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": "escalate",
       "confidence": 0.523,
@@ -982,16 +964,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "exports/serve.py:19",
-          "matched_labels": [
-            "exports/serve.py:19"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "exports/serve.py:19"
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1045,10 +1025,8 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "billing/queries.py:8",
-          "matched_labels": [
-            "billing/queries.py:8"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "billing/queries.py:8"
           ]
@@ -1060,7 +1038,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1078,16 +1056,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "integrations/webhooks.py:13",
-          "matched_labels": [
-            "integrations/webhooks.py:13"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "integrations/webhooks.py:13"
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1123,7 +1099,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1141,16 +1117,14 @@
           "title": "New function arrives without a test",
           "body": "No test file in this diff covers the new function.",
           "agreeing": [],
-          "matched_label": "webhooks/verify.py:10",
-          "matched_labels": [
-            "webhooks/verify.py:10"
-          ],
+          "matched_label": null,
+          "matched_labels": [],
           "cites": [
             "webhooks/verify.py:10"
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1184,9 +1158,9 @@
     {
       "id": "sec-weak-password-hash",
       "hits": 0,
-      "missed": 1,
+      "missed": 2,
       "false_positives": 0,
-      "unlabelled": 4,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.523,
@@ -1195,7 +1169,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1211,7 +1185,7 @@
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "tests",
           "category": "test_coverage",
           "severity": "minor",
@@ -1227,7 +1201,7 @@
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1243,7 +1217,7 @@
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1307,7 +1281,7 @@
       "hits": 0,
       "missed": 2,
       "false_positives": 0,
-      "unlabelled": 2,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.45,
@@ -1316,7 +1290,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1332,7 +1306,7 @@
           ]
         },
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1425,7 +1399,7 @@
       "hits": 0,
       "missed": 1,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.45,
@@ -1434,7 +1408,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",
@@ -1454,9 +1428,9 @@
     {
       "id": "tst-untested-error-branch",
       "hits": 0,
-      "missed": 1,
+      "missed": 2,
       "false_positives": 0,
-      "unlabelled": 1,
+      "unlabelled": 0,
       "decision": "escalate",
       "expected_decision": null,
       "confidence": 0.45,
@@ -1465,7 +1439,7 @@
       "error": null,
       "findings": [
         {
-          "match": "unlabelled",
+          "match": "allowed",
           "agent": "docs",
           "category": "documentation",
           "severity": "info",

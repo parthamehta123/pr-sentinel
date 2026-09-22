@@ -30,6 +30,18 @@ from cases import CASES  # noqa: E402
 from pr_sentinel.forge.diff import build_diff_file  # noqa: E402
 
 GOLDEN = ROOT / "tests" / "eval" / "golden"
+
+# Two observations are legitimate on any diff and required on none: the tests
+# agent noting that new code has no test, and the docs agent noting that it is
+# undocumented. Both are usually true. Requiring them would encode "always ask"
+# and penalise restraint; calling them false positives would label a true
+# statement a lie. They are permitted everywhere — a CLEAN trap still overrides,
+# because traps are checked first, so a case can still declare a line where even
+# these are wrong.
+PERMITTED_CONCERNS = [
+    {"agent": "tests", "category": "test_coverage"},
+    {"agent": "docs", "category": "documentation"},
+]
 MARKER = re.compile(r"^\s*(?:#!|//!)\s*(EXPECT|CLEAN|ALLOW)\b(?P<attrs>[^:]*?)(?:\s*::\s*(?P<note>.*))?$")
 SEVERITY_ORDER = ["info", "minor", "major", "critical"]
 
@@ -145,6 +157,7 @@ def build_case(case: dict) -> dict:
         "expected": expected,
         "must_not_find": forbidden,
         "may_find": allowed,
+        "permitted_concerns": PERMITTED_CONCERNS,
     }
 
 

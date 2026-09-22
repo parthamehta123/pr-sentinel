@@ -3,7 +3,7 @@
   "expected": [
     {
       "agent": "security",
-      "category": "injection",
+      "category": "injection|logic",
       "file_path": "exports/serve.py",
       "line": 20,
       "min_severity": "critical",
@@ -21,20 +21,22 @@
     }
   ],
   "id": "sec-path-traversal",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "exports/serve.py",
-      "line": 19,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "exports/serve.py",
       "line": 14,
       "note": "routes through the confinement helper; this one is correct"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "One handler normalises and confines the path; the one added next to it does not.",

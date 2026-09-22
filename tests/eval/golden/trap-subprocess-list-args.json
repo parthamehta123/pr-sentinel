@@ -28,6 +28,16 @@
       "note": "a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token, a tar option or a path escape"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A refactor away from shell=True to a list argv, with the archive name allowlisted. It reads as command execution and is in fact the fix for one.",
   "title": "Stop shelling out for the archive step"
 }

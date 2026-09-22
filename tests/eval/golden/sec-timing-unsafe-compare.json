@@ -21,20 +21,22 @@
     }
   ],
   "id": "sec-timing-unsafe-compare",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "webhooks/verify.py",
-      "line": 10,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "webhooks/verify.py",
       "line": 7,
       "note": "constant-time comparison, which is the correct form"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "A signature compared with ==, one line below one compared with compare_digest.",

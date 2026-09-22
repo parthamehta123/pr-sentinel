@@ -23,6 +23,16 @@
   "id": "cor-off-by-one-pagination",
   "may_find": [],
   "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "A slice that drops the last record on every page.",
   "title": "Add pagination to the export endpoint"
 }

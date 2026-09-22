@@ -20,6 +20,16 @@
       "note": "the discriminant narrows the union, so the casts are no longer needed"
     }
   ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
   "summary": "TypeScript. A discriminated-union refactor that removes a cast and makes the code safer. Any finding here is a false positive.",
   "title": "Narrow the event union"
 }

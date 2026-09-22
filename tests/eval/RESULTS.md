@@ -115,8 +115,56 @@ The set is now 53 required findings, 21 permitted, 21 traps. Strict precision
 moved because the labels got more honest, not because the reviewer got better —
 worth remembering when reading the number.
 
-Fifteen or so findings per run are still unlabelled, and they are the next batch
-to judge.
+### The second pass, and what it found in my own labels
+
+Going back for the remaining fifteen turned up almost nothing left to judge — and
+instead five cases where the *label* was at fault. Three were correct findings
+rejected on category:
+
+- a traceback returned to a client, labelled `input_validation`, found as
+  `error_handling` at confidence **0.99**
+- `read_export_preview` skipping the confinement helper, labelled `injection`,
+  found as `logic` at 0.98
+- an unverified JWT yielding an attacker-controlled tenant id, labelled `authz`,
+  found as `logic` at 0.92
+
+All three are the same defect under a different fair reading. Labels can now name
+alternatives — `category=input_validation|error_handling` — which is narrower than
+dropping the family check and admits the ambiguity where it actually exists.
+
+Four more were **real defects the set still had not labelled**:
+
+- `_CACHE.clear()` on the size bound discards the entry just written, and every
+  other tenant's
+- `hash_reset_password` returns an MD5 digest where `hash_password` returns bcrypt,
+  so nothing can verify a reset password against the stored format
+- neither value quoted into `shell=True`, so a directory containing a space breaks
+  the command with no attacker involved
+- `apply_coupon` now requires `expires_at` on every coupon
+
+### Stating a policy once instead of on every line
+
+Nineteen of the `ALLOW` markers from the first pass said the same two things: the
+tests agent noting new code has no test, the docs agent noting it is undocumented.
+Those are legitimate on any diff and required on none, so they are now declared
+once in the builder rather than scattered as markers. A `CLEAN` trap still
+overrides them, because traps are checked first — `neg-clean-extract-method` still
+penalises asking for a test on a documented, tested pure extraction.
+
+| | after pass 1 | after pass 2 |
+|---|---|---|
+| precision strict | 0.653 | **0.898** |
+| precision lenient | 0.898 | 0.937 |
+| recall | 0.969 | 0.972 |
+| category agreement | 0.947 | 0.908 |
+| unlabelled findings per run | 15.7 | **2.0** |
+
+Two unlabelled findings per run, from about eighty produced. The set now has an
+opinion about substantially everything the reviewer says.
+
+Read the direction of travel carefully: strict precision went 0.402 → 0.653 →
+0.898 across two labelling passes in which **the reviewer did not change at all**.
+Every one of those points came from the labels getting less wrong.
 
 ### What the honest precision number is telling us
 

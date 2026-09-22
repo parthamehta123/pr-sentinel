@@ -112,16 +112,24 @@ def _traps(finding: Finding, trap: Label) -> bool:
 def _same_concern(finding: Finding, label: Label) -> bool:
     """Is the finding about the kind of thing the label describes?
 
-    A label with no category makes no claim about the concern, so location is
-    enough. Otherwise the families must agree — `injection` and `authz` are both
-    security and count; `test_coverage` on the same line does not.
+    A label with no category makes no claim, so location is enough. Otherwise the
+    families must agree — `injection` and `authz` are both security and count;
+    `test_coverage` on the same line does not.
+
+    A label may name alternatives as `a|b`, because one defect genuinely has more
+    than one fair reading. A traceback returned to a client is information
+    disclosure and an error-handling mistake; rejecting the second framing cost a
+    correct finding at confidence 0.99.
     """
     if label.category is None:
         return True
-    try:
-        return family_of(Category(label.category)) == family_of(finding.category)
-    except ValueError:
-        return True
+    families = set()
+    for name in label.category.split("|"):
+        try:
+            families.add(family_of(Category(name)))
+        except ValueError:
+            return True
+    return family_of(finding.category) in families
 
 
 def classify(
@@ -129,6 +137,7 @@ def classify(
     expected: list[Label],
     forbidden: list[Label],
     allowed: list[Label] | None = None,
+    permitted_concerns: list[tuple[str, str]] | None = None,
 ) -> list[Match]:
     matches: list[Match] = []
     for finding in findings:
@@ -142,7 +151,8 @@ def classify(
                     kind="hit",
                     labels=covered,
                     agent_correct=primary.agent is None or str(finding.agent) == primary.agent,
-                    category_correct=primary.category is None or str(finding.category) == primary.category,
+                    category_correct=primary.category is None
+                    or str(finding.category) in primary.category.split("|"),
                     severity_sufficient=SEVERITY_ORDER.index(str(finding.severity))
                     >= primary.min_severity_rank,
                 )
@@ -160,6 +170,10 @@ def classify(
         )
         if permitted is not None:
             matches.append(Match(finding=finding, label=permitted, kind="allowed", labels=[permitted]))
+            continue
+
+        if (str(finding.agent), str(finding.category)) in set(permitted_concerns or []):
+            matches.append(Match(finding=finding, label=None, kind="allowed"))
             continue
 
         matches.append(Match(finding=finding, label=None, kind="unlabelled"))

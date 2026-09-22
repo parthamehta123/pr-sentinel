@@ -3,7 +3,7 @@
   "expected": [
     {
       "agent": "security",
-      "category": "authz",
+      "category": "authz|logic",
       "file_path": "auth/tokens.py",
       "line": 11,
       "min_severity": "critical",
@@ -21,23 +21,18 @@
     }
   ],
   "id": "sec-jwt-unverified",
-  "may_find": [
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
     {
       "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "auth/tokens.py",
-      "line": 10,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
+      "category": "test_coverage"
     },
     {
       "agent": "docs",
-      "category": "documentation",
-      "file_path": "auth/tokens.py",
-      "line": 10,
-      "note": "the new function is undocumented; true, and optional on a change whose point is elsewhere"
+      "category": "documentation"
     }
   ],
-  "must_not_find": [],
   "summary": "Signature verification disabled to avoid a key lookup.",
   "title": "Read the tenant id straight from the token"
 }

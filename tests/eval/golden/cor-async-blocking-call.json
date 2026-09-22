@@ -21,20 +21,22 @@
     }
   ],
   "id": "cor-async-blocking-call",
-  "may_find": [
-    {
-      "agent": "tests",
-      "category": "test_coverage",
-      "file_path": "api/plans.py",
-      "line": 10,
-      "note": "a new public function with no test; true, and not required on a change whose point is elsewhere"
-    }
-  ],
+  "may_find": [],
   "must_not_find": [
     {
       "file_path": "api/plans.py",
       "line": 6,
       "note": "awaited async client, which is the correct form here"
+    }
+  ],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
     }
   ],
   "summary": "A synchronous HTTP call inside an async handler, beside an awaited one.",

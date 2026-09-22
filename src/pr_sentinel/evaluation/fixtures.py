@@ -41,6 +41,9 @@ class EvalCase:
     # Legitimate but optional: neither required for recall nor counted against
     # precision. Most of what a good reviewer could say lives here.
     may_find: list[Label] = field(default_factory=list)
+    # Concerns that are legitimate anywhere in this diff without being required.
+    # Stated once rather than as a marker on every line they could apply to.
+    permitted_concerns: list[tuple[str, str]] = field(default_factory=list)
 
     def pull_request(self) -> PullRequestContext:
         return PullRequestContext(
@@ -75,6 +78,7 @@ def load_cases(directory: Path | None = None, only: list[str] | None = None) -> 
                 expected=[Label(**_label(x)) for x in raw["expected"]],
                 must_not_find=[Label(**_label(x)) for x in raw.get("must_not_find", [])],
                 may_find=[Label(**_label(x)) for x in raw.get("may_find", [])],
+                permitted_concerns=[(x["agent"], x["category"]) for x in raw.get("permitted_concerns", [])],
             )
         )
     if not cases:

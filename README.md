@@ -100,8 +100,9 @@ thirteen whose defect is invisible without the retrieved repository context.
 The headline numbers below are from the 34-case set, scored by an earlier matcher.
 Investigating why `agent_attribution` sat at 0.33 found that matching on location
 alone was crediting any finding that landed near a labelled line, whatever it
-said. Corrected, attribution is 0.81 and precision is 0.402 strict / 0.879
-lenient — see [RESULTS.md](tests/eval/RESULTS.md). `scripts/rescore.py` recomputes
+said. Corrected, and after two passes labelling what the models actually find,
+attribution is 0.82 and precision is 0.898 strict / 0.937 lenient with 2
+unlabelled findings per run — see [RESULTS.md](tests/eval/RESULTS.md). `scripts/rescore.py` recomputes
 any recorded run under the current matcher without calling a model.
 
 Sixteen of the cases put a real defect next to a plausible look-alike — a path
