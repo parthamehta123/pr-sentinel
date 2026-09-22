@@ -421,6 +421,10 @@ def eval(
                 "calibration_error": [round(r.ece, 3) for r in reports],
                 "cost_per_case_usd": [round(r.cost_per_case_usd, 4) for r in reports],
             }
+            # Every run in full, not just the last. Comparing two configurations
+            # means comparing distributions, and a summary of three numbers is not
+            # enough to see which findings moved.
+            payload["runs"] = [r.as_dict() for r in reports]
 
         if as_json:
             typer.echo(json.dumps(payload, indent=2))

@@ -32,16 +32,18 @@ agent produced 5 findings in one and 9 in the other. Most changes worth making
 are smaller than that spread. `--repeat N` now reports mean and spread; the fix
 is more cases, not more repetitions.
 
-Two open questions the current data cannot answer:
+Answered since: the docs-agent prompt rewrite was measured over three runs per
+arm and is real — six fewer posted comments per pull request at identical recall.
+Two further claims made from single runs turned out to be coincidence. Tables in
+[tests/eval/RESULTS.md](../tests/eval/RESULTS.md).
 
-- **Is the rewritten docs prompt better, or did it just have a good run?** What
-  held across every post-fix run is that it stopped straying into other agents'
-  territory, and that its missing-documentation notes are now rated `info` rather
-  than `minor` — so the gate's severity floor withholds them. The precision
-  number itself moved less than the noise.
-- **The one consistent miss** is an assertion-free test. The tests agent finds the
-  *missing* test every time and misses the test that cannot fail. That gap held in
-  all four live runs, which makes it the one signal here strong enough to act on.
+## 2. The tests agent
+
+Now the weakest specialist: precision 0.866, and it misses the same labelled
+defect in every run — an assertion-free test. It reliably finds the *missing*
+test and never the test that cannot fail. That gap has held across seven live
+runs, which makes it the strongest signal available and the obvious next
+prompt to work on. The A/B harness can settle whether a fix works.
 
 ## 2. Learning from recorded disputes
 

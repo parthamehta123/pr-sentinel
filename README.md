@@ -108,36 +108,28 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
 (tests) and `claude-haiku-4-5` (docs):
 
 ```
-CALIBRATION   does a confidence of X turn out right X of the time?
-  expected calibration error : 0.118   (lower is better; <0.10 is good)
-
-  confidence        n    stated   observed      gap
-  0.50-0.60         4      0.54       0.50    -0.04
-  0.60-0.70         4      0.63       1.00    +0.37
-  0.70-0.80        12      0.74       0.92    +0.18
-  0.80-0.90         7      0.84       1.00    +0.16
-  0.90-1.01        17      0.96       0.94    -0.02
-
-ACCURACY
-  precision (strict)  : 0.909   unlabelled findings count against
-  precision (lenient) : 0.976   only labelled traps count against
-  recall              : 0.938   over distinct labels, not matches
-  15 of 16 defects found by 40 finding(s) · 1 false positive · 3 unlabelled
-  findings per concern: 1.05
-  gate decision match : 1.000
-
-COST
-  per case  : $0.0708   ($1.06 for the set)
+precision  0.948 strict / 0.973 lenient     recall  0.938  (15 of 16 defects)
+calibration error  0.111                  findings per concern  1.06
+gate decision match  1.000                  $0.071 per review
 ```
 
-Single runs on 15 cases are noisy. Two runs of an *identical* configuration were
-measured at 0.909 and 0.923 strict precision, and one agent produced 5 findings in
-one and 9 in the other. `--repeat N` reports mean and spread, and a change smaller
-than the spread has not been demonstrated.
+Single runs on 15 cases are noisy, so changes are measured over repeats:
 
-The models are mildly **under**confident in the middle of the range and slightly
-over at the top — the opposite of the usual worry, and the reason to measure
-rather than assume. `tests/eval/baselines/anthropic.json` is the recorded run.
+```bash
+pr-sentinel eval --provider anthropic --repeat 3 --save arm.json
+python scripts/compare_arms.py baseline.json arm.json
+```
+
+That comparison is what settled whether rewriting the docs-agent prompt helped.
+It did — a reviewer receives **six fewer comments per pull request at identical
+recall** — and it also showed that two other claims from single runs were
+coincidence. Full tables in [tests/eval/RESULTS.md](tests/eval/RESULTS.md).
+
+On calibration — the number the whole gate rests on — the models come out mildly
+**under**confident in the middle of the range and slightly over at the top. That
+is the opposite of the usual worry, and it means the 0.70 auto-post threshold is
+conservative rather than reckless. It is also exactly the kind of thing you
+cannot guess.
 
 Precision is reported twice — strictly (a finding matching no label counts
 against) and leniently (it does not) — because a model can find a real defect
