@@ -250,6 +250,25 @@ allowed to be the source of truth for "what happened".
 
 ---
 
+## 9. What a real run looks like
+
+Against `parthamehta123/pr-sentinel#1`, with real models and retrieval over the
+indexed repository:
+
+| | |
+|---|---|
+| wall clock | 42s, of which 39s is the panel |
+| cost | $0.30 — security $0.14, correctness $0.12, tests $0.027, docs $0.020 |
+| retrieval | 12 chunks over 702 indexed from 112 files |
+| findings | 6, all six planted defects, no false positives |
+| decision | escalate, `critical_security`, queued at priority 1 |
+| spine | 7 spans, 4 model calls, 1 retrieval, 1 decision |
+
+Two things worth reading off that table. The two Opus agents are 85% of the cost
+and 94% of the latency, which is where any optimisation has to start. And the
+panel is wall-clock bounded by its slowest member, so fanning out buys latency
+only while the agents stay comparable.
+
 ## 9. What is deliberately absent
 
 - **A harder eval set.** The cases are hand-authored, not mined from real merged

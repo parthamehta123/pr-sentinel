@@ -33,6 +33,16 @@ two passes while **the reviewer did not change at all**. Every point came from t
 labels getting less wrong, which is an argument for distrusting a single absolute
 number and watching deltas under a fixed set instead.
 
+## 0. Exercise the auto-post branch
+
+The pipeline has now run end to end with real models, but nothing has ever been
+written to GitHub — because the demo pull request contains a hardcoded credential,
+so the gate escalates rather than posting. That is correct behaviour and it leaves
+one branch unexercised outside tests.
+
+Closing it needs a pull request whose findings are all below critical security,
+and one `replay --post`. A few dollars, and it is the last untested link.
+
 ## 1. Grow the eval set, again
 
 The 47-case baseline is recorded: recall 1.000 with zero spread, precision 0.830

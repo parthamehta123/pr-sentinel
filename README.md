@@ -276,9 +276,30 @@ tests/eval/     the golden set: cases.py is the source, golden/*.json is generat
 
 ## Status
 
-The vertical slice runs end to end — webhook through to a posted review or a
-queued escalation, with traces and costs recorded — and has been exercised against
-real pull requests on github.com, which found two bugs that no test had:
+The pipeline has run end to end against a real pull request with real models:
+[`parthamehta123/pr-sentinel#1`](https://github.com/parthamehta123/pr-sentinel/pull/1).
+Webhook-shaped job through retrieval over the indexed repository, four
+specialists in parallel, aggregation, the confidence gate, persistence and the
+event spine — 42 seconds, **$0.30**, all six planted defects found:
+
+```
+[critical] injection       0.92  SQL injection: `term` and `status` interpolated into the WHERE clause
+[critical] injection       0.92  Command injection: `name` and `directory` reach a shell via shell=True
+[major   ] logic           0.95  Pagination slice drops the last record of every page
+[major   ] error_handling  0.90  Bare except turns a failed charge into an indistinguishable None
+[major   ] crypto          0.88  Passwords hashed with unsalted MD5
+[major   ] secrets         0.85  Hardcoded API secret committed at module scope
+
+decision: escalate (critical_security) · nothing posted · queued at priority 1
+```
+
+The correctly parameterised `get_customer`, sitting four lines from the injection,
+was not flagged — which is the harder half.
+
+**Nothing has ever been written to GitHub**, and that is the gate working: a
+critical security finding is never posted to a pull request, so the auto-post
+branch is the one path still unexercised in production. It is covered by tests and
+by the offline demo, not by a real run.
 
 - `replay` reached the pipeline without passing through ingress, so no
   `deliveries` row existed for a foreign key that needed one.
