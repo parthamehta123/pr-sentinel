@@ -840,3 +840,101 @@ def test_a_clean_repeat_still_returns_every_run(monkeypatch):
     """The guard must not cost a run when nothing goes wrong."""
     reports = _run_eval_with_outage_on(99, repeat=3, monkeypatch=monkeypatch)
     assert len(reports) == 3
+
+
+def _report_with_unlabelled(specs):
+    """Build a minimal EvalReport carrying the given unlabelled findings.
+
+    `specs` is a list of (case_id, path, line, agent, title, confidence).
+    """
+    from types import SimpleNamespace
+
+    by_case: dict[str, list] = {}
+    for case_id, path, line, agent, title, conf in specs:
+        finding = SimpleNamespace(file_path=path, line_start=line, agent=agent, title=title, confidence=conf)
+        by_case.setdefault(case_id, []).append(SimpleNamespace(finding=finding))
+    cases = [SimpleNamespace(case_id=cid, unlabelled=matches) for cid, matches in by_case.items()]
+    return SimpleNamespace(cases=cases)
+
+
+def test_unlabelled_union_surfaces_findings_the_last_run_did_not_have():
+    """The last run printing nothing must not hide the earlier runs.
+
+    This is the real shape that exposed it: run 3 produced no unlabelled
+    findings, so `--verbose` printed an empty block while four sat in runs 1
+    and 2, recoverable only from the saved JSON.
+    """
+    from pr_sentinel.evaluation.report import unlabelled_union
+
+    r1 = _report_with_unlabelled(
+        [
+            ("intro-requests-poolmanager", "requests/sessions.py", 134, "security", "verify dropped", 0.62),
+            ("tst-time-dependent-flaky", "tests/test_clock.py", 4, "tests", "wall clock", 0.55),
+        ]
+    )
+    r2 = _report_with_unlabelled(
+        [
+            ("intro-requests-poolmanager", "requests/sessions.py", 134, "security", "verify dropped", 0.70),
+            ("cor-check-then-act-race", "svc/lock.py", 9, "correctness", "TOCTOU", 0.60),
+        ]
+    )
+    r3 = _report_with_unlabelled([])
+
+    out = unlabelled_union([r1, r2, r3])
+    assert "3 distinct" in out
+    # Seen twice, so it sorts first and is marked as recurring.
+    assert "[2/3] intro-requests-poolmanager" in out
+    assert "[1/3] cor-check-then-act-race" in out
+    assert "[1/3] tst-time-dependent-flaky" in out
+    # Mean confidence across the runs it appeared in, not the last value.
+    assert "(0.66)" in out
+    # And it must come first, since recurrence is what deserves attention.
+    assert out.index("intro-requests-poolmanager") < out.index("cor-check-then-act-race")
+
+
+def test_unlabelled_union_is_silent_for_a_single_run():
+    """render() already covers one run; printing it twice is noise."""
+    from pr_sentinel.evaluation.report import unlabelled_union
+
+    r = _report_with_unlabelled([("c", "a.py", 1, "docs", "t", 0.5)])
+    assert unlabelled_union([r]) == ""
+
+
+def test_unlabelled_union_is_silent_when_there_is_nothing_to_report():
+    from pr_sentinel.evaluation.report import unlabelled_union
+
+    empty = _report_with_unlabelled([])
+    assert unlabelled_union([empty, empty, empty]) == ""
+
+
+def test_results_md_per_run_claims_match_the_recorded_runs():
+    """Numbers quoted in RESULTS.md must be computed, not typed from memory.
+
+    RESULTS.md is hand-written prose around hand-transcribed tables, and a
+    mistyped digit in it is invisible — it looks exactly like a measurement.
+    Every recorded run is on disk, so the per-run triples it states can simply
+    be recomputed and looked for.
+
+    This checks the shape most often quoted (the per-run unlabelled counts) for
+    every recorded run. It deliberately does not try to parse the tables: it
+    recomputes the triple and asserts the document states it somewhere, which is
+    robust to how the row happens to be formatted.
+    """
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    results = (root / "tests" / "eval" / "RESULTS.md").read_text()
+    recorded = sorted((root / "tests" / "eval" / "recorded").glob("*.json"))
+    assert recorded, "no recorded runs to check against"
+
+    for path in recorded:
+        payload = json.loads(path.read_text())
+        runs = payload.get("runs") or [payload]
+        if len(runs) < 2:
+            continue
+        triple = ", ".join(str(sum(c["unlabelled"] for c in r["per_case"])) for r in runs)
+        assert triple in results, (
+            f"{path.name} has per-run unlabelled counts of '{triple}', "
+            f"which RESULTS.md does not state anywhere"
+        )

@@ -973,3 +973,56 @@ final run had none, so the block printed nothing at all while four unlabelled
 findings sat in runs 1 and 2 — recoverable only from the saved JSON. The union
 across runs is exactly what a labelling pass needs. Worth fixing before the next
 one.
+
+### Unlabelled findings are now reported across the whole repeat
+
+`--verbose` printed the last run's unlabelled findings, which on this set meant
+printing nothing while four sat in the two runs before it. `unlabelled_union`
+now reports the union across every run, sorted by how often each recurred, and
+`scripts/rescore.py --verbose` prints the same thing for free from a recorded
+run — which is where a labelling pass should start, since it costs nothing.
+
+The recurrence count is the part that earns its place. Run against the recorded
+baseline, all four came back `[1/3]`:
+
+```
+UNLABELLED across 3 runs  (4 distinct)
+  [1/3] cor-check-then-act-race      limits/ratelimit.py:14 [security] cost not checked non-negative before adjusting the quota (0.55)
+  [1/3] intro-requests-poolmanager   requests/sessions.py:363 [correctness] send() builds a new HTTPAdapter per request, defeating pooling (0.75)
+  [1/3] sec-terraform-public-bucket  infra/storage.tf:13 [security] invoices bucket declared without SSE or versioning (0.60)
+  [1/3] tst-time-dependent-flaky     tests/test_tokens.py:12 [correctness] is_expired called without `now` (0.50)
+```
+
+A standing opinion in 3 of 3 runs is a hole in the label set; a 1-of-3 is a
+one-off. All four are one-offs, which is consistent with unlabelled-per-run
+sitting at 1.3.
+
+One of them is worth recording whatever is decided about labelling: in
+`intro-requests-poolmanager`, `send()` really does construct a fresh
+`HTTPAdapter` on every call. In the same commit that deletes `init_poolmanager`
+and reduces `close()` to `pass`, that is the connection pooling removed three
+different ways. **These four are deliberately left unlabelled.** Labelling
+findings as they appear is the loop that made strict precision unfalsifiable in
+the first place, and doing it again immediately would undo the point of the run
+that just demonstrated the labels generalise.
+
+### Against the Genesis Kit checklist
+
+Checked this project against the five failure modes Genesis Kit names. Two were
+already handled, one does not apply, and two were real:
+
+| Genesis failure mode | here |
+|---|---|
+| Memory loss — state only in context | already handled: RESULTS.md, `tests/eval/recorded/*.json`, golden fixtures, and an append-only event spine in the database |
+| Self-grading — the builder judges its own work | **real, and previously identified.** Labels are written in response to model output, which is why strict precision became unfalsifiable. The `ALLOW`-only rule limits the damage to precision; recall stays honest. There is still no independent check on a label's reasoning — the audit that found three overstated notes was done by the same agent that wrote them |
+| Duplication — rebuilding what exists | does not apply to this codebase |
+| Narration over execution | **real, now partly fixed.** RESULTS.md is prose around hand-transcribed tables, where a mistyped digit is indistinguishable from a measurement. A test now recomputes the per-run counts from every recorded run and fails if the document does not state them |
+| Untiered model use | already handled: `claude-opus-5` for security and correctness, `claude-sonnet-5` for tests, `claude-haiku-4-5` for docs |
+
+Genesis Kit itself is a Node.js framework for driving agents over a repository,
+not a library this service would depend on; adopting it wholesale is not the
+move. Its diagnosis is the useful part, and on the one point where it is
+sharpest — that the checker should never see the builder's reasoning — this
+project still fails. The obvious experiment is to have the label audit done by a
+model that sees the diff and the finding but not the note, and compare against
+the three the audit caught by hand.

@@ -401,7 +401,7 @@ def eval(
         get_settings.cache_clear()
 
     async def _go():
-        from .evaluation.report import compare, render, stability
+        from .evaluation.report import compare, render, stability, unlabelled_union
         from .evaluation.runner import run_eval
 
         reports = await run_eval(
@@ -430,6 +430,10 @@ def eval(
             typer.echo(json.dumps(payload, indent=2))
         else:
             typer.echo(render(report, verbose=verbose))
+            if verbose:
+                # render() shows the last run only; across a repeat that hides
+                # unlabelled findings from every earlier run.
+                typer.echo(unlabelled_union(reports))
             typer.echo(stability(reports))
 
         if save:

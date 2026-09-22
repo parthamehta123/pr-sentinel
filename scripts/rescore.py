@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Re-score a recorded eval run under the current matcher, without calling a model.
 
-    python scripts/rescore.py recorded.json [--save baseline.json]
+    python scripts/rescore.py recorded.json [--verbose] [--save baseline.json]
 
 Scoring has now been changed three times — once for recall over distinct defects,
 once for evidence-based coverage, once to require the finding to be about the
@@ -60,6 +60,7 @@ def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
+    verbose = "--verbose" in sys.argv or "-v" in sys.argv
     save_to = None
     if "--save" in sys.argv:
         save_to = Path(sys.argv[sys.argv.index("--save") + 1])
@@ -135,6 +136,22 @@ def main() -> int:
     ]:
         v = [fn(r) for r in reports]
         print(f"  {name:<24}{st.mean(v):>9.3f}{min(v):>9.3f}{max(v):>9.3f}")
+
+    if verbose:
+        from pr_sentinel.evaluation.report import unlabelled_union
+
+        block = unlabelled_union(reports)
+        if block.strip():
+            print(block)
+        else:
+            lone = [(c.case_id, m) for r in reports[:1] for c in r.cases for m in c.unlabelled]
+            if lone:
+                print(f"\n  UNLABELLED ({len(lone)})")
+                for cid, m in lone:
+                    f = m.finding
+                    print(f"    {cid:<34} {f.file_path}:{f.line_start} [{f.agent}] {f.title}")
+            else:
+                print("\n  no unlabelled findings in any recorded run")
 
     if save_to is not None:
         # Write the recorded findings back with current-matcher scores, so the

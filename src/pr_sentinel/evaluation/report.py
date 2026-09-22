@@ -141,6 +141,51 @@ def render(report: EvalReport, verbose: bool = False) -> str:
     return "\n".join(out)
 
 
+def unlabelled_union(reports: list[EvalReport]) -> str:
+    """Every unlabelled finding across every run, with how often it recurred.
+
+    `render` shows one report, and the CLI hands it the last one. On a --repeat
+    that hid real work: a run whose final pass happened to produce no unlabelled
+    findings printed nothing at all, while four sat in the two runs before it,
+    recoverable only by reading the saved JSON. The union is what a labelling
+    pass actually needs.
+
+    The recurrence count earns its place too. A finding in 3 of 3 runs is a
+    standing opinion the label set has no answer for; one in 1 of 3 is a
+    one-off, and the two deserve different amounts of attention.
+    """
+    if len(reports) < 2:
+        return ""
+
+    seen: dict[tuple, dict] = {}
+    for report in reports:
+        for case in report.cases:
+            for match in case.unlabelled:
+                f = match.finding
+                key = (case.case_id, str(f.file_path), f.line_start, str(f.agent), f.title)
+                row = seen.setdefault(key, {"runs": 0, "case": case.case_id, "finding": f, "confidences": []})
+                row["runs"] += 1
+                row["confidences"].append(f.confidence)
+
+    if not seen:
+        return ""
+
+    out = [
+        "",
+        f"UNLABELLED across {len(reports)} runs  ({len(seen)} distinct)  "
+        "— real defects or noise; label them to find out",
+    ]
+    for row in sorted(seen.values(), key=lambda r: (-r["runs"], r["case"])):
+        f = row["finding"]
+        mean_conf = sum(row["confidences"]) / len(row["confidences"])
+        out.append(
+            f"  [{row['runs']}/{len(reports)}] {row['case']:<34} "
+            f"{f.file_path}:{f.line_start} [{f.agent}] {f.title} ({mean_conf:.2f})"
+        )
+    out.append("")
+    return "\n".join(out)
+
+
 def compare(current: EvalReport, baseline: dict) -> tuple[str, bool]:
     """Diff against a saved run. Returns (rendered, regressed)."""
     base = baseline.get("overall", {})
