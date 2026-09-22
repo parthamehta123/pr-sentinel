@@ -916,3 +916,60 @@ neither. If it is near zero the 22 labels generalise and strict precision means
 something again; if it is near thirteen the labelling pass was fitting one sample
 and strict precision will never converge. That is the experiment worth buying with
 the next $15.
+
+### Rerun against the corrected labels — the prediction was wrong again
+
+$14.57, three runs, and the panel saw **byte-identical input** to the previous
+baseline (the golden patches hash the same; label markers are stripped before the
+diff is built, so notes and labels never reach a model).
+
+| | previous baseline | this run |
+|---|---|---|
+| unlabelled / run | 18, 13, 15 | **2, 2, 0** |
+| false positives / run | 1, 1, 1 | **0, 0, 0** |
+| missed labels / run | 1, 1, 0 | **0, 0, 0** |
+| precision, strict | 0.815 *(0.791–0.835)* | **0.982** *(0.973–1.000)* |
+| precision, lenient | 0.986 | 1.000 *(spread 0.000)* |
+| recall | 0.991 *(0.986–1.000)* | 1.000 *(spread 0.000)* |
+| calibration error | 0.084 | 0.091 *(0.086–0.097)* |
+| agent attribution | 0.944 | 0.946 |
+| category agreement | 0.944 | 0.905 |
+| raw findings / run | 163, 158, 158 | 157, 162, 161 |
+
+**I predicted 4–9 unlabelled per run. It came back 0–2.** That is the third
+prediction in this file to be wrong, and the second in a row in the same
+direction — I keep expecting the reviewer to do worse than it does.
+
+The result that matters: **strict precision of 0.982 is falsifiable.** The 22
+labels predate this run, so nothing here was fitted to it, and unlabelled-per-run
+could have come back at thirteen. It came back at 1.3 on average. The labels
+generalise across samples; they were not chasing one.
+
+The four unlabelled findings that did appear were on four different cases
+(`intro-requests-poolmanager`, `tst-time-dependent-flaky`, `cor-check-then-act-race`,
+`sec-terraform-public-bucket`), one each, none twice. That is a long tail, not a
+gap.
+
+Two things not to misread:
+
+- **`findings produced` fell from 88 to 75, and that is not a behaviour change.**
+  That row counts scoreable findings — hits + unlabelled + false positives.
+  Previously 72 + 15 + 1; now 74 + 1 + 0. The raw findings the panel emitted are
+  unchanged at ~160 per run. Nothing got quieter; the unlabelled pile moved into
+  the labelled one.
+- **Recall is pinned at 1.000 again**, spread 0.000, no misses in any run. The two
+  one-off misses in the previous baseline (`sec-command-injection`,
+  `doc-misleading-name`) did not recur, so they were noise rather than a weakness,
+  and the set has gone back to being unable to report a recall regression.
+
+Category agreement fell 0.944 → 0.905. Unexplained, and larger than it looks
+comfortable to wave at; it is the one number here worth a look before it is
+quoted as stable.
+
+### A reporting gap this exposed
+
+`--verbose` prints the unlabelled findings of the **final run only**. This run's
+final run had none, so the block printed nothing at all while four unlabelled
+findings sat in runs 1 and 2 — recoverable only from the saved JSON. The union
+across runs is exactly what a labelling pass needs. Worth fixing before the next
+one.
