@@ -34,12 +34,9 @@ stopped discriminating. It measures again.
 **Three findings that reproduce in every run**, none of which the smaller set
 could see:
 
-1. **A consolidated coverage comment names only one file's worth of locations.**
-   All four missed labels, in all three runs, are `tst-repeated-coverage-gap`: the
-   tests agent correctly files one comment for six untested functions across three
-   files, and then lists only the ones in `csv_export.py`. A reviewer acting on
-   that comment fixes a third of the problem. Recall spread is exactly 0.000, so
-   this is a property of the system rather than a bad run.
+1. **A consolidated coverage comment cites only one file's worth of locations.**
+   *Fixed — see below. The description first given here was wrong: a reviewer
+   reading the comment was never underinformed.*
 
 2. **Wildcard CORS with credentials is not rated `critical`.** Every run finds the
    defect and rates it below critical, so the gate's never-post-critical-security
@@ -235,6 +232,53 @@ in six months.
 - **The set's first multi-file case.** Fifteen of sixteen cases touch one or two
   files. Whole classes of behaviour — repetition, truncation, cross-file
   reasoning — were simply invisible.
+
+---
+
+## Fixing the incomplete citation — and correcting the claim
+
+The 34-case set reported four missed labels in every run, all on
+`tst-repeated-coverage-gap`. Written up as "a reviewer acting on that comment
+fixes a third of the problem."
+
+**That was wrong, and reading the comment shows it.** The body says:
+
+> csv_rows, csv_escape, dump_streaming, dump_pretty, margins_for, and
+> usable_width are all new public functions with no accompanying tests…
+
+All six named. A reviewer is fully informed. What was incomplete was `evidence` —
+the machine-readable record of where a finding applies, which is what is stored,
+audited and read back weeks later by someone deciding whether the finding was
+fair. Prose in `body` is not that record.
+
+Which still matters, and there was a real bug underneath it: **the evidence list
+was capped at five entries.** A finding covering six locations lost one silently,
+so the case was unwinnable whatever the model did. The cap is now 12, with a unit
+test.
+
+With the cap raised, one instruction in the shared prompt — cite every location a
+finding covers, not just the first — settled it. Three runs per arm on the
+affected case:
+
+| | before | after |
+|---|---|---|
+| evidence locations cited, per run | 1, 1, 3 | **6, 6, 6** |
+| recall | 0.555 (0.333–1.000) | **1.000 (spread 0.000)** |
+
+Raw data in `baselines/ab-evidence-citation-{old,new}.json`. The cap fix is
+present in both arms, so the table isolates the prompt change.
+
+### A failure the incident exposed
+
+The full-set refresh after this change returned **zero findings, zero cost, and a
+calibration error of 0.000** — which is also what a flawless run of a reviewer
+that says nothing looks like. The cause was an exhausted API credit balance. The
+run scored itself as a result and overwrote a good baseline on the way past; a
+regression gate fed that report would have passed it.
+
+The runner now refuses to score a run in which every agent failed in every case,
+and saves nothing. Partial failure is still scored, because a degraded result is
+a real result — only a total outage is refused.
 
 ---
 

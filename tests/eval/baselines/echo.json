@@ -150,6 +150,7 @@
           "confidence": 0.71,
           "where": "telemetry/push.py:4",
           "title": "Bare except swallows control-flow exceptions",
+          "body": "`except:` also catches KeyboardInterrupt and SystemExit. Catch `Exception`, or the specific error.",
           "agreeing": [],
           "matched_label": "telemetry/push.py:4",
           "matched_labels": [
@@ -210,6 +211,7 @@
           "confidence": 0.55,
           "where": "notify/batch.py:7",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "notify/batch.py:7",
           "matched_labels": [
@@ -227,6 +229,7 @@
           "confidence": 0.45,
           "where": "notify/batch.py:7",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "notify/batch.py:7",
           "matched_labels": [
@@ -259,6 +262,7 @@
           "confidence": 0.55,
           "where": "export/pages.py:9",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "export/pages.py:12",
           "matched_labels": [
@@ -276,6 +280,7 @@
           "confidence": 0.45,
           "where": "export/pages.py:9",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "export/pages.py:12",
           "matched_labels": [
@@ -308,6 +313,7 @@
           "confidence": 0.55,
           "where": "importer/csv_import.py:9",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "importer/csv_import.py:10",
           "matched_labels": [
@@ -325,6 +331,7 @@
           "confidence": 0.45,
           "where": "importer/csv_import.py:9",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "importer/csv_import.py:10",
           "matched_labels": [
@@ -357,6 +364,7 @@
           "confidence": 0.55,
           "where": "billing/resilient.py:11",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "billing/resilient.py:11",
           "matched_labels": [
@@ -389,6 +397,7 @@
           "confidence": 0.55,
           "where": "invites/expiry.py:8",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "invites/expiry.py:9",
           "matched_labels": [
@@ -435,6 +444,7 @@
           "confidence": 0.55,
           "where": "cache/lookup.py:8",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "cache/lookup.py:8",
           "matched_labels": [
@@ -452,6 +462,7 @@
           "confidence": 0.45,
           "where": "cache/lookup.py:8",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "cache/lookup.py:8",
           "matched_labels": [
@@ -512,6 +523,7 @@
           "confidence": 0.55,
           "where": "api/listing.py:1",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": null,
           "matched_labels": [],
@@ -542,6 +554,7 @@
           "confidence": 0.55,
           "where": "billing/totals.py:1",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "billing/totals.py:1",
           "matched_labels": [
@@ -616,6 +629,7 @@
           "confidence": 0.55,
           "where": "export/archive.py:8",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "export/archive.py:9",
           "matched_labels": [
@@ -633,6 +647,7 @@
           "confidence": 0.45,
           "where": "export/archive.py:8",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "export/archive.py:9",
           "matched_labels": [
@@ -679,6 +694,7 @@
           "confidence": 0.82,
           "where": "billing/acmepay_client.py:4",
           "title": "Credential literal committed to the repository",
+          "body": "A secret is hardcoded here. Move it to configuration and rotate it.",
           "agreeing": [],
           "matched_label": "billing/acmepay_client.py:4",
           "matched_labels": [
@@ -696,6 +712,7 @@
           "confidence": 0.82,
           "where": "tests/fixtures/acmepay.py:3",
           "title": "Credential literal committed to the repository",
+          "body": "A secret is hardcoded here. Move it to configuration and rotate it.",
           "agreeing": [],
           "matched_label": "tests/fixtures/acmepay.py:3",
           "matched_labels": [
@@ -728,6 +745,7 @@
           "confidence": 0.55,
           "where": "auth/tokens.py:10",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "auth/tokens.py:11",
           "matched_labels": [
@@ -745,6 +763,7 @@
           "confidence": 0.45,
           "where": "auth/tokens.py:10",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "auth/tokens.py:11",
           "matched_labels": [
@@ -777,6 +796,7 @@
           "confidence": 0.55,
           "where": "api/payment_methods.py:10",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "api/payment_methods.py:12",
           "matched_labels": [
@@ -809,6 +829,7 @@
           "confidence": 0.55,
           "where": "exports/serve.py:19",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "exports/serve.py:20",
           "matched_labels": [
@@ -826,6 +847,7 @@
           "confidence": 0.45,
           "where": "exports/serve.py:19",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "exports/serve.py:20",
           "matched_labels": [
@@ -858,6 +880,7 @@
           "confidence": 0.55,
           "where": "billing/queries.py:8",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "billing/queries.py:9",
           "matched_labels": [
@@ -890,6 +913,7 @@
           "confidence": 0.55,
           "where": "integrations/webhooks.py:13",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "integrations/webhooks.py:14",
           "matched_labels": [
@@ -907,6 +931,7 @@
           "confidence": 0.45,
           "where": "integrations/webhooks.py:13",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "integrations/webhooks.py:14",
           "matched_labels": [
@@ -953,6 +978,7 @@
           "confidence": 0.55,
           "where": "webhooks/verify.py:10",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "webhooks/verify.py:12",
           "matched_labels": [
@@ -970,6 +996,7 @@
           "confidence": 0.45,
           "where": "webhooks/verify.py:10",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "webhooks/verify.py:12",
           "matched_labels": [
@@ -1002,6 +1029,7 @@
           "confidence": 0.55,
           "where": "auth/passwords.py:10",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11",
           "matched_labels": [
@@ -1019,6 +1047,7 @@
           "confidence": 0.55,
           "where": "auth/passwords.py:14",
           "title": "New function arrives without a test",
+          "body": "No test file in this diff covers the new function.",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11",
           "matched_labels": [
@@ -1036,6 +1065,7 @@
           "confidence": 0.45,
           "where": "auth/passwords.py:10",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11",
           "matched_labels": [
@@ -1053,6 +1083,7 @@
           "confidence": 0.45,
           "where": "auth/passwords.py:14",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "auth/passwords.py:11",
           "matched_labels": [
@@ -1085,6 +1116,7 @@
           "confidence": 0.45,
           "where": "tests/test_invoice.py:5",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "tests/test_invoice.py:8",
           "matched_labels": [
@@ -1102,6 +1134,7 @@
           "confidence": 0.45,
           "where": "tests/test_invoice.py:11",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "tests/test_invoice.py:8",
           "matched_labels": [
@@ -1149,6 +1182,7 @@
           "confidence": 0.55,
           "where": "reports/csv_export.py:5",
           "title": "New function arrives without a test (and 5 more)",
+          "body": "No test file in this diff covers the new function.\n\nThe same gap appears at 5 other place(s) in this change:\n\n- `reports/csv_export.py:10` \u2014 New function arrives without a test\n- `reports/json_export.py:8` \u2014 New function arrives without a test\n- `reports/json_export.py:14` \u2014 New function arrives without a test\n- `reports/pdf_export.py:5` \u2014 New function arrives without a test\n- `reports/pdf_export.py:11` \u2014 New function arrives without a test\n\n_Collapsed into one comment: this is one piece of work, not 6 separate ones._",
           "agreeing": [],
           "matched_label": "reports/csv_export.py:5",
           "matched_labels": [
@@ -1191,6 +1225,7 @@
           "confidence": 0.45,
           "where": "tests/test_tokens.py:9",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": "tests/test_tokens.py:10",
           "matched_labels": [
@@ -1223,6 +1258,7 @@
           "confidence": 0.45,
           "where": "billing/coupons.py:1",
           "title": "Public definition has no docstring",
+          "body": "Add a one-line docstring describing the contract.",
           "agreeing": [],
           "matched_label": null,
           "matched_labels": [],

@@ -1,0 +1,687 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 1,
+  "overall": {
+    "hits": 3,
+    "labels_found": 6,
+    "concerns": 10,
+    "duplicate_rate": 0.3,
+    "false_positives": 0,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 1.0,
+    "precision_lenient": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 1,
+      "labels_found": 2,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "security": {
+      "hits": 1,
+      "labels_found": 2,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "tests": {
+      "hits": 1,
+      "labels_found": 6,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.72,
+        "observed_hit_rate": 1.0,
+        "gap": 0.28
+      },
+      {
+        "range": "0.80-0.90",
+        "n": 1,
+        "mean_confidence": 0.88,
+        "observed_hit_rate": 1.0,
+        "gap": 0.12
+      },
+      {
+        "range": "0.90-1.01",
+        "n": 1,
+        "mean_confidence": 0.93,
+        "observed_hit_rate": 1.0,
+        "gap": 0.07
+      }
+    ],
+    "expected_calibration_error": 0.157
+  },
+  "category_agreement": 0.333,
+  "agent_attribution": 0.333,
+  "decision_accuracy": null,
+  "cost": {
+    "total_usd": 0.1268,
+    "per_case_usd": 0.1268
+  },
+  "per_case": [
+    {
+      "id": "tst-repeated-coverage-gap",
+      "hits": 3,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.843,
+      "cost_usd": 0.1268,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.93,
+          "where": "reports/csv_export.py:5-14",
+          "title": "New exporter functions added with no accompanying tests",
+          "body": "csv_rows, csv_escape (csv_export.py), dump_streaming, dump_pretty (json_export.py), and margins_for, usable_width (pdf_export.py) are all new public functions with real logic (CSV quoting rules, chunked JSON generation, margin arithmetic) but none are covered by any test in this diff. If any of these were implemented incorrectly \u2014 e.g. csv_escape failing to escape embedded quotes, dump_streaming's chunk boundaries being off-by-one, or margins_for's rounding being wrong \u2014 nothing in the existing suite would catch it, since test_csv.py only covers csv_header. Add unit tests analogous to the existing test_csv_header_matches_columns for each of these functions.\n\n_Also raised by the correctness agent:_ Six new public exporter functions ship with no tests",
+          "agreeing": [
+            "correctness",
+            "tests"
+          ],
+          "matched_label": "reports/csv_export.py:5",
+          "matched_labels": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10",
+            "reports/json_export.py:8",
+            "reports/json_export.py:14",
+            "reports/pdf_export.py:5",
+            "reports/pdf_export.py:11"
+          ],
+          "cites": [
+            "reports/csv_export.py:5",
+            "reports/json_export.py:8",
+            "reports/pdf_export.py:5",
+            "reports/tests/test_csv.py:1",
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.88,
+          "where": "reports/csv_export.py:5-13",
+          "title": "csv_rows does not apply csv_escape, producing malformed CSV",
+          "body": "`csv_rows` joins raw `str(...)` values with commas and never calls `csv_escape`, which is defined three lines below for exactly this purpose. Any cell value containing a comma or a double quote (a free-text field, a formatted number like \"1,234\") will emit extra columns or unbalanced quotes, silently corrupting the output for downstream parsers. Wrap the value: `\",\".join(csv_escape(str(r.get(c, \"\"))) for c in columns)`. Note that `csv_escape` currently assumes a `str` (it uses `in` and `.replace`), so the `str()` conversion must stay on the outside of the call.",
+          "agreeing": [],
+          "matched_label": "reports/csv_export.py:5",
+          "matched_labels": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10"
+          ],
+          "cites": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "security",
+          "category": "injection",
+          "severity": "major",
+          "confidence": 0.72,
+          "where": "reports/csv_export.py:5-13",
+          "title": "csv_rows joins field values without using csv_escape",
+          "body": "`csv_rows` interpolates `str(r.get(c, \"\"))` straight into a comma-joined line, bypassing the `csv_escape` helper added ten lines below it. Any field value that contains a comma (or a quote, or a newline) shifts every subsequent column in that record, so a single attacker-influenced field in `rows` becomes control over the whole row's shape in whatever consumes the export.\n\nFix: render each cell as `csv_escape(str(r.get(c, \"\")))`. While you are there, `csv_escape` should also quote values containing `\\r` or `\\n` \u2014 RFC 4180 requires it, and an embedded newline forges an entire extra record, which is the more damaging version of the same bug. Consider using the stdlib `csv` module, which handles all three cases.\n\nA separate note, if these files are opened in a spreadsheet: values beginning with `=`, `+`, `-` or `@` are interpreted as formulas, and quoting does not prevent that; prefixing with `'` or a tab is the usual mitigation.\n\nI cannot see where `rows` originates \u2014 no caller appears in this diff or the retrieved context \u2014 so whether the values are attacker-controlled is unconfirmed; the escaping gap itself is unambiguous.",
+          "agreeing": [],
+          "matched_label": "reports/csv_export.py:5",
+          "matched_labels": [
+            "reports/csv_export.py:5",
+            "reports/csv_export.py:10"
+          ],
+          "cites": [
+            "reports/csv_export.py:7",
+            "reports/csv_export.py:10"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "recall": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "calibration_error": [
+      0.146,
+      0.142,
+      0.157
+    ],
+    "cost_per_case_usd": [
+      0.1336,
+      0.1004,
+      0.1268
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 2,
+        "labels_found": 6,
+        "concerns": 8,
+        "duplicate_rate": 0.25,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "labels_found": 2,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 1,
+          "labels_found": 6,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.75,
+            "observed_hit_rate": 1.0,
+            "gap": 0.25
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 1,
+            "mean_confidence": 0.958,
+            "observed_hit_rate": 1.0,
+            "gap": 0.042
+          }
+        ],
+        "expected_calibration_error": 0.146
+      },
+      "category_agreement": 0.5,
+      "agent_attribution": 0.5,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.1336,
+        "per_case_usd": 0.1336
+      },
+      "per_case": [
+        {
+          "id": "tst-repeated-coverage-gap",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.854,
+          "cost_usd": 0.1336,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.958,
+              "where": "reports/csv_export.py:5-13",
+              "title": "csv_rows joins fields without applying csv_escape",
+              "body": "`csv_rows` builds each line with `\",\".join(str(r.get(c, \"\")) for c in columns)` and never calls `csv_escape`, which is added directly below it for exactly this purpose. Any cell value containing a comma or a double quote will emit extra fields or unbalanced quotes, producing a row the consumer cannot parse back into `columns`. Wrap the stringified value: `\",\".join(csv_escape(str(r.get(c, \"\"))) for c in columns)`. (Note that `csv_escape` also does not handle embedded newlines, which RFC 4180 requires quoting; worth covering at the same time.)\n\n_Also raised by the security agent:_ csv_rows joins values without using csv_escape",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/csv_export.py:7"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.75,
+              "where": "reports/csv_export.py:5-14",
+              "title": "New exporter functions ship with no tests",
+              "body": "csv_rows, csv_escape, dump_streaming, dump_pretty, margins_for, and usable_width are all new public functions with no accompanying tests. The repo already has a precedent test (test_csv.py testing csv_header), so these follow the same pattern but lack coverage themselves. If any of these had an off-by-one (e.g. chunk_size boundary in dump_streaming, margin rounding in margins_for) or an escaping bug (unescaped comma edge case in csv_escape), nothing in the test suite would catch it.",
+              "agreeing": [],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/json_export.py:8",
+                "reports/json_export.py:14",
+                "reports/pdf_export.py:5",
+                "reports/pdf_export.py:11"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/json_export.py:8",
+                "reports/json_export.py:14",
+                "reports/pdf_export.py:5",
+                "reports/pdf_export.py:11"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 2,
+        "labels_found": 6,
+        "concerns": 8,
+        "duplicate_rate": 0.25,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "labels_found": 2,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 1,
+          "labels_found": 6,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.75,
+            "observed_hit_rate": 1.0,
+            "gap": 0.25
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 1,
+            "mean_confidence": 0.966,
+            "observed_hit_rate": 1.0,
+            "gap": 0.034
+          }
+        ],
+        "expected_calibration_error": 0.142
+      },
+      "category_agreement": 0.5,
+      "agent_attribution": 0.5,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.1004,
+        "per_case_usd": 0.1004
+      },
+      "per_case": [
+        {
+          "id": "tst-repeated-coverage-gap",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.888,
+          "cost_usd": 0.1004,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.966,
+              "where": "reports/csv_export.py:5-14",
+              "title": "csv_rows joins fields without applying csv_escape",
+              "body": "`csv_rows` builds each line with `\",\".join(str(r.get(c, \"\")) ...)` and never calls `csv_escape`, which is defined in the same module for exactly this purpose. Any cell value containing a comma or a double quote (free-text fields, names like \"Doe, Jane\", numbers formatted with thousands separators) emits an extra field and shifts every subsequent column, producing a file that parses but is silently wrong. Wrap the stringified value: `\",\".join(csv_escape(str(r.get(c, \"\"))) for c in columns)`. Note that `csv_escape` also assumes a `str` (it uses `in` on `value`), so the `str(...)` must stay on the inside.\n\n_Also raised by the security agent:_ csv_rows joins values without using csv_escape (CSV injection)",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/csv_export.py:7"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.75,
+              "where": "reports/csv_export.py:5-14",
+              "title": "New exporter functions (csv, json, pdf) added without any tests",
+              "body": "Six new public functions were added in this PR: csv_rows and csv_escape in reports/csv_export.py, dump_streaming and dump_pretty in reports/json_export.py, and margins_for and usable_width in reports/pdf_export.py. None have tests, even though the repo already has a precedent test (test_csv_header_matches_columns) for the sibling function in the same file. A logic error in any of these \u2014 e.g. csv_escape failing to quote a value with only a quote and no comma edge case, dump_streaming producing overlapping chunks off-by-one, or margins_for/usable_width miscalculating for an unknown page name \u2014 would go undetected.",
+              "agreeing": [],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/json_export.py:8",
+                "reports/json_export.py:14",
+                "reports/pdf_export.py:5",
+                "reports/pdf_export.py:11"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/json_export.py:8",
+                "reports/json_export.py:14",
+                "reports/pdf_export.py:5",
+                "reports/pdf_export.py:11"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 3,
+        "labels_found": 6,
+        "concerns": 10,
+        "duplicate_rate": 0.3,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "labels_found": 2,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "security": {
+          "hits": 1,
+          "labels_found": 2,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 1,
+          "labels_found": 6,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.72,
+            "observed_hit_rate": 1.0,
+            "gap": 0.28
+          },
+          {
+            "range": "0.80-0.90",
+            "n": 1,
+            "mean_confidence": 0.88,
+            "observed_hit_rate": 1.0,
+            "gap": 0.12
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 1,
+            "mean_confidence": 0.93,
+            "observed_hit_rate": 1.0,
+            "gap": 0.07
+          }
+        ],
+        "expected_calibration_error": 0.157
+      },
+      "category_agreement": 0.333,
+      "agent_attribution": 0.333,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.1268,
+        "per_case_usd": 0.1268
+      },
+      "per_case": [
+        {
+          "id": "tst-repeated-coverage-gap",
+          "hits": 3,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.843,
+          "cost_usd": 0.1268,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.93,
+              "where": "reports/csv_export.py:5-14",
+              "title": "New exporter functions added with no accompanying tests",
+              "body": "csv_rows, csv_escape (csv_export.py), dump_streaming, dump_pretty (json_export.py), and margins_for, usable_width (pdf_export.py) are all new public functions with real logic (CSV quoting rules, chunked JSON generation, margin arithmetic) but none are covered by any test in this diff. If any of these were implemented incorrectly \u2014 e.g. csv_escape failing to escape embedded quotes, dump_streaming's chunk boundaries being off-by-one, or margins_for's rounding being wrong \u2014 nothing in the existing suite would catch it, since test_csv.py only covers csv_header. Add unit tests analogous to the existing test_csv_header_matches_columns for each of these functions.\n\n_Also raised by the correctness agent:_ Six new public exporter functions ship with no tests",
+              "agreeing": [
+                "correctness",
+                "tests"
+              ],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10",
+                "reports/json_export.py:8",
+                "reports/json_export.py:14",
+                "reports/pdf_export.py:5",
+                "reports/pdf_export.py:11"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/json_export.py:8",
+                "reports/pdf_export.py:5",
+                "reports/tests/test_csv.py:1",
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.88,
+              "where": "reports/csv_export.py:5-13",
+              "title": "csv_rows does not apply csv_escape, producing malformed CSV",
+              "body": "`csv_rows` joins raw `str(...)` values with commas and never calls `csv_escape`, which is defined three lines below for exactly this purpose. Any cell value containing a comma or a double quote (a free-text field, a formatted number like \"1,234\") will emit extra columns or unbalanced quotes, silently corrupting the output for downstream parsers. Wrap the value: `\",\".join(csv_escape(str(r.get(c, \"\"))) for c in columns)`. Note that `csv_escape` currently assumes a `str` (it uses `in` and `.replace`), so the `str()` conversion must stay on the outside of the call.",
+              "agreeing": [],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ],
+              "cites": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "injection",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "reports/csv_export.py:5-13",
+              "title": "csv_rows joins field values without using csv_escape",
+              "body": "`csv_rows` interpolates `str(r.get(c, \"\"))` straight into a comma-joined line, bypassing the `csv_escape` helper added ten lines below it. Any field value that contains a comma (or a quote, or a newline) shifts every subsequent column in that record, so a single attacker-influenced field in `rows` becomes control over the whole row's shape in whatever consumes the export.\n\nFix: render each cell as `csv_escape(str(r.get(c, \"\")))`. While you are there, `csv_escape` should also quote values containing `\\r` or `\\n` \u2014 RFC 4180 requires it, and an embedded newline forges an entire extra record, which is the more damaging version of the same bug. Consider using the stdlib `csv` module, which handles all three cases.\n\nA separate note, if these files are opened in a spreadsheet: values beginning with `=`, `+`, `-` or `@` are interpreted as formulas, and quoting does not prevent that; prefixing with `'` or a tab is the usual mitigation.\n\nI cannot see where `rows` originates \u2014 no caller appears in this diff or the retrieved context \u2014 so whether the values are attacker-controlled is unconfirmed; the escaping gap itself is unambiguous.",
+              "agreeing": [],
+              "matched_label": "reports/csv_export.py:5",
+              "matched_labels": [
+                "reports/csv_export.py:5",
+                "reports/csv_export.py:10"
+              ],
+              "cites": [
+                "reports/csv_export.py:7",
+                "reports/csv_export.py:10"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

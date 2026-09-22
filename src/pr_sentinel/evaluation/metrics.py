@@ -201,6 +201,9 @@ class EvalReport:
                                 f"-{m.finding.line_end}" if m.finding.line_end != m.finding.line_start else ""
                             ),
                             "title": m.finding.title,
+                            # What a reviewer actually reads. Without it you
+                            # cannot tell a thin finding from a thin citation.
+                            "body": m.finding.body,
                             "agreeing": m.finding.agreeing,
                             "matched_label": (f"{m.label.file_path}:{m.label.line}" if m.label else None),
                             "matched_labels": [f"{lab.file_path}:{lab.line}" for lab in m.labels],

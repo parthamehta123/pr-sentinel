@@ -331,3 +331,75 @@ def test_the_same_concern_said_twice_does_count_as_duplication():
     )
     assert rep.overall.concerns == 1
     assert rep.overall.duplicate_rate == pytest.approx(2.0)
+
+
+def test_a_run_where_every_agent_failed_is_refused_not_scored():
+    """Regression: an exhausted credit balance produced a report reading
+    `calibration error 0.000`, `0 findings`, `$0.0000` — indistinguishable from a
+    flawless run of a reviewer that says nothing — and overwrote a good baseline.
+    A regression gate fed that would have passed."""
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import EvalRunFailed, _refuse_if_everything_failed
+
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label()],
+        must_not_find=[],
+    )
+    dead = [
+        score_case(
+            case,
+            [],
+            decision="escalate",
+            confidence=0.0,
+            cost_usd=0.0,
+            duration_ms=1,
+            failed_agents=[str(a) for a in ALL_AGENTS],
+        )
+        for _ in range(3)
+    ]
+    with pytest.raises(EvalRunFailed, match="outage"):
+        _refuse_if_everything_failed(dead)
+
+
+def test_a_run_with_one_healthy_case_is_still_scored():
+    """Partial failure is a result — degraded, but real. Only a total outage is refused."""
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import _refuse_if_everything_failed
+
+    case = EvalCase(
+        id="c",
+        title="t",
+        summary="",
+        expected_decision=None,
+        files=[],
+        context_chunks=[],
+        expected=[label()],
+        must_not_find=[],
+    )
+    mixed = [
+        score_case(
+            case,
+            [],
+            decision="escalate",
+            confidence=0.0,
+            cost_usd=0.0,
+            duration_ms=1,
+            failed_agents=[str(a) for a in ALL_AGENTS],
+        ),
+        score_case(
+            case,
+            [finding()],
+            decision="auto_post",
+            confidence=0.9,
+            cost_usd=0.01,
+            duration_ms=1,
+            failed_agents=[],
+        ),
+    ]
+    _refuse_if_everything_failed(mixed)  # does not raise

@@ -123,11 +123,13 @@ Measured against `claude-opus-5` (security, correctness), `claude-sonnet-5`
   cost per review     $0.066   $0.065   $0.068
 ```
 
-Three things reproduce in every run, and none of them was visible on the smaller
-set: a consolidated coverage comment names only one file's worth of the locations
-it covers; wildcard CORS with credentials is found but not rated `critical`, so it
-auto-posts instead of escalating; and a clean TypeScript refactor draws a false
-positive two runs in three.
+These figures predate the evidence-citation fix described in
+[RESULTS.md](tests/eval/RESULTS.md); a refreshed full-set baseline is pending.
+
+Two things still reproduce in every run, neither visible on the smaller set:
+wildcard CORS with credentials is found but not rated `critical`, so it auto-posts
+instead of escalating; and a clean TypeScript refactor draws a false positive two
+runs in three.
 
 Always a mean over repeats, never a single run: an identical configuration has
 been seen to vary by 0.18 in recall. And read the calibration error next to the

@@ -78,10 +78,12 @@ async def run_eval(
             return await run_case(case, engine_name, budget_cap_usd)
 
     reports: list[EvalReport] = []
+
     for run in range(repeat):
         if repeat > 1:
             log.info("eval.run", run=run + 1, of=repeat)
         results = await asyncio.gather(*(guarded(c) for c in cases))
+        _refuse_if_everything_failed(list(results))
         reports.append(
             score(
                 list(results),
@@ -90,3 +92,26 @@ async def run_eval(
             )
         )
     return reports
+
+
+class EvalRunFailed(RuntimeError):
+    """Every agent failed, so the run measures the outage and not the reviewer."""
+
+
+def _refuse_if_everything_failed(results: list) -> None:
+    """Stop a dead run from being mistaken for a perfect one.
+
+    An exhausted credit balance made every agent fail. The report that came back
+    read `calibration error 0.000`, `0 findings`, `$0.0000` — which is what a
+    flawless run of a reviewer that says nothing also looks like — and it
+    overwrote a good baseline on its way past. A regression gate fed that would
+    have passed.
+    """
+    if not results:
+        return
+    if all(len(r.failed_agents) == len(ALL_AGENTS) for r in results):
+        raise EvalRunFailed(
+            f"every agent failed in all {len(results)} case(s) — this is an outage, "
+            "not a result. Nothing was scored or saved. Check the worker log for the "
+            "provider error (an exhausted credit balance looks exactly like this)."
+        )

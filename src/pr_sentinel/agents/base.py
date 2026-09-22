@@ -32,6 +32,9 @@ log = get_logger(__name__)
 # they invent a location. Snap within this window; drop beyond it.
 SNAP_WINDOW = 3
 
+# Enough for a finding that consolidates a repeated issue across a whole diff.
+MAX_EVIDENCE = 12
+
 
 class SpecialistAgent(ABC):
     agent: AgentType
@@ -257,7 +260,11 @@ def _evidence(raw, default_path: str) -> list[Evidence]:
             )
         except ValueError:
             continue
-    return out[:5]
+    # A consolidated finding legitimately carries one entry per location it
+    # covers, so five is too few: a comment about six untested functions was
+    # silently losing one. Still capped, because evidence travels into every
+    # prompt and every stored row.
+    return out[:MAX_EVIDENCE]
 
 
 def _salvage_json(text: str) -> dict | None:

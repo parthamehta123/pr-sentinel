@@ -117,3 +117,68 @@ def test_ungrounded_findings_are_counted_not_silently_lost(pr_context):
     payload = json.dumps({"summary": "s", "findings": [raw(), raw(line_start=8000, line_end=8000)]})
     findings, dropped, _, _ = SecurityAgent()._parse(payload, ctx_for(pr_context))
     assert len(findings) == 1 and dropped == 1
+
+
+# --- evidence capacity ------------------------------------------------------
+
+
+def test_a_consolidated_finding_keeps_every_location_it_cites():
+    """Regression: the cap was 5, so a finding covering six places silently lost one.
+
+    Evidence is the machine-readable record of where a finding applies. Truncating
+    it guarantees an under-count in any audit, and it guaranteed a permanent miss
+    on the multi-file eval case whatever the model did.
+    """
+    import json
+
+    from pr_sentinel.agents.base import MAX_EVIDENCE
+    from pr_sentinel.domain.models import PullRequestContext
+    from pr_sentinel.forge.diff import build_diff_file
+
+    patch = "@@ -1,1 +1,10 @@\n keep\n" + "\n".join(f"+line {i}" for i in range(9))
+    files = [
+        build_diff_file(
+            {"filename": f"mod{i}.py", "status": "modified", "additions": 9, "deletions": 0, "patch": patch}
+        )
+        for i in range(8)
+    ]
+    pr = PullRequestContext(
+        repo_full_name="a/b",
+        repo_github_id=1,
+        number=1,
+        head_sha="a" * 40,
+        base_sha="b" * 40,
+        files=files,
+    )
+    payload = json.dumps(
+        {
+            "summary": "s",
+            "findings": [
+                {
+                    "file_path": "mod0.py",
+                    "line_start": 2,
+                    "line_end": 2,
+                    "category": "test_coverage",
+                    "severity": "major",
+                    "confidence": 0.8,
+                    "title": "Eight new functions are untested",
+                    "body": "b",
+                    "rationale": "nothing exercises any of them",
+                    "evidence": [
+                        {
+                            "kind": "diff",
+                            "file_path": f"mod{i}.py",
+                            "line_start": 2,
+                            "line_end": 2,
+                            "excerpt": f"mod{i}",
+                        }
+                        for i in range(8)
+                    ],
+                }
+            ],
+        }
+    )
+    findings, _, _, _ = SecurityAgent()._parse(payload, ctx_for(pr))
+    assert len(findings) == 1
+    assert len(findings[0].evidence) == 8, "all eight locations must survive"
+    assert MAX_EVIDENCE >= 8
