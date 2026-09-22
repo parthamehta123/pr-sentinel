@@ -655,3 +655,75 @@ separate configurations any more. Harder cases are still the only lever, and
 inversion" — that knob is spent. The remaining untested axis is a defect whose
 fix *nobody upstream has written yet*, which by construction cannot be mined
 this way.
+
+---
+
+## Full baseline — 63 cases, 3 runs
+
+$14.33 over three runs of the whole set ($4.77/run, $0.076/case, ~750 model calls).
+
+| metric | 59-case baseline | 63 cases, as measured | after correcting the trap |
+|---|---|---|---|
+| precision, strict | 0.819 | 0.815 *(0.791–0.835)* | **0.847** *(0.828–0.866)* |
+| precision, lenient | 0.995 | 0.986 *(spread 0.000)* | **1.000** |
+| recall | 1.000 *(spread 0.000)* | 0.991 *(0.986–1.000)* | 0.991 |
+| calibration error | 0.088 | 0.084 *(0.076–0.093)* | 0.081 |
+| agent attribution | 0.951 | 0.944 | 0.949 |
+| category agreement | — | 0.944 | 0.930 |
+| gate decision match | — | 1.000 | 1.000 |
+| false positives | — | 1 | **0** |
+
+**I predicted strict precision would rise, and as measured it did not** — 0.815
+against 0.819, inside the ±0.044 spread either way. The three `ALLOW` labels
+added earlier that day did retire findings which used to count against it, but
+the four new introducer cases brought their own unlabelled findings and cancelled
+the gain. The rise to 0.847 only appears after the trap correction below, and it
+is bookkeeping in exactly the same sense — the reviewer did not get better.
+
+### Recall is no longer pinned at 1.000
+
+Two misses, in different runs, of different labels: `sec-command-injection` in
+run 1, `doc-misleading-name` in run 2, none in run 3. One miss out of 73 labels
+each time. That is not a systematic weakness, it is the set finally sitting just
+below saturation — which makes it marginally more useful than it was, since a
+metric stuck at 1.000 cannot report a regression. A missed command injection is
+still the more interesting of the two and worth watching across future runs.
+
+### The fourth negative control that wasn't clean
+
+`trap-subprocess-list-args` produced the run's only false positive, in all three
+runs, at confidence 0.55 — the security agent flagging that `directory` reaches
+`tar` unvalidated. Checking it: the case passes
+`["tar", "-czf", f"/exports/{name}.tar.gz", "--", directory]` with `shell=False`,
+and my trap note claimed neither value "can become a shell token, a tar option or
+a path escape". The first two hold. **The third does not.** `--` ends option
+parsing; it places no constraint on the path, so a caller passing untrusted
+`directory` archives whatever it points at. The model was right and the label was
+wrong.
+
+It was also not making the mistake the trap exists to catch. Its category was
+`input_validation` in every run, never `injection` — it was not claiming shell
+injection, which really is impossible here. The trap was scoped by agent alone,
+so any security observation on that line fired it.
+
+The trap is now scoped `category=injection`, and the three legitimate
+observations on that case are labelled `ALLOW` after checking each:
+
+- `directory` unconstrained by `--` *(security, input_validation)*
+- `shell=True` used to word-split and glob `directory`; the list argv does not
+  *(correctness, api_contract)*
+- the test asserts only `shell is False`, never the argv list, so it would pass
+  against a re-introduced f-string *(tests, test_quality)*
+
+This is the **fourth** hand-written negative control to contain a real defect I
+had not seen — after the path traversal, the string-concat collision and the
+fixture importing nothing. The pattern is consistent enough to state as a rule:
+a control written by the same person who writes the labels is not a control. The
+scoped trap is the mitigation that has worked; the unscoped one has failed every
+time.
+
+### Still open
+
+13 unlabelled findings remain unexamined. They are the whole of the remaining gap
+between strict (0.847) and lenient (1.000) precision, and on past form some
+fraction of them are real defects rather than noise.

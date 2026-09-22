@@ -1628,7 +1628,9 @@ def create_archive(name, directory):
     """Write /exports/<name>.tar.gz from `directory`."""
     if not SAFE_NAME.fullmatch(name):
         raise ValueError(f"unsafe archive name: {name!r}")
-    #!CLEAN agent=security :: a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token, a tar option or a path escape
+    #!CLEAN agent=security category=injection :: a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token or a tar option — this traps the command-injection reflex only
+    #!ALLOW agent=security category=input_validation :: the -- terminator stops option parsing, it does not constrain `directory` to a base path, so a caller passing untrusted input archives whatever that path points at
+    #!ALLOW agent=correctness category=api_contract :: shell=True used to word-split and glob `directory`; the list argv passes it literally, which is a real behaviour change for any caller relying on that
     return subprocess.run(
         ["tar", "-czf", f"/exports/{name}.tar.gz", "--", directory],
         shell=False,
@@ -1640,6 +1642,7 @@ def create_archive(name, directory):
 from export.archive import create_archive
 
 
+#!ALLOW agent=tests category=test_quality :: this asserts only that shell is False, never that the argv list is well-formed, so it would pass against a re-introduced f-string in the command
 def test_runs_without_a_shell(spy):
     create_archive("nightly", "/srv/data")
     assert spy.last_call.kwargs["shell"] is False

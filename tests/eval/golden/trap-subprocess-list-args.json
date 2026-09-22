@@ -19,13 +19,36 @@
     }
   ],
   "id": "trap-subprocess-list-args",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "input_validation",
+      "file_path": "export/archive.py",
+      "line": 11,
+      "note": "the -- terminator stops option parsing, it does not constrain `directory` to a base path, so a caller passing untrusted input archives whatever that path points at"
+    },
+    {
+      "agent": "correctness",
+      "category": "api_contract",
+      "file_path": "export/archive.py",
+      "line": 11,
+      "note": "shell=True used to word-split and glob `directory`; the list argv passes it literally, which is a real behaviour change for any caller relying on that"
+    },
+    {
+      "agent": "tests",
+      "category": "test_quality",
+      "file_path": "tests/test_archive.py",
+      "line": 6,
+      "note": "this asserts only that shell is False, never that the argv list is well-formed, so it would pass against a re-introduced f-string in the command"
+    }
+  ],
   "must_not_find": [
     {
       "agent": "security",
+      "category": "injection",
       "file_path": "export/archive.py",
       "line": 11,
-      "note": "a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token, a tar option or a path escape"
+      "note": "a list argv with shell=False and a -- terminator, and the name allowlisted to a safe charset, so neither value can become a shell token or a tar option \u2014 this traps the command-injection reflex only"
     }
   ],
   "permitted_concerns": [
