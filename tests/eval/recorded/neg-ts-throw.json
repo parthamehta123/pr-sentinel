@@ -1,0 +1,491 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 1,
+  "overall": {
+    "hits": 0,
+    "allowed": 1,
+    "labels_found": 0,
+    "concerns": 0,
+    "duplicate_rate": 0.0,
+    "false_positives": 1,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 0.0,
+    "precision_lenient": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 1,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.50-0.60",
+        "n": 1,
+        "mean_confidence": 0.55,
+        "observed_hit_rate": 0.0,
+        "gap": -0.55
+      }
+    ],
+    "expected_calibration_error": 0.55
+  },
+  "category_agreement": 0.0,
+  "agent_attribution": 0.0,
+  "decision_accuracy": 1.0,
+  "cost": {
+    "total_usd": 0.054,
+    "per_case_usd": 0.054
+  },
+  "per_case": [
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 0.55,
+      "cost_usd": 0.054,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "false_positive",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "web/src/events.ts:11-14",
+          "title": "describe() can now throw; PR claims types-only change",
+          "body": "Previously `describe` was total: any event whose `kind` was not `\"click\"` fell through to `return \\`key ${...code}\\``, so even an unexpected runtime value produced a string (`\"key undefined\"`). The new `default` branch throws instead. If any event value reaches `describe` from outside the type system \u2014 JSON from the network, `postMessage`, a persisted payload, a test fixture \u2014 a previously silent call site now raises. The description says \"Types only\", so this runtime change is unlikely to be intentional and callers are unlikely to be wrapped in try/catch.\n\nIf exhaustiveness checking at compile time is the goal, keep the `const unreachable: never = event;` line (which gives you the compile error when a variant is added) but return a fallback string instead of throwing, e.g. `return \\`unknown event\\``. If throwing is genuinely desired, it belongs in the PR description and the callers should be checked.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "web/src/events.ts:5",
+          "matched_labels": [
+            "web/src/events.ts:5"
+          ],
+          "cites": [
+            "web/src/events.ts:11",
+            "web/src/events.ts:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "web/src/events.ts:6-15",
+          "title": "No test exercises the new switch/never-exhaustiveness behavior",
+          "body": "The refactor changes describe() from an unsafe cast-based implementation to a discriminated switch with an exhaustiveness check that throws on unhandled kinds. This is a behavior change (a previously-would-be-wrong cast now throws explicitly on unknown kinds), but no test file is included in this diff to verify describe() still returns correct output for 'click' and 'key' events, nor that the default branch behaves as expected. If the switch cases were reordered or a case body were wrong, nothing in the visible change would catch it.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "web/src/events.ts:6"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "recall": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "calibration_error": [
+      0.55,
+      0.0,
+      0.55
+    ],
+    "cost_per_case_usd": [
+      0.0459,
+      0.0499,
+      0.054
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "tests": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 0.0,
+            "gap": -0.55
+          }
+        ],
+        "expected_calibration_error": 0.55
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.0459,
+        "per_case_usd": 0.0459
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.0459,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:5-16",
+              "title": "No test verifies describe() behavior for click/key/unreachable cases",
+              "body": "The refactor changes describe() from an unsafe cast to an exhaustive switch with a runtime throw on unreachable kinds. Nothing in the diff or shown repo exercises describe({kind:'click',...}), describe({kind:'key',...}), or the new throw path for an unknown kind. If the switch logic were wrong (e.g. wrong property accessed, or the default case accidentally triggered on a valid kind), nothing would fail.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 1,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 0,
+        "unlabelled": 1,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [],
+        "expected_calibration_error": 0.0
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.0499,
+        "per_case_usd": 0.0499
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.565,
+          "cost_usd": 0.0499,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "unlabelled",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.58,
+              "where": "web/src/events.ts:11-14",
+              "title": "New default branch throws where the old code returned a string",
+              "body": "Previously any event whose `kind` was not `\"click\"` fell through to `return \\`key ${...code}\\``, so a value arriving from outside the type system (deserialised JSON, a widened `any`, a future union member added elsewhere) yielded `\"key undefined\"` rather than an exception. The new `default` branch throws instead. The `never` assignment is compile-time only and does not prevent that path from being reached at runtime. If `describe` is called on data crossing a trust/serialisation boundary, callers that never had to handle an exception from this function now can receive one. Either confirm all inputs are statically typed union values, or return a fallback string from `default` and keep the `never` assignment purely as a compile-time assertion.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "web/src/events.ts:11",
+                "web/src/events.ts:15"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:6-15",
+              "title": "No test exercises the new switch/exhaustiveness logic",
+              "body": "The refactor changes describe() from if/else with unsafe casts to a switch with a `never` exhaustiveness check. If a future change adds a new event kind without updating this switch, nothing would catch it failing to compile or throwing at runtime, since no test file is present in this diff covering describe() for 'click' and 'key' cases.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "web/src/events.ts:6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 1,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 0.0,
+            "gap": -0.55
+          }
+        ],
+        "expected_calibration_error": 0.55
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.054,
+        "per_case_usd": 0.054
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.054,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:11-14",
+              "title": "describe() can now throw; PR claims types-only change",
+              "body": "Previously `describe` was total: any event whose `kind` was not `\"click\"` fell through to `return \\`key ${...code}\\``, so even an unexpected runtime value produced a string (`\"key undefined\"`). The new `default` branch throws instead. If any event value reaches `describe` from outside the type system \u2014 JSON from the network, `postMessage`, a persisted payload, a test fixture \u2014 a previously silent call site now raises. The description says \"Types only\", so this runtime change is unlikely to be intentional and callers are unlikely to be wrapped in try/catch.\n\nIf exhaustiveness checking at compile time is the goal, keep the `const unreachable: never = event;` line (which gives you the compile error when a variant is added) but return a fallback string instead of throwing, e.g. `return \\`unknown event\\``. If throwing is genuinely desired, it belongs in the PR description and the callers should be checked.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:11",
+                "web/src/events.ts:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:6-15",
+              "title": "No test exercises the new switch/never-exhaustiveness behavior",
+              "body": "The refactor changes describe() from an unsafe cast-based implementation to a discriminated switch with an exhaustiveness check that throws on unhandled kinds. This is a behavior change (a previously-would-be-wrong cast now throws explicitly on unknown kinds), but no test file is included in this diff to verify describe() still returns correct output for 'click' and 'key' events, nor that the default branch behaves as expected. If the switch cases were reordered or a case body were wrong, nothing in the visible change would catch it.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "web/src/events.ts:6"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

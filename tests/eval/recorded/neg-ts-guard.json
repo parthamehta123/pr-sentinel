@@ -1,0 +1,409 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 1,
+  "overall": {
+    "hits": 0,
+    "allowed": 0,
+    "labels_found": 0,
+    "concerns": 0,
+    "duplicate_rate": 0.0,
+    "false_positives": 1,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 0.0,
+    "precision_lenient": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.60-0.70",
+        "n": 1,
+        "mean_confidence": 0.62,
+        "observed_hit_rate": 0.0,
+        "gap": -0.62
+      }
+    ],
+    "expected_calibration_error": 0.62
+  },
+  "category_agreement": 0.0,
+  "agent_attribution": 0.0,
+  "decision_accuracy": 0.0,
+  "cost": {
+    "total_usd": 0.0449,
+    "per_case_usd": 0.0449
+  },
+  "per_case": [
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "suppress",
+      "confidence": 0.62,
+      "cost_usd": 0.0449,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "false_positive",
+          "agent": "correctness",
+          "category": "error_handling",
+          "severity": "minor",
+          "confidence": 0.62,
+          "where": "web/src/events.ts:11-14",
+          "title": "Exhaustiveness default returns the event object, not a string",
+          "body": "The `default` branch assigns `event` to a `never`-typed local and then returns it. At compile time this is the standard exhaustiveness guard, but the emitted JavaScript is `return event;` \u2014 so if an `Event` with an unrecognised `kind` reaches `describe` at runtime (deserialised JSON, a value from an older client, a new variant added later without recompiling all producers), the function returns an object from a `string`-typed signature. The previous code degraded to the string `\"key undefined\"` in that case, so callers that concatenate or call `.toUpperCase()` on the result now get an object or a TypeError instead. Prefer `throw new Error(\\`unhandled event kind: ${JSON.stringify(event)}\\`)` after the `never` assignment, which keeps the compile-time check and makes the runtime path explicit.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "web/src/events.ts:5",
+          "matched_labels": [
+            "web/src/events.ts:5"
+          ],
+          "cites": [
+            "web/src/events.ts:11",
+            "web/src/events.ts:5"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "recall": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "calibration_error": [
+      0.6,
+      0.58,
+      0.62
+    ],
+    "cost_per_case_usd": [
+      0.0447,
+      0.048,
+      0.0449
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.6,
+            "observed_hit_rate": 0.0,
+            "gap": -0.6
+          }
+        ],
+        "expected_calibration_error": 0.6
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 0.0,
+      "cost": {
+        "total_usd": 0.0447,
+        "per_case_usd": 0.0447
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "suppress",
+          "confidence": 0.6,
+          "cost_usd": 0.0447,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "web/src/events.ts:11-14",
+              "title": "Exhaustiveness default returns the event object, not a string",
+              "body": "The `default` branch assigns `event` to a `never`-typed local and then returns it. For any input whose `kind` is not `\"click\"` or `\"key\"` \u2014 which is reachable whenever the value comes from JSON, an API response or untyped JS \u2014 `describe` returns the event *object* rather than a `string`, silently breaking the declared return type. The previous code returned the string `\"key undefined\"` in that case, so callers that concatenate or `.length` the result now get an object instead of a string. Prefer `throw new Error(\\`unhandled event: ${JSON.stringify(event)}\\`)` in the default branch, which keeps the compile-time exhaustiveness check while failing loudly at runtime.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:11",
+                "web/src/events.ts:5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.58,
+            "observed_hit_rate": 0.0,
+            "gap": -0.58
+          }
+        ],
+        "expected_calibration_error": 0.58
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.048,
+        "per_case_usd": 0.048
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.58,
+          "cost_usd": 0.048,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.58,
+              "where": "web/src/events.ts:11-14",
+              "title": "Exhaustiveness default returns the event object, violating the string return type",
+              "body": "`describe` is declared to return `string`, but the `default` branch returns `unreachable`, which is the event value itself at runtime. The `never` type makes the compiler accept this, yet nothing enforces it at runtime: an `Event` deserialised from JSON, a network payload, or a newer producer emitting a third `kind` would flow into `default` and the function would hand a plain object back to a caller that will do string things with it (template interpolation, `.toUpperCase()`, `.length`). The old code degraded to the string `\"key undefined\"` in that situation, so this is also a behaviour change on the unexpected-input path. Prefer `throw new Error(\\`unhandled event kind: ${(event as {kind: string}).kind}\\`)` in the default branch, or return a literal fallback string, keeping the `const unreachable: never = event;` line purely as the compile-time exhaustiveness check.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:11",
+                "web/src/events.ts:5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.62,
+            "observed_hit_rate": 0.0,
+            "gap": -0.62
+          }
+        ],
+        "expected_calibration_error": 0.62
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 0.0,
+      "cost": {
+        "total_usd": 0.0449,
+        "per_case_usd": 0.0449
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "suppress",
+          "confidence": 0.62,
+          "cost_usd": 0.0449,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.62,
+              "where": "web/src/events.ts:11-14",
+              "title": "Exhaustiveness default returns the event object, not a string",
+              "body": "The `default` branch assigns `event` to a `never`-typed local and then returns it. At compile time this is the standard exhaustiveness guard, but the emitted JavaScript is `return event;` \u2014 so if an `Event` with an unrecognised `kind` reaches `describe` at runtime (deserialised JSON, a value from an older client, a new variant added later without recompiling all producers), the function returns an object from a `string`-typed signature. The previous code degraded to the string `\"key undefined\"` in that case, so callers that concatenate or call `.toUpperCase()` on the result now get an object or a TypeError instead. Prefer `throw new Error(\\`unhandled event kind: ${JSON.stringify(event)}\\`)` after the `never` assignment, which keeps the compile-time check and makes the runtime path explicit.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:11",
+                "web/src/events.ts:5"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

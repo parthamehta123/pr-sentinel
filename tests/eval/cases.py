@@ -1315,7 +1315,7 @@ def test_zero_subtotal_is_zero_discount():
 case(
     id="neg-typescript-type-narrowing",
     title="Narrow the event union",
-    body="Narrows the event union with a discriminant so the cast can go. Types only.",
+    body="The union already discriminates on `kind`, so the two casts are redundant. Removes them.",
     summary=(
         "TypeScript. A discriminated-union refactor that removes a cast and makes "
         "the code safer. Any finding here is a false positive."
@@ -1341,12 +1341,10 @@ export function describe(event: Event): string {
 
 //!CLEAN :: the discriminant narrows the union, so the casts are no longer needed
 export function describe(event: Event): string {
-  switch (event.kind) {
-    case "click":
-      return `click at ${event.x}`;
-    case "key":
-      return `key ${event.code}`;
+  if (event.kind === "click") {
+    return `click at ${event.x}`;
   }
+  return `key ${event.code}`;
 }
 """,
     },

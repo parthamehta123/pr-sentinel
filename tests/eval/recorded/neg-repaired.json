@@ -1,0 +1,410 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 2,
+  "overall": {
+    "hits": 0,
+    "allowed": 0,
+    "labels_found": 0,
+    "concerns": 0,
+    "duplicate_rate": 0.0,
+    "false_positives": 1,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 0.0,
+    "precision_lenient": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.60-0.70",
+        "n": 1,
+        "mean_confidence": 0.6,
+        "observed_hit_rate": 0.0,
+        "gap": -0.6
+      }
+    ],
+    "expected_calibration_error": 0.6
+  },
+  "category_agreement": 0.0,
+  "agent_attribution": 0.0,
+  "decision_accuracy": 0.5,
+  "cost": {
+    "total_usd": 0.0913,
+    "per_case_usd": 0.0456
+  },
+  "per_case": [
+    {
+      "id": "neg-allowlisted-dynamic-sql",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.044,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "suppress",
+      "confidence": 0.6,
+      "cost_usd": 0.0473,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "false_positive",
+          "agent": "correctness",
+          "category": "error_handling",
+          "severity": "minor",
+          "confidence": 0.6,
+          "where": "web/src/events.ts:6-11",
+          "title": "switch without default can return undefined at runtime",
+          "body": "Previously `describe` ended with an unconditional `return \\`key ${...}\\``, so every call returned a string no matter what value arrived at runtime. The new `switch` has only the two literal cases and no `default`, so a value whose `kind` is neither \"click\" nor \"key\" \u2014 e.g. an event decoded from JSON, a network payload, or a third variant added to `Event` by code that is not type-checked against this file \u2014 falls through and the function implicitly returns `undefined`, while its declared return type is still `string`. Callers doing `describe(e).length` or string concatenation would get a TypeError or the literal text \"undefined\". Add a `default:` that either throws or returns a fallback string (an `assertNever(event)` default keeps the compile-time exhaustiveness check and closes the runtime hole).",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "web/src/events.ts:5",
+          "matched_labels": [
+            "web/src/events.ts:5"
+          ],
+          "cites": [
+            "web/src/events.ts:6",
+            "web/src/events.ts:5"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "recall": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "calibration_error": [
+      0.0,
+      0.0,
+      0.6
+    ],
+    "cost_per_case_usd": [
+      0.0789,
+      0.0407,
+      0.0456
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 2,
+      "overall": {
+        "hits": 0,
+        "allowed": 1,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [],
+        "expected_calibration_error": 0.0
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.1579,
+        "per_case_usd": 0.0789
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0809,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.0769,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:6-11",
+              "title": "No test exercises the narrowed switch behaviour",
+              "body": "The refactor changes control flow from if/cast to a switch on the discriminant, but no test file is present in the diff to verify describe() still returns correct strings for both 'click' and 'key' events. If a case were mismatched (e.g., swapped properties) nothing would fail.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "web/src/events.ts:6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 2,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {},
+      "calibration": {
+        "bins": [],
+        "expected_calibration_error": 0.0
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.0814,
+        "per_case_usd": 0.0407
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0402,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0412,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 2,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.6,
+            "observed_hit_rate": 0.0,
+            "gap": -0.6
+          }
+        ],
+        "expected_calibration_error": 0.6
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 0.5,
+      "cost": {
+        "total_usd": 0.0913,
+        "per_case_usd": 0.0456
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.044,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "suppress",
+          "confidence": 0.6,
+          "cost_usd": 0.0473,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "web/src/events.ts:6-11",
+              "title": "switch without default can return undefined at runtime",
+              "body": "Previously `describe` ended with an unconditional `return \\`key ${...}\\``, so every call returned a string no matter what value arrived at runtime. The new `switch` has only the two literal cases and no `default`, so a value whose `kind` is neither \"click\" nor \"key\" \u2014 e.g. an event decoded from JSON, a network payload, or a third variant added to `Event` by code that is not type-checked against this file \u2014 falls through and the function implicitly returns `undefined`, while its declared return type is still `string`. Callers doing `describe(e).length` or string concatenation would get a TypeError or the literal text \"undefined\". Add a `default:` that either throws or returns a fallback string (an `assertNever(event)` default keeps the compile-time exhaustiveness check and closes the runtime hole).",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:6",
+                "web/src/events.ts:5"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

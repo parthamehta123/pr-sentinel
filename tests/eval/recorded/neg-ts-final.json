@@ -1,0 +1,276 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 1,
+  "overall": {
+    "hits": 0,
+    "allowed": 0,
+    "labels_found": 0,
+    "concerns": 0,
+    "duplicate_rate": 0.0,
+    "false_positives": 0,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 0.0,
+    "precision_lenient": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "by_agent": {},
+  "calibration": {
+    "bins": [],
+    "expected_calibration_error": 0.0
+  },
+  "category_agreement": 0.0,
+  "agent_attribution": 0.0,
+  "decision_accuracy": 1.0,
+  "cost": {
+    "total_usd": 0.0291,
+    "per_case_usd": 0.0291
+  },
+  "per_case": [
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0291,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "recall": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "calibration_error": [
+      0.0,
+      0.55,
+      0.0
+    ],
+    "cost_per_case_usd": [
+      0.031,
+      0.0317,
+      0.0291
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {},
+      "calibration": {
+        "bins": [],
+        "expected_calibration_error": 0.0
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.031,
+        "per_case_usd": 0.031
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.031,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {
+        "tests": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 0.0,
+            "gap": -0.55
+          }
+        ],
+        "expected_calibration_error": 0.55
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.0317,
+        "per_case_usd": 0.0317
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.0317,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "false_positive",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "web/src/events.ts:5-10",
+              "title": "No test exercises describe() for click/key events",
+              "body": "The diff removes redundant casts but doesn't add or reference any test verifying describe() still returns correct strings for both 'click' and 'key' event kinds. If narrowing were subtly wrong (e.g. property name typo), nothing in this PR would catch it.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "web/src/events.ts:5",
+              "matched_labels": [
+                "web/src/events.ts:5"
+              ],
+              "cites": [
+                "web/src/events.ts:5"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 0,
+        "allowed": 0,
+        "labels_found": 0,
+        "concerns": 0,
+        "duplicate_rate": 0.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 0.0,
+        "precision_lenient": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "by_agent": {},
+      "calibration": {
+        "bins": [],
+        "expected_calibration_error": 0.0
+      },
+      "category_agreement": 0.0,
+      "agent_attribution": 0.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.0291,
+        "per_case_usd": 0.0291
+      },
+      "per_case": [
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0291,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        }
+      ]
+    }
+  ]
+}

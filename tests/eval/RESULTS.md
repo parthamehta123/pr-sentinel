@@ -1569,3 +1569,40 @@ route. Suppress is now checked first.
 This is adopted on the argument, not the number: across three recorded runs it
 changes one decision in one run. It is not demonstrated by the eval and is not
 claimed to be.
+
+### Verifying the two repaired controls — four rounds, all of them earned
+
+Both now suppress on every run. `neg-allowlisted-dynamic-sql` fixed in one round:
+with the missing `direction` test added it produces **zero findings**, confidence
+1.00, three runs out of three.
+
+`neg-typescript-type-narrowing` took four, and the panel was right every time —
+including about code I wrote to fix it.
+
+| round | what I changed | what the panel said |
+|---|---|---|
+| 1 | removed `` `, ${y}` `` from the click output | *"switch without default can return undefined at runtime"* — true; the old `if`/`return` always returned, an exhaustive switch does not |
+| 2 | added `const unreachable: never = event; return unreachable;` | *"exhaustiveness default returns the event object, not a string"* — **true, 3 of 3 runs.** Returning `never` is the known anti-pattern: at runtime it returns the value and violates the declared return type |
+| 3 | made the default `throw` | *"new default branch throws where the old code returned a string"* — true; the body still claimed "types only" |
+| 4 | reduced the diff to removing the two casts, nothing else | *"casts removed but the discriminated-union change is not in the diff"* — true; the body claimed a union change the diff did not contain |
+
+Round 4 also corrected the body, which by then was the only thing left that was
+false. The diff is now two lines — the casts — and the body says what those two
+lines do.
+
+Round 2 is the one worth sitting with. **I introduced a real defect while
+repairing a negative control, and the reviewer caught it on every run at
+0.58–0.62.** Not a lucky single run; three for three, with the mechanism named
+correctly.
+
+Round 3 is worth sitting with for the opposite reason. It *passed* — suppress on
+all three runs — while the panel was still reporting a true mismatch between the
+body and the diff, at 0.55–0.58. It passed because those findings fall below the
+posting bar, not because there was nothing to find. A control that clears the bar
+by a hair is not the same as a control that is clean, and only reading the
+findings distinguishes them. The gate number alone would have called round 3 done.
+
+Eight negative controls in this file have now been found to contain something
+real. The pattern is no longer worth treating as a surprise: a case written to be
+unremarkable, by the person who also writes the labels, is unremarkable only
+until someone looks.

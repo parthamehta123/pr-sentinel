@@ -1,14 +1,14 @@
 {
-  "body": "Narrows the event union with a discriminant so the cast can go. Types only.",
+  "body": "The union already discriminates on `kind`, so the two casts are redundant. Removes them.",
   "context_files": [],
   "expected": [],
   "expected_decision": "suppress",
   "files": [
     {
-      "additions": 5,
-      "deletions": 3,
+      "additions": 2,
+      "deletions": 2,
       "filename": "web/src/events.ts",
-      "patch": "@@ -3,8 +3,10 @@\n   | { kind: \"key\"; code: string };\n \n export function describe(event: Event): string {\n-  if (event.kind === \"click\") {\n-    return `click at ${(event as { x: number; y: number }).x}`;\n+  switch (event.kind) {\n+    case \"click\":\n+      return `click at ${event.x}`;\n+    case \"key\":\n+      return `key ${event.code}`;\n   }\n-  return `key ${(event as { code: string }).code}`;\n }",
+      "patch": "@@ -4,7 +4,7 @@\n \n export function describe(event: Event): string {\n   if (event.kind === \"click\") {\n-    return `click at ${(event as { x: number; y: number }).x}`;\n+    return `click at ${event.x}`;\n   }\n-  return `key ${(event as { code: string }).code}`;\n+  return `key ${event.code}`;\n }",
       "status": "modified"
     }
   ],
