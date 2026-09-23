@@ -1,4 +1,5 @@
 {
+  "body": "",
   "context_files": [
     {
       "content": "class Invite:\n    \"\"\"`expires_at` is stored as a timezone-aware UTC datetime.\"\"\"\n\n    expires_at: \"datetime\"  # always tz-aware, set from datetime.now(timezone.utc)\n",

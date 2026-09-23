@@ -32,6 +32,12 @@ class Label:
 class EvalCase:
     id: str
     title: str
+    # Documentation for whoever reads cases.py — what the case is *for*. It is
+    # deliberately NOT the pull request body: 14 of these described the defect
+    # ("the retrieved caller relies on the old value", "the defective line is in
+    # httpserver.py"), and feeding them to the panel as the PR description handed
+    # over the answer. An author writing a real pull request does not narrate the
+    # bug they are shipping.
     summary: str
     expected_decision: str | None
     files: list[DiffFile]
@@ -39,6 +45,9 @@ class EvalCase:
     expected: list[Label]
     # Where a mined case came from: repository, pull request, licence. Recorded
     # because these excerpts are other people's code.
+    # What the pull request's author wrote, if the case supplies one. Empty by
+    # default, which the prompt renders as "(no description)".
+    body: str = ""
     provenance: str | None = None
     must_not_find: list[Label] = field(default_factory=list)
     # Legitimate but optional: neither required for recall nor counted against
@@ -55,7 +64,7 @@ class EvalCase:
             is_private=True,
             number=1,
             title=self.title,
-            body=self.summary,
+            body=self.body,
             author="eval",
             head_sha="e" * 40,
             base_sha="b" * 40,
@@ -75,6 +84,7 @@ def load_cases(directory: Path | None = None, only: list[str] | None = None) -> 
                 id=raw["id"],
                 title=raw["title"],
                 summary=raw.get("summary", ""),
+                body=raw.get("body", ""),
                 provenance=raw.get("provenance"),
                 expected_decision=raw.get("expected_decision"),
                 files=[build_diff_file(f) for f in raw["files"]],

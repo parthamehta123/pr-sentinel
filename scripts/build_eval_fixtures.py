@@ -181,6 +181,7 @@ def build_case(case: dict) -> dict:
         "title": case["title"],
         "provenance": case.get("provenance"),
         "summary": case.get("summary", ""),
+        "body": case.get("body", ""),
         "expected_decision": case.get("expected_decision"),
         "files": files,
         "context_files": context,

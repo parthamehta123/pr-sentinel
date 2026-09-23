@@ -1,4 +1,5 @@
 {
+  "body": "",
   "context_files": [
     {
       "content": "export interface Account {\n  id: string;\n  /** Absent until the customer completes onboarding. */\n  billingContact?: { name: string; email: string };\n}\n",

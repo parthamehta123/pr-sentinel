@@ -1,4 +1,5 @@
 {
+  "body": "Reporting queries filter invoices by tenant and sort by recency. Adding the index.",
   "context_files": [
     {
       "content": "-- Applied 2025-11-02.\nCREATE INDEX invoices_tenant_created_idx\n    ON invoices (tenant_id, created_at DESC);\n\nCREATE INDEX invoices_status_idx ON invoices (status);\n",
@@ -10,9 +11,9 @@
       "agent": "correctness",
       "category": "logic",
       "file_path": "migrations/0031_reporting.sql",
-      "line": 7,
+      "line": 8,
       "min_severity": "minor",
-      "note": "migration 0007 already creates this exact index on invoices; a second copy doubles write cost and storage for no read benefit"
+      "note": "migration 0007 already creates this exact index on invoices (tenant_id, created_at DESC), as invoices_tenant_created_idx; only the name differs, so this doubles write cost and storage for no read benefit"
     }
   ],
   "expected_decision": null,
@@ -21,7 +22,7 @@
       "additions": 3,
       "deletions": 0,
       "filename": "migrations/0031_reporting.sql",
-      "patch": "@@ -3,3 +3,6 @@\n     tenant_id   BIGINT NOT NULL,\n     started_at  TIMESTAMPTZ NOT NULL DEFAULT now()\n );\n+\n+CREATE INDEX invoices_tenant_created_idx2\n+    ON invoices (tenant_id, created_at DESC);",
+      "patch": "@@ -4,3 +4,6 @@\n     tenant_id   BIGINT NOT NULL,\n     started_at  TIMESTAMPTZ NOT NULL DEFAULT now()\n );\n+\n+CREATE INDEX CONCURRENTLY IF NOT EXISTS invoices_tenant_recent_idx\n+    ON invoices (tenant_id, created_at DESC);",
       "status": "modified"
     }
   ],
@@ -39,6 +40,6 @@
     }
   ],
   "provenance": null,
-  "summary": "A migration that is unremarkable on its own and duplicates an index an earlier migration already created. Only the retrieved context shows it.",
-  "title": "Add an index for the tenant lookup"
+  "summary": "Creates an index an earlier migration already created, under a different name. The generic complaints about CREATE INDEX are pre-empted in the diff \u2014 CONCURRENTLY, and a note that the migration is non-transactional \u2014 so duplication is the only thing left to notice, and only migration 0007 shows it.",
+  "title": "Add an index for the reporting tenant lookup"
 }

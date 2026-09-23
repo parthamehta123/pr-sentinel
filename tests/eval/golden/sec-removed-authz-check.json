@@ -1,4 +1,5 @@
 {
+  "body": "",
   "context_files": [
     {
       "content": "def require_owner(user, obj):\n    \"\"\"Raise Forbidden unless `user` owns `obj`. Every object read or mutation\n    of another tenant's data must go through this.\"\"\"\n    if obj.tenant_id != user.tenant_id:\n        raise Forbidden()\n",

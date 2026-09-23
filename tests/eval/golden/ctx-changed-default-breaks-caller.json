@@ -1,27 +1,28 @@
 {
+  "body": "Adds the nightly partner catalogue pull. Timeout set generously since their API is slow.",
   "context_files": [
     {
-      "content": "from clients.http import fetch\n\n\ndef sync_partner_catalogue():\n    \"\"\"The partner API returns 503 roughly one call in three during their nightly\n    window. We rely on fetch()'s default retry count to get through it; this is\n    deliberate and was the fix for INC-4471.\"\"\"\n    return fetch(\"https://partner.example.com/catalogue\")\n",
-      "path": "sync/nightly.py"
+      "content": "def fetch(url, timeout, retries=3):\n    \"\"\"GET `url` and return the decoded body.\n\n    `timeout` is in MILLISECONDS, matching the underlying transport. Callers\n    wanting seconds must multiply. Retries share the same budget.\n    \"\"\"\n    return _transport.get(url, timeout_ms=timeout, retries=retries)\n",
+      "path": "clients/http.py"
     }
   ],
   "expected": [
     {
       "agent": "correctness",
-      "category": "api_contract",
-      "file_path": "clients/http.py",
-      "line": 1,
+      "category": "api_contract|logic",
+      "file_path": "sync/nightly.py",
+      "line": 9,
       "min_severity": "major",
-      "note": "sync_partner_catalogue depends on the old default of 5 to survive a dependency that 503s one call in three; dropping it to 1 silently reverts the fix for INC-4471"
+      "note": "fetch takes timeout in milliseconds, so this is 30ms rather than the 30 seconds it reads as, and every call to a slow partner API times out immediately"
     }
   ],
   "expected_decision": null,
   "files": [
     {
-      "additions": 1,
-      "deletions": 1,
-      "filename": "clients/http.py",
-      "patch": "@@ -1,2 +1,2 @@\n-def fetch(url, retries=5, timeout=10):\n+def fetch(url, retries=1, timeout=10):\n     return _with_retries(url, retries=retries, timeout=timeout)",
+      "additions": 4,
+      "deletions": 0,
+      "filename": "sync/nightly.py",
+      "patch": "@@ -3,3 +3,7 @@\n \n def sync_currency_rates():\n     return _rates_provider.refresh()\n+\n+\n+def sync_partner_catalogue():\n+    return fetch(\"https://partner.example.com/catalogue\", timeout=30)",
       "status": "modified"
     }
   ],
@@ -39,6 +40,6 @@
     }
   ],
   "provenance": null,
-  "summary": "A default is lowered from 5 to 1. Reasonable in isolation; the retrieved caller relies on the old value to survive a known flaky dependency.",
-  "title": "Make retries less aggressive by default"
+  "summary": "A new call site passing timeout=30, which reads as thirty seconds and is thirty milliseconds. Purely additive, with no other timeout in the diff to compare against \u2014 the unit appears only in the unchanged helper's docstring.",
+  "title": "Sync the partner catalogue nightly"
 }

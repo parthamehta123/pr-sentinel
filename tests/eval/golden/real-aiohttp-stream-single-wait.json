@@ -1,4 +1,5 @@
 {
+  "body": "",
   "context_files": [
     {
       "content": "    async def _wait(self, func_name: str) -> None:\n        \"\"\"Wake when the feeder calls feed_data() OR feed_eof().\n\n        The waiter is also resolved at the end of a chunk, which can happen with\n        no new data in the buffer, so a caller must re-check its condition after\n        waking rather than assuming data arrived.\n        \"\"\"\n        waiter = self._waiter = self._loop.create_future()\n        await waiter\n",

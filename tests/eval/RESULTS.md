@@ -1192,3 +1192,67 @@ caller or an invariant defined in a file the diff does not touch. Writing one
 that survives is harder than it sounds: the four negative controls in this file
 all failed on the first attempt, and a context-dependent case has the same
 failure mode in reverse.
+
+### Rebuilding the context-dependent cases — one fixed, one not
+
+Two problems, found in order.
+
+#### The case summary was being fed to the panel as the pull request body
+
+`fixtures.py` set `body=self.summary`, and the agent prompt renders `pr.body`.
+The summaries are documentation for whoever reads `cases.py` and **14 of 63 of
+them describe the defect** — `ctx-changed-default-breaks-caller` said "the
+retrieved caller relies on the old value", and `intro-tornado-cookies-move` said
+"the defective line is in httpserver.py, the code it breaks is in web.py". Every
+run in this file was scored with those descriptions in the prompt.
+
+`summary` no longer reaches the model. Cases may now set `body` explicitly, for
+what an author would actually write; it defaults to empty, which the prompt
+renders as "(no description)".
+
+**Every recorded baseline predates this fix and was measured with the leak.** The
+numbers above are not comparable to anything measured from here on, and recall in
+particular should be expected to fall.
+
+#### One case is now genuinely context-dependent
+
+`ctx-changed-default-breaks-caller` is rebuilt as a purely additive call site
+passing `timeout=30` to a helper whose docstring — in an unchanged context file —
+says the unit is milliseconds. Nothing in the diff contradicts it.
+
+| | with context | no context |
+|---|---|---|
+| `ctx-changed-default-breaks-caller` | 1/1, 1/1, 1/1 | **0/1** |
+
+Found every run with context, missed without it. That is the first case in this
+set that demonstrably needs retrieval. The no-context arm is a **single run** —
+credits ran out during run 2 — so it wants confirming at three.
+
+Its first rebuild failed, and instructively: I had included a sibling call with
+`timeout=45_000` for realism, and the `before` used `timeout=30_000`, so the diff
+showed `30_000 → 30` outright. The panel reported "timeout unit inconsistent: 30
+vs 45_000" and never needed the docstring. **The case leaked its own answer
+through the very detail added to make it look real.**
+
+#### The other case still does not need context, and shows why this is hard
+
+`ctx-duplicate-index-migration` is found without context every time — but never
+for the right reason. Twice now the panel has commented on the labelled line
+without noticing the duplication at all:
+
+- "CREATE INDEX without CONCURRENTLY blocks writes to invoices"
+- after adding `CONCURRENTLY`: "CREATE INDEX CONCURRENTLY cannot run in a
+  transactional migration" — ignoring the `-- transactional: false` comment
+  directly above it
+
+Both are true, neither is the defect, and both score as hits because matching is
+location plus concern *family*, and `error_handling` and `logic` are both
+correctness. Family matching was a deliberate choice — one defect genuinely has
+several fair readings — and here it is credit for the wrong observation.
+
+The general lesson: **a context-dependent case needs a labelled line that is not
+itself interesting.** `CREATE INDEX` is a magnet for true generic commentary, so
+any defect anchored to one will be "found" whatever the panel actually noticed.
+The fix is either a defect on a boring line, or a matcher that demands the
+labelled concern rather than its family — and the second would undo an earlier
+fix for good reasons, so the first is the one to try.

@@ -1465,11 +1465,15 @@ def get_tenant_fresh(tenant_id):
 
 case(
     id="ctx-duplicate-index-migration",
-    title="Add an index for the tenant lookup",
+    title="Add an index for the reporting tenant lookup",
     summary=(
-        "A migration that is unremarkable on its own and duplicates an index an "
-        "earlier migration already created. Only the retrieved context shows it."
+        "Creates an index an earlier migration already created, under a different "
+        "name. The generic complaints about CREATE INDEX are pre-empted in the "
+        "diff — CONCURRENTLY, and a note that the migration is non-transactional "
+        "— so duplication is the only thing left to notice, and only migration "
+        "0007 shows it."
     ),
+    body="Reporting queries filter invoices by tenant and sort by recency. Adding the index.",
     expected_decision=None,
     context={
         "migrations/0007_invoice_indexes.sql": """-- Applied 2025-11-02.
@@ -1480,7 +1484,8 @@ CREATE INDEX invoices_status_idx ON invoices (status);
 """,
     },
     before={
-        "migrations/0031_reporting.sql": """CREATE TABLE report_runs (
+        "migrations/0031_reporting.sql": """-- transactional: false (CONCURRENTLY cannot run inside a transaction)
+CREATE TABLE report_runs (
     id          BIGSERIAL PRIMARY KEY,
     tenant_id   BIGINT NOT NULL,
     started_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -1488,14 +1493,15 @@ CREATE INDEX invoices_status_idx ON invoices (status);
 """,
     },
     after={
-        "migrations/0031_reporting.sql": """CREATE TABLE report_runs (
+        "migrations/0031_reporting.sql": """-- transactional: false (CONCURRENTLY cannot run inside a transaction)
+CREATE TABLE report_runs (
     id          BIGSERIAL PRIMARY KEY,
     tenant_id   BIGINT NOT NULL,
     started_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-#!EXPECT agent=correctness category=logic severity>=minor :: migration 0007 already creates this exact index on invoices; a second copy doubles write cost and storage for no read benefit
-CREATE INDEX invoices_tenant_created_idx2
+#!EXPECT agent=correctness category=logic severity>=minor :: migration 0007 already creates this exact index on invoices (tenant_id, created_at DESC), as invoices_tenant_created_idx; only the name differs, so this doubles write cost and storage for no read benefit
+CREATE INDEX CONCURRENTLY IF NOT EXISTS invoices_tenant_recent_idx
     ON invoices (tenant_id, created_at DESC);
 """,
     },
@@ -1503,32 +1509,44 @@ CREATE INDEX invoices_tenant_created_idx2
 
 case(
     id="ctx-changed-default-breaks-caller",
-    title="Make retries less aggressive by default",
+    title="Sync the partner catalogue nightly",
     summary=(
-        "A default is lowered from 5 to 1. Reasonable in isolation; the retrieved "
-        "caller relies on the old value to survive a known flaky dependency."
+        "A new call site passing timeout=30, which reads as thirty seconds and is "
+        "thirty milliseconds. Purely additive, with no other timeout in the diff "
+        "to compare against — the unit appears only in the unchanged helper's "
+        "docstring."
     ),
+    body="Adds the nightly partner catalogue pull. Timeout set generously since their API is slow.",
     expected_decision=None,
     context={
-        "sync/nightly.py": '''from clients.http import fetch
+        "clients/http.py": '''def fetch(url, timeout, retries=3):
+    """GET `url` and return the decoded body.
 
-
-def sync_partner_catalogue():
-    """The partner API returns 503 roughly one call in three during their nightly
-    window. We rely on fetch()'s default retry count to get through it; this is
-    deliberate and was the fix for INC-4471."""
-    return fetch("https://partner.example.com/catalogue")
+    `timeout` is in MILLISECONDS, matching the underlying transport. Callers
+    wanting seconds must multiply. Retries share the same budget.
+    """
+    return _transport.get(url, timeout_ms=timeout, retries=retries)
 ''',
     },
     before={
-        "clients/http.py": """def fetch(url, retries=5, timeout=10):
-    return _with_retries(url, retries=retries, timeout=timeout)
+        "sync/nightly.py": """from clients.http import fetch
+
+
+def sync_currency_rates():
+    return _rates_provider.refresh()
 """,
     },
     after={
-        "clients/http.py": """#!EXPECT agent=correctness category=api_contract severity>=major :: sync_partner_catalogue depends on the old default of 5 to survive a dependency that 503s one call in three; dropping it to 1 silently reverts the fix for INC-4471
-def fetch(url, retries=1, timeout=10):
-    return _with_retries(url, retries=retries, timeout=timeout)
+        "sync/nightly.py": """from clients.http import fetch
+
+
+def sync_currency_rates():
+    return _rates_provider.refresh()
+
+
+def sync_partner_catalogue():
+    #!EXPECT agent=correctness category=api_contract|logic severity>=major :: fetch takes timeout in milliseconds, so this is 30ms rather than the 30 seconds it reads as, and every call to a slow partner API times out immediately
+    return fetch("https://partner.example.com/catalogue", timeout=30)
 """,
     },
 )
