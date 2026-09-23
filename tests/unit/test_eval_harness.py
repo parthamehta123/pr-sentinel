@@ -1007,3 +1007,46 @@ def test_no_body_narrates_its_own_defect():
                 f"  body: {case.body}\n  note: {label.note}"
             )
     assert worst[0] > 0.0, "overlap never computed — the check is not running"
+
+
+def test_widespread_partial_agent_failure_is_refused():
+    """A run can be thoroughly degraded without any case losing its whole panel.
+
+    Seen for real: credits ran out during run 2 of a repeat, 46 of 252 agent
+    calls failed across 63 cases, and no single case lost all four — so the
+    whole-panel guard passed it. The report then printed recall 0.726 and a
+    tests agent at recall 0.00, which was eleven failed calls rather than a
+    specialist with nothing to say.
+    """
+    import pytest
+
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import EvalRunFailed, _refuse_if_everything_failed
+
+    agents = list(ALL_AGENTS)
+
+    class R:
+        def __init__(self, failed):
+            self.failed_agents = failed
+
+    # 63 cases; 18% of calls lost, spread so no case loses its whole panel.
+    results = [R([str(agents[i % len(agents)])]) if i % 4 else R([]) for i in range(63)]
+    lost = sum(len(r.failed_agents) for r in results)
+    assert 0 < lost < len(results) * len(agents)
+    assert all(len(r.failed_agents) < len(agents) for r in results), "no whole panel lost"
+
+    with pytest.raises(EvalRunFailed, match="degraded across the run"):
+        _refuse_if_everything_failed(results)
+
+
+def test_a_few_stray_agent_failures_still_score():
+    """A degraded result is still a result below the threshold; only a pattern is not."""
+    from pr_sentinel.domain.enums import ALL_AGENTS
+    from pr_sentinel.evaluation.runner import _refuse_if_everything_failed
+
+    class R:
+        def __init__(self, failed):
+            self.failed_agents = failed
+
+    results = [R([str(ALL_AGENTS[0])]) if i < 4 else R([]) for i in range(63)]
+    _refuse_if_everything_failed(results)  # 4 of 252 calls: ~1.6%, scores normally

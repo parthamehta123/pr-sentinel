@@ -132,6 +132,11 @@ class EvalRunFailed(RuntimeError):
 # Below it, a degraded result is still a result and is scored.
 OUTAGE_THRESHOLD = 0.25
 
+# And above this share of individual agent calls failing, regardless of how
+# they are distributed across cases. Lower than the whole-panel bar because a
+# run can be thoroughly degraded without any single case losing all four.
+DEGRADED_THRESHOLD = 0.10
+
 
 def _refuse_if_everything_failed(results: list) -> None:
     """Stop a dead or half-dead run from being mistaken for a result.
@@ -156,4 +161,20 @@ def _refuse_if_everything_failed(results: list) -> None:
             "outage, not a result, and the cases that did run are whichever ones got "
             "in first. Nothing was scored or saved. Check the worker log for the "
             "provider error (an exhausted credit balance looks exactly like this)."
+        )
+
+    # Widespread *partial* loss, which the whole-panel test below cannot see. A
+    # run where a fifth of the agent calls failed is not a measurement of the
+    # reviewer, even if no single case lost all four: seen for real when credits
+    # ran out mid-run and 46 of 252 calls died across 63 cases, none of them
+    # taking a whole panel with it. The report printed recall 0.726 and a tests
+    # agent at 0.00 — which was eleven failed calls, not a silent specialist.
+    calls = len(results) * len(ALL_AGENTS)
+    lost = sum(len(r.failed_agents) for r in results)
+    if calls and lost / calls > DEGRADED_THRESHOLD:
+        raise EvalRunFailed(
+            f"{lost} of {calls} agent call(s) failed ({lost / calls:.0%}) — the panel was "
+            "degraded across the run, so the findings are whichever agents happened to "
+            "answer. Nothing was scored or saved. Check the worker log for the provider "
+            "error (an exhausted credit balance looks exactly like this)."
         )

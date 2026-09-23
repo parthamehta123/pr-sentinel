@@ -1606,3 +1606,63 @@ Eight negative controls in this file have now been found to contain something
 real. The pattern is no longer worth treating as a surprise: a case written to be
 unremarkable, by the person who also writes the labels, is unremarkable only
 until someone looks.
+
+## Re-baseline after the fixture and gate fixes — and a guard that missed
+
+One clean run and one that must not be read. Credits ran out during run 3, the
+retention fix kept what had completed, and **run 2 was already degraded when it
+was kept**. Unlabelled per run: 8, 2.
+
+| | run 1 (clean) | run 2 (degraded — do not read) |
+|---|---|---|
+| recall | **0.986** | 0.726 |
+| gate decision match | **1.000** | 0.950 |
+| failed agent calls | none | 46 of 252 |
+| tests agent recall | — | 0.00 |
+| cost | $5.38 | $4.07 |
+
+Run 2's "tests agent recall 0.00" was eleven failed calls, not a specialist with
+nothing to say. Its recall of 0.726 is the sound of a provider running out of
+money.
+
+### The guard that should have caught it
+
+`_refuse_if_everything_failed` only counted cases that lost their **whole** panel.
+Run 2 lost 46 of 252 individual agent calls spread across 63 cases without any
+single case losing all four, so it passed — and because the report renders the
+last run, that degraded run became the headline. This is the exact failure the
+guard was written for, stated in its own docstring: *a partial outage is more
+dangerous than a total one, because it looks like a measurement.* It was guarding
+one shape of partial and not the other.
+
+There is now a second threshold: more than 10% of individual agent calls failing
+refuses the run, whatever the distribution. Whole-panel loss is still checked
+first, because it is the more specific diagnosis and deserves its own message.
+Both are tested, including that a handful of stray failures still scores — a
+degraded result below the threshold is still a result.
+
+### What run 1 actually says
+
+| metric | before (3 runs) | run 1, after |
+|---|---|---|
+| recall | 0.986 [0.973–1.000] | 0.986 |
+| **gate decision match** | 0.900 [0.900–0.900] | **1.000** |
+| precision, lenient | 0.986 [0.986–0.986] | 0.986 |
+| precision, strict | 0.925 [0.920–0.934] | 0.890 |
+| category agreement | 0.924 [0.913–0.943] | 0.918 |
+| agent attribution | 0.962 [0.957–0.972] | 0.945 |
+
+**The gate reaches 1.000**, as predicted — though that prediction was close to a
+tautology: the two cases that were failing were the only two failing, both were
+repaired, and both were verified to suppress three times before this run started.
+It confirms the repairs took; it is not independent evidence of anything.
+
+Strict precision fell to 0.890, below the previous range, with unlabelled findings
+at 8 against 4.7. That is the one movement worth attention and **a single run
+cannot establish it** — the previous distribution spans 0.920–0.934 and one
+observation outside a range is what noise looks like from the inside. Two more
+clean runs would settle whether repairing the fixtures cost precision or whether
+this is the ordinary spread of a set that produces a handful of unlabelled
+findings per run.
+
+Nothing here is a baseline yet. One clean run is a reading, not a distribution.
