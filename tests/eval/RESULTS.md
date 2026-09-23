@@ -1415,6 +1415,37 @@ part is real, 1.000 flat versus 0.883 — but one run at the top of the prior ra
 is what noise looks like. Two more runs settle it; nothing here should be quoted
 until they exist.
 
+## Three-run with-bodies baseline — gate settled
+
+Runs 2–3 completed after a credit top-up (`baseline-63-withbodies-runs23.json`),
+combined with run 1 into `baseline-63-withbodies-3.json`. Per-run unlabelled
+counts: **5, 5, 4**.
+
+| metric | no body (3 runs) | with bodies (3 runs) |
+|---|---|---|
+| recall | 0.977 [0.973–0.986] | **0.986** [0.973–1.000] |
+| precision, strict | 0.899 [0.889–0.919] | **0.925** [0.920–0.934] |
+| precision, lenient | 0.982 [0.973–0.986] | 0.986 [0.986–0.986] |
+| false positives | 1.3 [1–2] | **1, 1, 1** |
+| unlabelled | 6.7 [5–8] | **4.7** [4–5] |
+| gate decision match | 0.883 [0.850–0.900] | **0.900, 0.900, 0.900** |
+
+**Did the gate improve?** Mean yes — 0.883 → 0.900 — and the distribution
+tightened: the 0.850 dip is gone. It did **not** rise above the prior ceiling
+(still 0.900), so this is recovery of consistency, not a new high. The same two
+disagreements appear on every run:
+
+```
+  neg-allowlisted-dynamic-sql      expected suppress  got escalate
+  neg-typescript-type-narrowing    expected suppress  got auto_post
+```
+
+`neg-dependency-bump` stays suppressed across all three — that was the
+empty-body escalation that actually moved. The remaining two are stable
+disputes with the authored intent, not unanchored noise.
+
+This three-run file is the comparable zero for anything measured with bodies.
+
 ### Unrelated change bundled in
 
 `tests/conftest.py` switched its environment setup from `setdefault` to forced
@@ -1422,3 +1453,47 @@ assignment, so a developer with a sourced `.env` no longer has a real
 `GITHUB_WEBHOOK_SECRET` leak into the webhook tests and 401 every happy path.
 That is a correct fix and it has nothing to do with pull request bodies; it is
 noted here so it is not mistaken later for part of this change.
+
+### With bodies, at three runs — one thing is demonstrated, the gate is not
+
+$10.51 for the two remaining runs; fixtures unchanged since the first, so the
+three combine into one distribution (`baseline-63-withbodies.json` plus
+`baseline-63-withbodies-runs23.json`).
+
+| metric | no body (3 runs) | with bodies (3 runs) |
+|---|---|---|
+| precision, strict | 0.899 [0.889–0.919] | **0.925 [0.920–0.934]** |
+| unlabelled | 6.7 [5–8] | 4.7 [4–5] |
+| recall | 0.977 [0.973–0.986] | 0.986 [0.973–1.000] |
+| precision, lenient | 0.982 [0.973–0.986] | 0.986 [0.986–0.986] |
+| false positives | 1.3 [1–2] | 1.0 [1–1] |
+| gate decision match | 0.883 [0.850–0.900] | 0.900 [0.900–0.900] |
+| category agreement | 0.915 [0.889–0.944] | 0.924 [0.913–0.943] |
+| agent attribution | 0.972 [0.958–0.985] | 0.962 [0.957–0.972] |
+
+**Strict precision separates cleanly**: 0.920–0.934 against 0.889–0.919, no
+overlap. Giving the panel a plausible statement of intent makes it say fewer
+things nobody has agreed are worth saying — unlabelled findings fall from 6.7 to
+4.7 per run, which is the same fact seen from the other side. That is the one
+result here that survives its own error bars.
+
+**The gate is not the result I claimed it would be.** It is flat at 0.900 across
+all three runs, against 0.883 [0.850–0.900] without bodies. The ranges overlap:
+0.900 is the top of the no-body range and every no-body run but one already hit
+it. What bodies demonstrably remove is the *variance* — the 0.850 run does not
+recur — and with n=3 on each side, one excursion out of three is not enough to
+call that real either.
+
+More to the point: **the gate does not come back.** It was a flat 1.000 when the
+summaries were leaking, and restoring author intent moves it to 0.900, not 1.000.
+So the perfect gate score was the leak, not the presence of a description. My
+"unanchored escalation" story explained part of something real — the panel does
+say less, more precisely, when told what a change is for — and it does not
+explain the gate, which I had presented as its main evidence.
+
+Recall, lenient precision, false positives, category agreement and attribution
+all overlap. Nothing there is demonstrated in either direction.
+
+**This three-run distribution is the reference baseline.** It is the first one
+measured with a prompt that is neither leaking the answer nor withholding the
+description a real pull request would carry.
