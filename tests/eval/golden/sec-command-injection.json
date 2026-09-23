@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Adds an export command that packs a named directory into a tarball under /exports.",
   "context_files": [],
   "expected": [
     {

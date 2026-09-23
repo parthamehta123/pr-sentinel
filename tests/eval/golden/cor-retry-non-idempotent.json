@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Retries flaky gateway calls. Applied to the charge path and the balance read.",
   "context_files": [
     {
       "content": "def charge(card_token, amount_cents):\n    \"\"\"POST /charges. NOT idempotent: each call creates a new charge.\n\n    The gateway supports an Idempotency-Key header; pass one to make retries safe.\n    \"\"\"\n    return _post(\"/charges\", {\"card\": card_token, \"amount\": amount_cents})\n\n\ndef get_charge(charge_id):\n    \"\"\"GET /charges/{id}. Safe to repeat.\"\"\"\n    return _get(f\"/charges/{charge_id}\")\n",

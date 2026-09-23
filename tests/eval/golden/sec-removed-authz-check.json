@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Speeds up bulk export by dropping the per-object ownership loop \u2014 callers are already authenticated.",
   "context_files": [
     {
       "content": "def require_owner(user, obj):\n    \"\"\"Raise Forbidden unless `user` owns `obj`. Every object read or mutation\n    of another tenant's data must go through this.\"\"\"\n    if obj.tenant_id != user.tenant_id:\n        raise Forbidden()\n",

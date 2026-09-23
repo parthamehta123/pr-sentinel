@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Tidy multipart Content-Type parsing; drop a redundant strip on the parameter value.",
   "context_files": [],
   "expected": [
     {

@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Tidies the invoice renderer \u2014 drops a redundant nil check that the type already covers.",
   "context_files": [
     {
       "content": "class Invoice:\n    \"\"\"`purchase_order` is optional: only set for customers on invoicing terms,\n    which is roughly one account in twenty.\"\"\"\n\n    purchase_order: \"str | None\"\n",

@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Narrows the event union with a discriminant so the cast can go. Types only.",
   "context_files": [],
   "expected": [],
   "expected_decision": "suppress",

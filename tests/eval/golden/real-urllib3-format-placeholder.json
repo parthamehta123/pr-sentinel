@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Shorten the LocationParseError message; the detail is already in the exception type.",
   "context_files": [],
   "expected": [
     {

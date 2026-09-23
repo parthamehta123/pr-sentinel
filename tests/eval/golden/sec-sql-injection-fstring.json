@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Adds a name/status search beside the existing id lookup so support can find customers without knowing the id.",
   "context_files": [
     {
       "content": "\"\"\"Thin database helpers used across the billing package.\"\"\"\n\n\ndef execute(sql, params=None):\n    \"\"\"Run a parameterised query. `params` must carry every caller value.\"\"\"\n    return _cursor.execute(sql, params)\n",

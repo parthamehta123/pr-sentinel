@@ -186,6 +186,24 @@ def test_the_report_serialises_to_json():
 # --- the golden set itself --------------------------------------------------
 
 
+def test_every_case_has_an_author_body_that_is_not_the_summary():
+    """Regression: empty bodies unanchor the gate; summaries as bodies leak the answer.
+
+    After the body leak closed, every case rendered "(no description)" and gate
+    decision match fell from a flat 1.000 to 0.900/0.900/0.850, mean 0.883,
+    mostly neg-* escalations at confidence 0.55 to 0.60. The
+    summary field is documentation for readers of cases.py and must never reach
+    the model (14 of them narrated the defect). Each case needs a written body:
+    what an author would plausibly say, without narrating the defect.
+    """
+    cases = load_cases()
+    assert cases
+    for case in cases:
+        assert case.body.strip(), f"{case.id}: empty body — panel sees '(no description)'"
+        assert case.body != case.summary, f"{case.id}: body equals summary — reintroduces the leak"
+        assert case.pull_request().body == case.body, f"{case.id}: PR body is not case.body"
+
+
 def test_the_golden_set_loads_and_is_not_trivial():
     cases = load_cases()
     assert len(cases) >= 12
@@ -940,3 +958,47 @@ def test_results_md_per_run_claims_match_the_recorded_runs():
             f"{path.name} has per-run unlabelled counts of '{triple}', "
             f"which RESULTS.md does not state anywhere"
         )
+
+
+def test_no_body_narrates_its_own_defect():
+    """A body must describe the change, not the bug hiding in it.
+
+    The summary leak was found by reading 63 summaries by hand. This is the same
+    check, computed: how much of each EXPECT note's vocabulary the body reuses. A
+    body that restates its label is handing the panel the answer, and the numbers
+    it produces then measure the fixture rather than the reviewer.
+
+    The threshold is loose on purpose. Real overlap is low — median 0.10 across
+    the set, with the highest legitimate case at 0.43 where the body states a
+    return-type change the diff shows anyway. This fires on a body that reuses
+    most of its label's wording, which is what narration looks like, not on one
+    that happens to name the same function.
+    """
+    import re
+
+    stop = set(
+        "the a an and or of to in is are for with that this it its on by as be we our "
+        "you can not no if then so at from will would should when where which what "
+        "into out up down over under also only just now new add adds added use uses "
+        "using make makes made set sets".split()
+    )
+
+    def terms(text: str) -> set[str]:
+        return {w for w in re.findall(r"[a-z_]{4,}", (text or "").lower())} - stop
+
+    worst: tuple[float, str] = (0.0, "")
+    for case in load_cases():
+        body = terms(case.body)
+        for label in case.expected:
+            note = terms(label.note)
+            if not note:
+                continue
+            overlap = len(body & note) / len(note)
+            if overlap > worst[0]:
+                worst = (overlap, f"{case.id} :: {label.note[:70]}")
+            assert overlap < 0.60, (
+                f"{case.id}: body reuses {overlap:.0%} of its label's wording — "
+                f"it is narrating the defect rather than describing the change.\n"
+                f"  body: {case.body}\n  note: {label.note}"
+            )
+    assert worst[0] > 0.0, "overlap never computed — the check is not running"

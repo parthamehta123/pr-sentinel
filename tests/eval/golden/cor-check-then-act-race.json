@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Per-tenant rate limiter so a noisy client cannot starve everyone else.",
   "context_files": [],
   "expected": [
     {

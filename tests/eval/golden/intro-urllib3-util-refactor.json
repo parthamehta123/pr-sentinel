@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Lift shared helpers into util.py so callers have one place to import from.",
   "context_files": [],
   "expected": [
     {

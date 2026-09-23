@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Stops shelling out for the archive step \u2014 list argv, name allowlisted, shell=False. Tests included.",
   "context_files": [],
   "expected": [],
   "expected_decision": null,

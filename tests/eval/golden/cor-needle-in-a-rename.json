@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Renames calc_* helpers to compute_* across the line-item package for consistency.",
   "context_files": [],
   "expected": [
     {

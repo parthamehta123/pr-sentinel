@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Batch helpers for the notifier \u2014 optional extra headers on send and on enqueue.",
   "context_files": [],
   "expected": [
     {

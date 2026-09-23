@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Keys the render cache on a digest of the template source plus context so identical inputs hit.",
   "context_files": [],
   "expected": [],
   "expected_decision": null,

@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Fix the rounding and drop the failing test that was asserting the old behaviour.",
   "context_files": [],
   "expected": [
     {

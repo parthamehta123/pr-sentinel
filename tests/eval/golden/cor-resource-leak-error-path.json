@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "CSV importer for partner catalogues. Rejects rows that fail validation before writing.",
   "context_files": [],
   "expected": [
     {

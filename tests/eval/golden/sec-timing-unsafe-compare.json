@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Adds AcmePay webhook verification alongside the existing Stripe helper.",
   "context_files": [],
   "expected": [
     {

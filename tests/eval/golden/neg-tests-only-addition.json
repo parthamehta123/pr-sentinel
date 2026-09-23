@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Adds unit tests for the existing discount rules. No production code changes.",
   "context_files": [
     {
       "content": "def discount_for(tier, subtotal):\n    \"\"\"Return the discount for `tier` on `subtotal`, as a Decimal.\"\"\"\n    return {\"gold\": Decimal(\"0.10\"), \"silver\": Decimal(\"0.05\")}.get(tier, Decimal(\"0\")) * subtotal\n",

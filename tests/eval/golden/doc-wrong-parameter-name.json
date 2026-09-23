@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Renames the pagination parameter from page to offset to match the rest of the API.",
   "context_files": [],
   "expected": [
     {

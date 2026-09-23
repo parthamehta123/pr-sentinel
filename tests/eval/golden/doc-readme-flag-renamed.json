@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Renames --workers to --concurrency to match the internal flag name.",
   "context_files": [],
   "expected": [
     {

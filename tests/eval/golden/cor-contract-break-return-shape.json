@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "lookup_user now returns a dict with email and role instead of a bare tuple, so callers get richer data.",
   "context_files": [
     {
       "content": "from users.lookup import lookup_user\n\n\ndef render_row(user_id):\n    \"\"\"Existing caller. Unpacks the tuple lookup_user has always returned.\"\"\"\n    name, email = lookup_user(user_id)\n    return f\"{name} <{email}>\"\n",

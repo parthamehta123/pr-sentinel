@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Simplify get_cookie \u2014 cookies is always a mapping after construction.",
   "context_files": [
     {
       "content": "    @property\n    def cookies(self):\n        \"\"\"A dictionary of Cookie.Morsel objects.\n\n        Set to None when the Cookie header is present but cannot be parsed, so\n        every consumer has to allow for that.\n        \"\"\"\n        if self._cookies is None:\n            return None\n        return self._cookies\n",

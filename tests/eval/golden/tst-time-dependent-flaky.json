@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Asserts the token is still valid inside the expiry window.",
   "context_files": [],
   "expected": [
     {

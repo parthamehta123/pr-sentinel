@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Run the size check on forked pull requests so external contributors get the same CI signal.",
   "context_files": [],
   "expected": [
     {

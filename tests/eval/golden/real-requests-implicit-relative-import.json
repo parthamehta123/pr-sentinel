@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Drop the leading dot from the adapters import; same module, cleaner form.",
   "context_files": [],
   "expected": [
     {

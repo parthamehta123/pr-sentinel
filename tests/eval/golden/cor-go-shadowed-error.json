@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Settlement writer for the end-of-day batch. Logs and continues on individual row failures.",
   "context_files": [],
   "expected": [
     {

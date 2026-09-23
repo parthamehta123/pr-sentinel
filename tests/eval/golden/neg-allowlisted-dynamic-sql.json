@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Lets the invoice list sort by a fixed set of columns. Sort keys are module literals only.",
   "context_files": [],
   "expected": [],
   "expected_decision": "suppress",

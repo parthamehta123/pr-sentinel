@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Covers the notification retry path with a patched sender.",
   "context_files": [
     {
       "content": "from notify.transport import deliver\n\n\ndef send_with_retry(message, attempts=3):\n    \"\"\"Note the `from ... import`: `deliver` is bound into this module's namespace\n    at import time, so patching `notify.transport.deliver` does not affect it.\"\"\"\n    for _ in range(attempts):\n        if deliver(message):\n            return True\n    return False\n",

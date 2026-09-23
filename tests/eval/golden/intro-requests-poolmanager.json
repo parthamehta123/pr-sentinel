@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "WHOOOOOOOOOOOOOOOO\n\nMid-refactor: move sending onto an HTTPAdapter and stop owning the PoolManager on Session.",
   "context_files": [],
   "expected": [
     {

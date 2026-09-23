@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Metrics push failures should not take down the request \u2014 catch and log, then continue.",
   "context_files": [],
   "expected": [
     {

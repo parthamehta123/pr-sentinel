@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Serves export files by name. Preview path reuses the same layout as download.",
   "context_files": [],
   "expected": [
     {

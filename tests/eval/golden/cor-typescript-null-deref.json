@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Simplifies the account banner now that the account payload is always present on this page.",
   "context_files": [
     {
       "content": "export interface Account {\n  id: string;\n  /** Absent until the customer completes onboarding. */\n  billingContact?: { name: string; email: string };\n}\n",

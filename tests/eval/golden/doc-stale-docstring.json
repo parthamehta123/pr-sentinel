@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Usage endpoint now returns a per-day breakdown instead of a single total.",
   "context_files": [],
   "expected": [
     {

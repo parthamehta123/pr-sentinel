@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Reads the tenant id from the bearer token without a round-trip to the key store.",
   "context_files": [],
   "expected": [
     {

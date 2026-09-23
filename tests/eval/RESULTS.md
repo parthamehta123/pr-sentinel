@@ -1269,7 +1269,7 @@ the case summary in the prompt.
 | precision, lenient | 1.000 | 0.982 *(0.973–0.986)* |
 | calibration error | 0.091 | **0.079** |
 | agent attribution | 0.946 | 0.958 |
-| gate decision match | 1.000 | **0.850** |
+| gate decision match | 1.000, 1.000, 1.000 | **0.900, 0.900, 0.850** *(mean 0.883)* |
 | false positives / run | 0 | 2 |
 | unlabelled / run | 2, 2, 0 | 8, 5, 7 |
 
@@ -1297,7 +1297,7 @@ claim.
 
 ### The gate regression is the more interesting result
 
-`gate decision match` fell from 1.000 to 0.850, and all three disagreements are
+`gate decision match` fell from a flat 1.000 to 0.900, 0.900, 0.850 — mean 0.883. (An earlier version of this section quoted the 0.850 alone, which is the last run's figure and not the result; the report prints the final run while the stability table omits this metric, and I read the headline instead of the distribution — the same error the per-run guard was added to catch.) On the last run all three disagreements are
 the same shape — a `neg-*` case expected to be suppressed and escalated instead:
 
 ```
@@ -1323,3 +1323,102 @@ the defect. Two cases have one already.
 Nothing above this section shares a prompt with anything below it. The leak
 closed and the labels changed in the same window, so the old strict-precision
 figures are not comparable either. This run is the new zero.
+
+## Author bodies for all 63 cases
+
+Every case now carries a written `body` — author-plausible intent, no defect
+narration. The two that already had one (`ctx-duplicate-index-migration`,
+`ctx-changed-default-breaks-caller`) are unchanged. A unit guard refuses empty
+bodies and refuses `body == summary`.
+
+This closes the "(no description)" unanchoring. It does **not** replace the
+nobodyleak baseline: the prompt changed again, so headline numbers above are
+still the wrong zero for anything measured with bodies.
+
+## Partial re-baseline with bodies — credits died on run 2
+
+Attempted `--repeat 3`. Anthropic credit balance hit zero mid-run 2; the outage
+guard discarded the incomplete run and kept run 1 (`baseline-63-withbodies.json`,
+~$5.21). **Not a three-run zero.** Directional only:
+
+| metric | nobodyleak (3-run mean / last) | with bodies (1 run) |
+|---|---|---|
+| recall | 0.977 *(0.971–0.986)* / 0.973 | 0.973 |
+| precision, strict | 0.899 / 0.889 | **0.920** |
+| precision, lenient | 0.982 / 0.973 | **0.986** |
+| calibration error | 0.079 / 0.072 | 0.071 |
+| gate decision match | 0.850 (last) · 0.900, 0.900, 0.850 | **0.900** |
+| false positives | 2 (last) | **1** |
+| unlabelled | 8, 5, 7 | **5** |
+
+Gate disagreements on the kept run:
+
+```
+  neg-allowlisted-dynamic-sql      expected suppress  got escalate   (0.65)
+  neg-typescript-type-narrowing    expected suppress  got auto_post  (0.74)
+```
+
+`neg-dependency-bump` no longer escalates — that was one of the three empty-body
+escalations. `neg-typescript-type-narrowing` still mismatches, but moved from
+escalate@0.58 to auto_post@0.74: the body ("Narrows the event union… Types only.")
+is being read, and the panel is now arguing with it rather than inventing severity
+from silence.
+
+Misses on the kept run: `doc-misleading-name` (still), and `sec-command-injection`
+as a correctness/logic reading of unquoted interpolation (the security label is
+elsewhere — family matching may still score the injection finding as a hit; this
+miss is the secondary label).
+
+**Needs a full three-run re-baseline once credits are topped up** (~$15). Until
+then, do not treat `baseline-63-withbodies.json` as the comparable zero.
+
+### Auditing the written bodies, and what the single run does not show
+
+All 63 cases now carry an author-plausible `body`. Audited rather than assumed,
+because an LLM-written body narrating the defect would reinstate the exact leak
+that was just closed:
+
+- **Term overlap between each body and its own `EXPECT` note**, which is what
+  leakage looks like mechanically. Median **0.100**. The highest, 0.43, is
+  `cor-contract-break-return-shape`, whose body says the return type went from a
+  tuple to a dict — which the diff shows anyway. Nothing narrates a consequence.
+- **The bodies that read closest to the defect are the realistic ones.**
+  `sec-removed-authz-check` says "dropping the per-object ownership loop —
+  callers are already authenticated", which is the authn/authz conflation a
+  reviewer is supposed to catch, in the author's own voice. That is what a bad
+  pull request actually looks like. `sec-jwt-unverified` and
+  `sec-verbose-error-leak` do the same: they state an unwise intent rather than
+  admit a bug.
+
+The bodies are sound. **The single run that followed does not demonstrate
+anything.**
+
+| metric | no body (3 runs) | with bodies (1 run) |
+|---|---|---|
+| recall | 0.977 [0.973–0.986] | 0.973 |
+| precision, strict | 0.899 [0.889–0.919] | 0.920 |
+| precision, lenient | 0.982 [0.973–0.986] | 0.986 |
+| false positives | 1.3 [1–2] | 1 |
+| unlabelled | 6.7 [5–8] | 5 |
+| gate decision match | 0.883 [0.850–0.900] | 0.900 |
+| category agreement | 0.915 [0.889–0.944] | 0.913 |
+| agent attribution | 0.972 [0.958–0.985] | 0.957 |
+
+**Every figure lands inside the no-body spread.** Strict precision is a hair above
+(0.920 against a 0.919 maximum) and attribution a hair below; neither is a result.
+The gate's 0.900 is exactly the best of the three no-body runs, not an improvement
+on them.
+
+So the "restoring intent recovers the gate" story is unsupported. It remains the
+best available explanation of why the gate fell when bodies were removed — that
+part is real, 1.000 flat versus 0.883 — but one run at the top of the prior range
+is what noise looks like. Two more runs settle it; nothing here should be quoted
+until they exist.
+
+### Unrelated change bundled in
+
+`tests/conftest.py` switched its environment setup from `setdefault` to forced
+assignment, so a developer with a sourced `.env` no longer has a real
+`GITHUB_WEBHOOK_SECRET` leak into the webhook tests and 401 every happy path.
+That is a correct fix and it has nothing to do with pull request bodies; it is
+noted here so it is not mistaken later for part of this change.

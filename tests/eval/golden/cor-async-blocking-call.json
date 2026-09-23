@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Fetches plan limits during request handling so the UI can show remaining quota.",
   "context_files": [],
   "expected": [
     {

@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Assign the parsed Location once and reuse it for the header.",
   "context_files": [
     {
       "content": ".. attribute:: HTTPMove.location\n\n   The location the response redirects to, **as the string it was constructed\n   with**. Application code compares it against configured strings and passes it\n   to ``str.startswith``.\n",

@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Reporting exporters for CSV, JSON, and PDF. Public entry points for each format.",
   "context_files": [
     {
       "content": "\"\"\"The only existing exporter test in the repository.\"\"\"\n\n\ndef test_csv_header_matches_columns():\n    assert csv_header([\"a\", \"b\"]) == \"a,b\"\n",

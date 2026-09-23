@@ -46,6 +46,7 @@ case(
     id="sec-sql-injection-fstring",
     title="Add customer lookup endpoint",
     summary="An f-string SQL query one line below a correctly parameterised one.",
+    body="Adds a name/status search beside the existing id lookup so support can find customers without knowing the id.",
     expected_decision="escalate",
     context={
         "billing/db.py": '''"""Thin database helpers used across the billing package."""
@@ -86,6 +87,7 @@ case(
     id="sec-missing-authz",
     title="Allow updating a saved payment method",
     summary="An endpoint that loads an object by id and mutates it without checking ownership.",
+    body="Lets a signed-in user update the payment method they have saved on file.",
     expected_decision="escalate",
     context={
         "api/auth.py": '''def current_user(request):
@@ -138,6 +140,7 @@ case(
     id="sec-hardcoded-credential",
     title="Wire up the payments client",
     summary="A credential-shaped literal committed to source, plus a fake one in a test fixture.",
+    body="Wires the AcmePay client so charges can go out. Includes a test fixture for the payments suite.",
     expected_decision="escalate",
     before={
         "billing/acmepay_client.py": """import os
@@ -180,6 +183,7 @@ case(
     id="sec-weak-password-hash",
     title="Add a password reset path",
     summary="MD5 used for password storage; SHA-256 used correctly for a file checksum.",
+    body="Adds a password-reset hashing helper next to the existing password hash, plus a file checksum utility.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "auth/passwords.py": """import bcrypt
@@ -217,6 +221,7 @@ case(
     id="sec-command-injection",
     title="Add an archive export command",
     summary="subprocess with shell=True and an interpolated user-supplied name.",
+    body="Adds an export command that packs a named directory into a tarball under /exports.",
     expected_decision="escalate",
     before={
         "export/archive.py": """import subprocess
@@ -247,6 +252,7 @@ case(
     id="sec-ssrf-webhook-url",
     title="Let customers register a webhook target",
     summary="A caller-supplied URL fetched server-side with no allowlist or scheme check.",
+    body="Lets tenants register a URL we POST events to when their invoice status changes.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "integrations/webhooks.py": """import requests
@@ -290,6 +296,7 @@ def verify_endpoint(url):
 case(
     id="cor-contract-break-return-shape",
     title="Return richer data from lookup_user",
+    body="lookup_user now returns a dict with email and role instead of a bare tuple, so callers get richer data.",
     summary=(
         "Return type changes from a tuple to a dict. An existing caller still unpacks it, "
         "and the docstring above still describes the old shape."
@@ -329,6 +336,7 @@ case(
     id="cor-bare-except",
     title="Make the metrics push non-fatal",
     summary="A bare except that also swallows KeyboardInterrupt and SystemExit.",
+    body="Metrics push failures should not take down the request — catch and log, then continue.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "telemetry/push.py": """def push_metrics(payload):
@@ -350,6 +358,7 @@ case(
     id="cor-off-by-one-pagination",
     title="Add pagination to the export endpoint",
     summary="A slice that drops the last record on every page.",
+    body="Pages the export endpoint so large tenants are not dumped in one response.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "export/pages.py": """PAGE_SIZE = 100
@@ -382,6 +391,7 @@ case(
     id="cor-resource-leak-error-path",
     title="Add a CSV importer",
     summary="A file handle that leaks on the validation-failure path.",
+    body="CSV importer for partner catalogues. Rejects rows that fail validation before writing.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "importer/csv_import.py": """import csv
@@ -419,6 +429,7 @@ case(
     id="cor-check-then-act-race",
     title="Add a per-tenant rate limiter",
     summary="Check-then-act on shared state across an await.",
+    body="Per-tenant rate limiter so a noisy client cannot starve everyone else.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "limits/ratelimit.py": """import asyncio
@@ -468,6 +479,7 @@ case(
     id="tst-untested-error-branch",
     title="Reject expired coupons",
     summary="A new error branch; the test added in the same PR only covers the happy path.",
+    body="Reject coupons past their expiry. Happy-path test included.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "billing/coupons.py": """def apply_coupon(order, coupon):
@@ -506,6 +518,7 @@ case(
     id="tst-assertion-free-test",
     title="Add tests for the invoice renderer",
     summary="One test asserts on a mock instead of behaviour; another asserts nothing at all.",
+    body="Tests for the invoice renderer — covers the mock path and the blank-invoice case.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "tests/test_invoice.py": """def test_renders_total():
@@ -540,6 +553,7 @@ case(
     id="doc-stale-docstring",
     title="Return usage broken down by day",
     summary="The implementation changes; the docstring above it now describes something else.",
+    body="Usage endpoint now returns a per-day breakdown instead of a single total.",
     expected_decision=None,  # depends on model confidence, not on the case
     before={
         "usage/report.py": '''def monthly_usage(account_id):
@@ -566,6 +580,7 @@ case(
 case(
     id="neg-clean-extract-method",
     title="Extract the discount calculation",
+    body="Pulls the discount calculation into its own helper with a docstring and a unit test. Behaviour unchanged.",
     summary=(
         "A pure refactor with a test and a docstring. Any finding here is a false "
         "positive, and this case is the one that stops the set rewarding noise."
@@ -624,6 +639,7 @@ def test_standard_customers_get_nothing():
 case(
     id="tst-repeated-coverage-gap",
     title="Add the reporting exporters",
+    body="Reporting exporters for CSV, JSON, and PDF. Public entry points for each format.",
     summary=(
         "Six new public functions across three files, none tested. One comment "
         "naming the gap is the right review; six comments is the failure mode."
@@ -726,6 +742,7 @@ case(
     id="sec-path-traversal",
     title="Serve export files by name",
     summary="One handler normalises and confines the path; the one added next to it does not.",
+    body="Serves export files by name. Preview path reuses the same layout as download.",
     expected_decision="escalate",
     before={
         "exports/serve.py": """import os
@@ -779,6 +796,7 @@ case(
     id="sec-timing-unsafe-compare",
     title="Add a second webhook provider",
     summary="A signature compared with ==, one line below one compared with compare_digest.",
+    body="Adds AcmePay webhook verification alongside the existing Stripe helper.",
     # Labelled >=major, so the gate's critical-security rule cannot fire and the
     # outcome turns on the model's severity rating. Not structurally determined.
     expected_decision=None,
@@ -816,6 +834,7 @@ case(
     id="sec-jwt-unverified",
     title="Read the tenant id straight from the token",
     summary="Signature verification disabled to avoid a key lookup.",
+    body="Reads the tenant id from the bearer token without a round-trip to the key store.",
     expected_decision="escalate",
     before={
         "auth/tokens.py": """import jwt
@@ -849,6 +868,7 @@ case(
     id="sec-terraform-public-bucket",
     title="Add the public assets bucket",
     summary="Terraform, not Python. One bucket is deliberately public; the next is not meant to be.",
+    body="Public assets bucket for the marketing site, next to the existing private one.",
     expected_decision="escalate",
     before={
         "infra/storage.tf": """resource "aws_s3_bucket" "assets" {
@@ -898,6 +918,7 @@ case(
     id="sec-cors-wildcard-credentials",
     title="Open CORS for the new dashboard",
     summary="TypeScript. Wildcard origin combined with credentials.",
+    body="Opens CORS so the new dashboard origin can call the API with cookies.",
     expected_decision="escalate",
     before={
         "api/src/cors.ts": """import cors from "cors";
@@ -937,6 +958,7 @@ case(
     id="cor-async-blocking-call",
     title="Fetch the tenant plan during request handling",
     summary="A synchronous HTTP call inside an async handler, beside an awaited one.",
+    body="Fetches plan limits during request handling so the UI can show remaining quota.",
     expected_decision=None,
     before={
         "api/plans.py": """import httpx
@@ -971,6 +993,7 @@ case(
     id="cor-mutable-default-arg",
     title="Add batch helpers to the notifier",
     summary="A mutable default argument next to a correct None default.",
+    body="Batch helpers for the notifier — optional extra headers on send and on enqueue.",
     expected_decision=None,
     before={
         "notify/batch.py": """def send(recipients, extra_headers=None):
@@ -1001,6 +1024,7 @@ case(
     id="cor-retry-non-idempotent",
     title="Retry flaky gateway calls",
     summary="A retry decorator applied to a charge, and correctly applied to a read.",
+    body="Retries flaky gateway calls. Applied to the charge path and the balance read.",
     expected_decision=None,
     context={
         "billing/gateway.py": '''def charge(card_token, amount_cents):
@@ -1049,6 +1073,7 @@ case(
     id="cor-timezone-naive-comparison",
     title="Expire stale invitations",
     summary="A naive datetime compared against an aware one.",
+    body="Expires invitations that have sat unused past the cutoff.",
     expected_decision=None,
     context={
         "models/invite.py": '''class Invite:
@@ -1087,6 +1112,7 @@ case(
     id="cor-typescript-null-deref",
     title="Simplify the account banner",
     summary="TypeScript. Optional chaining removed from a value that is genuinely optional.",
+    body="Simplifies the account banner now that the account payload is always present on this page.",
     expected_decision=None,
     context={
         "web/src/types.ts": """export interface Account {
@@ -1125,6 +1151,7 @@ export function contactEmail(account: Account): string {
 case(
     id="tst-mock-patches-wrong-target",
     title="Test the notification retry path",
+    body="Covers the notification retry path with a patched sender.",
     summary=(
         "A test that patches where the symbol is defined rather than where it is "
         "looked up, so the real function still runs and the test proves nothing."
@@ -1168,6 +1195,7 @@ case(
     id="tst-time-dependent-flaky",
     title="Test the token expiry window",
     summary="A test that will fail at a midnight boundary and pass every other time.",
+    body="Asserts the token is still valid inside the expiry window.",
     expected_decision=None,
     before={
         "tests/test_tokens.py": """from datetime import datetime, timedelta, timezone
@@ -1201,6 +1229,7 @@ case(
     id="doc-wrong-parameter-name",
     title="Rename the pagination parameter",
     summary="The parameter is renamed; the docstring documenting it is not.",
+    body="Renames the pagination parameter from page to offset to match the rest of the API.",
     expected_decision=None,
     before={
         "api/listing.py": '''def list_invoices(tenant_id, page_size=50, cursor=None):
@@ -1240,6 +1269,7 @@ def list_invoices(tenant_id, limit=50, cursor=None):
 case(
     id="neg-tests-only-addition",
     title="Add tests for the discount rules",
+    body="Adds unit tests for the existing discount rules. No production code changes.",
     summary=(
         "A pull request that only adds good tests to existing, unchanged code. "
         "Every agent should be silent; the tests agent especially."
@@ -1285,6 +1315,7 @@ def test_zero_subtotal_is_zero_discount():
 case(
     id="neg-typescript-type-narrowing",
     title="Narrow the event union",
+    body="Narrows the event union with a discriminant so the cast can go. Types only.",
     summary=(
         "TypeScript. A discriminated-union refactor that removes a cast and makes "
         "the code safer. Any finding here is a false positive."
@@ -1324,6 +1355,7 @@ export function describe(event: Event): string {
 case(
     id="neg-dependency-bump",
     title="Bump httpx and record it",
+    body="Bump httpx to the latest patch and note it in the changelog.",
     summary=(
         "A routine dependency bump with a changelog entry. Nothing to review, and "
         "the docs agent in particular should not invent something."
@@ -1365,6 +1397,7 @@ case(
     id="doc-readme-flag-renamed",
     title="Rename the --workers flag",
     summary="The CLI flag is renamed; the README still documents the old one.",
+    body="Renames --workers to --concurrency to match the internal flag name.",
     expected_decision=None,
     before={
         "cli.py": """import argparse
@@ -1415,6 +1448,7 @@ case(
     id="doc-misleading-name",
     title="Add a cached lookup helper",
     summary="A get_* that mutates, alongside a get_* that does not.",
+    body="Adds get_tenant_fresh for callers that need a live fetch into the shared cache.",
     expected_decision=None,
     before={
         "cache/lookup.py": """_CACHE = {}
@@ -1557,6 +1591,7 @@ def sync_partner_catalogue():
 case(
     id="neg-allowlisted-dynamic-sql",
     title="Allow sorting the invoice list",
+    body="Lets the invoice list sort by a fixed set of columns. Sort keys are module literals only.",
     summary=(
         "Dynamic SQL built by string formatting — and correct, because the only "
         "interpolated values are literals the module owns. Documented, validated "
@@ -1624,6 +1659,7 @@ def test_rejects_an_unknown_sort_key():
 case(
     id="trap-subprocess-list-args",
     title="Stop shelling out for the archive step",
+    body="Stops shelling out for the archive step — list argv, name allowlisted, shell=False. Tests included.",
     summary=(
         "A refactor away from shell=True to a list argv, with the archive name "
         "allowlisted. It reads as command execution and is in fact the fix for one."
@@ -1680,6 +1716,7 @@ def test_rejects_a_traversing_name():
 case(
     id="trap-md5-for-cache-key",
     title="Key the render cache by template digest",
+    body="Keys the render cache on a digest of the template source plus context so identical inputs hit.",
     summary=(
         "MD5, used to key a cache. Not a password, not a signature, not integrity "
         "against an adversary. Flagging it is the reflex this case exists to catch."
@@ -1752,6 +1789,7 @@ case(
     id="sec-removed-authz-check",
     title="Speed up the bulk export endpoint",
     summary="An ownership check deleted for performance. Critical: the control is gone.",
+    body="Speeds up bulk export by dropping the per-object ownership loop — callers are already authenticated.",
     expected_decision="escalate",
     context={
         "api/auth.py": '''def require_owner(user, obj):
@@ -1790,6 +1828,7 @@ def bulk_export(request, report_ids):
 case(
     id="sec-missing-rate-limit",
     title="Drop the limiter from the password reset endpoint",
+    body="Removes the per-hour limiter from password reset; the email provider already throttles.",
     summary=(
         "A rate limit removed. Real, and `major` rather than `critical`: it makes "
         "an attack cheaper without granting anyone access."
@@ -1819,6 +1858,7 @@ case(
     id="sec-verbose-error-leak",
     title="Return the exception text to help debugging",
     summary="Internals leaked to the client. Real, and `major`, not `critical`.",
+    body="Returns the exception text on 500s so on-call can see what failed without SSHing in.",
     expected_decision=None,
     before={
         "api/errors.py": """import logging
@@ -1852,6 +1892,7 @@ def handle(exc):
 case(
     id="sec-workflow-pull-request-target",
     title="Run the size check on forked pull requests",
+    body="Run the size check on forked pull requests so external contributors get the same CI signal.",
     summary=(
         "GitHub Actions. `pull_request_target` runs with repository secrets and "
         "this checks out the fork's code before running it."
@@ -1898,6 +1939,7 @@ case(
     id="cor-go-shadowed-error",
     title="Add the settlement writer",
     summary="Go. An error shadowed inside an if-scope, so the failure is dropped.",
+    body="Settlement writer for the end-of-day batch. Logs and continues on individual row failures.",
     expected_decision=None,
     before={
         "internal/ledger/write.go": """package ledger
@@ -1944,6 +1986,7 @@ case(
     id="cor-removed-null-guard",
     title="Tidy up the invoice renderer",
     summary="A guard removed during cleanup, on a field that is genuinely optional.",
+    body="Tidies the invoice renderer — drops a redundant nil check that the type already covers.",
     expected_decision=None,
     context={
         "models/invoice.py": '''class Invoice:
@@ -1976,6 +2019,7 @@ case(
     id="tst-deleted-test-with-fix",
     title="Fix the rounding and drop the failing test",
     summary="The test that would have caught the change is deleted in the same commit.",
+    body="Fix the rounding and drop the failing test that was asserting the old behaviour.",
     expected_decision=None,
     before={
         "tests/test_rounding.py": """from decimal import Decimal
@@ -2059,6 +2103,7 @@ def _rename_module(prefix: str, threshold_op: str) -> str:
 case(
     id="cor-needle-in-a-rename",
     title="Rename the line-item calculators",
+    body="Renames calc_* helpers to compute_* across the line-item package for consistency.",
     summary=(
         "Forty functions renamed from calc_* to compute_*, and one comparison "
         "flipped along the way. The review where a defect actually gets missed."
@@ -2092,6 +2137,7 @@ case(
 case(
     id="real-tornado-cookie-none-guard",
     title="Simplify get_cookie",
+    body="Simplify get_cookie — cookies is always a mapping after construction.",
     summary=(
         "Drops the None check on request.cookies. Inverted from the fix for a "
         "crash on a malformed Cookie header."
@@ -2133,6 +2179,7 @@ case(
 case(
     id="real-tornado-multipart-boundary",
     title="Tidy the multipart content-type parsing",
+    body="Tidy multipart Content-Type parsing; drop a redundant strip on the parameter value.",
     summary=(
         "Drops a .strip() while parsing content-type parameters. Inverted from "
         "the fix for multipart/form-data bodies silently not being parsed."
@@ -2165,6 +2212,7 @@ case(
 case(
     id="real-urllib3-format-placeholder",
     title="Shorten the parse error message",
+    body="Shorten the LocationParseError message; the detail is already in the exception type.",
     summary=(
         "A format placeholder left without its argument. Inverted from the fix "
         "that added the url to the message."
@@ -2205,6 +2253,7 @@ case(
 case(
     id="real-aiohttp-stream-single-wait",
     title="Simplify the stream read wait",
+    body="Simplify the stream read wait — one wake is enough when the waiter is set.",
     summary=(
         "A while loop turned into a single if. Inverted from the fix for reads "
         "returning empty when the waiter is woken without data."
@@ -2251,6 +2300,7 @@ case(
 case(
     id="real-aiohttp-location-attribute-type",
     title="Assign the parsed location once",
+    body="Assign the parsed Location once and reuse it for the header.",
     summary=(
         "A public attribute changes from the string it was given to a URL "
         "object. Inverted from the fix that put it back."
@@ -2296,6 +2346,7 @@ case(
 case(
     id="real-requests-implicit-relative-import",
     title="Drop the leading dot from the adapters import",
+    body="Drop the leading dot from the adapters import; same module, cleaner form.",
     summary=("An implicit relative import. Inverted from the fix that made it explicit."),
     provenance="psf/requests#1011 (Apache-2.0) — 'Fixed relative import'",
     expected_decision=None,
@@ -2358,6 +2409,7 @@ def merge_kwargs(local_kwarg, default_kwarg):
 case(
     id="cve-jupyter-referer-token-log",
     title="Log the request headers on a 5xx",
+    body="Log Host/Accept/Referer/User-Agent on 5xx so we can see what the client sent.",
     summary=(
         "Logs the Referer verbatim. Inverted from the fix for a token-bearing "
         "Referer being written to the log."
@@ -2403,6 +2455,7 @@ case(
 case(
     id="cve-scrapy-s3-plaintext-default",
     title="Simplify the S3 scheme selection",
+    body="Simplify S3 scheme selection to a single ternary on is_secure.",
     summary=(
         "A scheme that defaults to plaintext when the flag is absent. Inverted "
         "from the fix for signed S3 requests going over HTTP."
@@ -2434,6 +2487,7 @@ case(
 case(
     id="cve-mdc-xss-xlink-href",
     title="Trim the sanitiser's attribute list",
+    body="Trim the sanitiser attribute list — drop rarely used SVG attributes we do not need.",
     summary=(
         "Drops xlinkhref from the sanitised attributes. Inverted from the fix "
         "for XSS through SVG xlink:href in untrusted markdown."
@@ -2481,6 +2535,7 @@ export const unsafeLinkPrefix = ['javascript:', 'data:text/html', 'vbscript:']
 case(
     id="cve-zot-delete-maps-to-push",
     title="Collapse the method-to-action mapping",
+    body="Collapse method-to-action mapping: reads pull, everything else push.",
     summary=(
         "Every non-read method maps to push. Inverted from the fix for a push "
         "token being accepted for DELETE."
@@ -2535,6 +2590,7 @@ case(
 case(
     id="cve-perses-unvalidated-project-path",
     title="Skip the project name validation",
+    body="Skip the project-name identifier check; the path join already scopes under the folder root.",
     summary=(
         "Drops the identifier check on a query parameter that becomes a "
         "filesystem path. Inverted from the fix for path traversal."
@@ -2585,6 +2641,7 @@ func (d *DAO) buildPath(project string, kind string) string {
 case(
     id="cve-rclone-declared-length-allocation",
     title="Pre-reserve the multipart buffer",
+    body="Pre-reserve the multipart buffer from Content-Length so the MD5 pass does not grow page by page.",
     summary=(
         "Allocates from a client-declared length before reading the body. "
         "Inverted from the fix for memory exhaustion."
@@ -2644,6 +2701,7 @@ case(
 case(
     id="intro-tornado-multipart",
     title="Don't assume 'boundary' is last field in Content-Type header",
+    body="Don't assume 'boundary' is the last field in the Content-Type header — scan all parameters.",
     summary=(
         "The real commit, unedited. It is itself a bug fix — it stops assuming "
         "boundary comes last — and it introduced a new bug that took three days "
@@ -2661,6 +2719,7 @@ case(
 case(
     id="intro-urllib3-util-refactor",
     title="Refactor helpers into util.py",
+    body="Lift shared helpers into util.py so callers have one place to import from.",
     summary=(
         "The real commit, unedited: a new 125-line module lifted out of several "
         "others. One line in it carries a format placeholder with no argument. "
@@ -2677,6 +2736,9 @@ case(
 case(
     id="intro-requests-poolmanager",
     title="WHOOOOOOOOOOOOOOOO",
+    body="""WHOOOOOOOOOOOOOOOO
+
+Mid-refactor: move sending onto an HTTPAdapter and stop owning the PoolManager on Session.""",
     summary=(
         "The real commit, unedited, commit message and all: mid-refactor work in "
         "progress that moves sending onto an adapter. The bad import is one line "
@@ -2694,6 +2756,7 @@ case(
 case(
     id="intro-tornado-cookies-move",
     title="Move 'cookies' property from RequestHandler to HTTPRequest",
+    body="Move the cookies property from RequestHandler onto HTTPRequest so request-level code can read them directly.",
     summary=(
         "The real commit, unedited, and the hardest of the four: a two-file move. "
         "The defective line is in httpserver.py, the code it breaks is in web.py, "

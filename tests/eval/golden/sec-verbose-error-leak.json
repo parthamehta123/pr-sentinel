@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Returns the exception text on 500s so on-call can see what failed without SSHing in.",
   "context_files": [],
   "expected": [
     {

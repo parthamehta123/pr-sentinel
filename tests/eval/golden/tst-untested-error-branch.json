@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Reject coupons past their expiry. Happy-path test included.",
   "context_files": [],
   "expected": [
     {

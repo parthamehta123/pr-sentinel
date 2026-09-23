@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Pulls the discount calculation into its own helper with a docstring and a unit test. Behaviour unchanged.",
   "context_files": [],
   "expected": [],
   "expected_decision": "suppress",

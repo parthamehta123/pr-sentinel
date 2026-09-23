@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Adds get_tenant_fresh for callers that need a live fetch into the shared cache.",
   "context_files": [],
   "expected": [
     {

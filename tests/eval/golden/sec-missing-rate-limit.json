@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Removes the per-hour limiter from password reset; the email provider already throttles.",
   "context_files": [],
   "expected": [
     {

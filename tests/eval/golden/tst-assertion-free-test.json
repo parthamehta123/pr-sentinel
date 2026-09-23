@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Tests for the invoice renderer \u2014 covers the mock path and the blank-invoice case.",
   "context_files": [],
   "expected": [
     {

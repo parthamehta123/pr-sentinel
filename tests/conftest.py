@@ -4,16 +4,17 @@ import os
 
 import pytest
 
-# Set before anything imports Settings — pydantic-settings reads the environment
-# at construction and the result is cached for the process.
-os.environ.setdefault("LLM_PROVIDER", "echo")
-os.environ.setdefault("GITHUB_WEBHOOK_SECRET", "unit-test-secret")
-os.environ.setdefault("EMBEDDING_PROVIDER", "hash")
+# Force — do not setdefault. Developers with a sourced .env otherwise keep their
+# real GITHUB_WEBHOOK_SECRET / LLM_PROVIDER, and the webhook tests sign with
+# "unit-test-secret" against a different verifier key (401 on every happy path).
+os.environ["LLM_PROVIDER"] = "echo"
+os.environ["GITHUB_WEBHOOK_SECRET"] = "unit-test-secret"
+os.environ["EMBEDDING_PROVIDER"] = "hash"
 # EMBEDDING_DIM is deliberately NOT forced here. It has to stay in agreement with
 # the vector(N) column the migrations create, and a test-only override is exactly
 # how that contract silently breaks. Tests that want a small vector construct the
 # embedder with an explicit dimension.
-os.environ.setdefault("APP_ENV", "dev")
+os.environ["APP_ENV"] = "dev"
 
 from pr_sentinel.config import get_settings
 from pr_sentinel.domain.models import DiffFile, PullRequestContext

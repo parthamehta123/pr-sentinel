@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Bump httpx to the latest patch and note it in the changelog.",
   "context_files": [],
   "expected": [],
   "expected_decision": "suppress",

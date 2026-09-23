@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Move the cookies property from RequestHandler onto HTTPRequest so request-level code can read them directly.",
   "context_files": [],
   "expected": [
     {

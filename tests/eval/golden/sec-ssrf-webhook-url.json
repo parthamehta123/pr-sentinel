@@ -1,5 +1,5 @@
 {
-  "body": "",
+  "body": "Lets tenants register a URL we POST events to when their invoice status changes.",
   "context_files": [],
   "expected": [
     {
