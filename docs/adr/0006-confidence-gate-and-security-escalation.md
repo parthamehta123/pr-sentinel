@@ -20,8 +20,10 @@ A gate with a strict precedence order:
 1. Budget exhausted → escalate.
 2. Any agent failed → escalate.
 3. Any **critical security** finding → escalate, never post, priority 1.
-4. Overall confidence below `AUTO_POST_CONFIDENCE` → escalate.
-5. Otherwise → post, but only findings above `FINDING_POST_CONFIDENCE`.
+4. Nothing clears both posting bars → suppress. *(Amended 2026-09-24; this rule
+   was originally fifth, below the confidence test.)*
+5. Overall confidence below `AUTO_POST_CONFIDENCE` → escalate.
+6. Otherwise → post, but only findings above `FINDING_POST_CONFIDENCE`.
 
 Two thresholds rather than one: the first governs the review, the second governs
 each finding, so a confident review can still withhold its weakest observations
@@ -85,3 +87,38 @@ grows rather than assuming it stays small.
 A private repository with a security team already in the loop might reasonably
 post critical findings directly — `ESCALATE_CRITICAL_SECURITY=false` exists for
 that, and it defaults to on because the failure is asymmetric.
+
+## Amendment, 2026-09-24 — suppress is checked before low confidence
+
+The original order tested "overall confidence is low" before "nothing is worth
+posting". That made the gate behave backwards on trivia:
+
+- a **confident** trivial finding suppressed, and
+- an **uncertain** trivial finding escalated.
+
+Low overall confidence is the *normal* state of a review that found only weak
+signals, so the effect was to spend a human on the pull requests with least to
+say — precisely the noise failure rules 1 through 5 exist to prevent. It surfaced
+on `neg-allowlisted-dynamic-sql`: one test-coverage remark at confidence 0.55,
+nothing clearing the posting bars, and a human summoned to look at it.
+
+The principle is that escalation *routes a finding to a person*. With nothing that
+clears the bars there is nothing to route, and escalating asserts "look at this"
+about no content. Suppress is therefore checked first.
+
+**This is adopted on the argument, not on a measurement.** Every recorded gate
+decision was recomputed offline under four candidate orderings — free, and it
+reproduces the live gate exactly — and the reorder changes one decision in one run
+of three. The eval does not demonstrate it and is not claimed to.
+
+Note also what the reorder does *not* fix. `neg-allowlisted-dynamic-sql` merely
+moves from `escalate` to `auto_post`, because no defensible gate stays silent
+about a finding the eval's own `PERMITTED_CONCERNS` policy declares legitimate
+everywhere. That case was failing because the fixture was wrong — it guarded both
+`sort` and `direction` while testing only `sort`, so "no test rejects an invalid
+direction" was simply true. The gate metric had been reporting a broken fixture,
+not a broken gate.
+
+The unit test covering rule 5 was asserting two things at once, using a finding
+that was itself below the posting bar; it is now split into the two behaviours it
+was conflating.

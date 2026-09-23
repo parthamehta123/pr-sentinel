@@ -13,3 +13,4 @@ an ADR worth writing rather than a paragraph in a design doc.
 | [0005](0005-per-agent-model-routing.md) | A provider seam and per-agent model routing | Accepted |
 | [0006](0006-confidence-gate-and-security-escalation.md) | The confidence gate, and never posting critical security findings | Accepted |
 | [0007](0007-feedback-requires-minimum-evidence.md) | Feedback is recorded but never acted on alone | Accepted |
+| [0008](0008-genesis-kit-is-not-a-dependency.md) | Genesis Kit is not a dependency; three of its diagnoses are | Accepted |
