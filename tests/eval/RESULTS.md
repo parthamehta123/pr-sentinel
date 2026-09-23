@@ -1271,7 +1271,7 @@ the case summary in the prompt.
 | agent attribution | 0.946 | 0.958 |
 | gate decision match | 1.000 | **0.850** |
 | false positives / run | 0 | 2 |
-| unlabelled / run | 1.3 | 7 |
+| unlabelled / run | 2, 2, 0 | 8, 5, 7 |
 
 **Recall dropped below 1.000 for the first time, with a real spread.** After many
 runs pinned at a ceiling, the set can now report a regression.
