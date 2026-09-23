@@ -1256,3 +1256,70 @@ any defect anchored to one will be "found" whatever the panel actually noticed.
 The fix is either a defect on a boring line, or a matcher that demands the
 labelled concern rather than its family — and the second would undo an earlier
 fix for good reasons, so the first is the one to try.
+
+## Re-baseline with the body leak closed — recall finally moved
+
+$15.19, three runs, 63 cases. The first measurement in this file taken without
+the case summary in the prompt.
+
+| metric | leak present | leak closed |
+|---|---|---|
+| recall | 1.000 *(spread 0.000)* | **0.977** *(0.971–0.986)* |
+| precision, strict | 0.982 | 0.899 *(0.889–0.919)* |
+| precision, lenient | 1.000 | 0.982 *(0.973–0.986)* |
+| calibration error | 0.091 | **0.079** |
+| agent attribution | 0.946 | 0.958 |
+| gate decision match | 1.000 | **0.850** |
+| false positives / run | 0 | 2 |
+| unlabelled / run | 1.3 | 7 |
+
+**Recall dropped below 1.000 for the first time, with a real spread.** After many
+runs pinned at a ceiling, the set can now report a regression.
+
+### The prediction was right and the reasoning was wrong
+
+I predicted 0.96–1.000, and 0.977 is inside it. That is the first correct
+prediction in this file. The stated reason was wrong, which matters more.
+
+The hypothesis was that the 14 summaries describing their own defect were
+propping recall up. **None of the three cases that lost labels had a leaking
+summary** — `doc-misleading-name` (3 of 3 runs), `tst-repeated-coverage-gap` and
+`sec-weak-password-hash` (1 each). The defect-describing summaries were removed
+and cost nothing measurable.
+
+What actually changed is larger than the leak. Every case previously carried
+*some* body, because every case had a summary. Now every case carries none, and
+the prompt renders "(no description)". So the panel did not merely lose 14 hints;
+it lost the author's stated intent on all 63. `doc-misleading-name` failing all
+three runs fits that reading — deciding whether `get_tenant_fresh` is misleadingly
+named is a judgement about what the change claims to do, and there is no longer a
+claim.
+
+### The gate regression is the more interesting result
+
+`gate decision match` fell from 1.000 to 0.850, and all three disagreements are
+the same shape — a `neg-*` case expected to be suppressed and escalated instead:
+
+```
+  neg-allowlisted-dynamic-sql      expected suppress  got escalate  (0.60)
+  neg-dependency-bump              expected suppress  got escalate  (0.55)
+  neg-typescript-type-narrowing    expected suppress  got escalate  (0.58)
+```
+
+Both new false positives are on the same kind of case: a routine dependency bump
+read as a breaking change, and MD5-over-template-source read as cache poisoning.
+All five confidences sit between 0.55 and 0.60 — the panel is not confident, it is
+*unanchored*. Stripped of any statement of intent, a benign change looks like an
+unexplained one, and an unexplained change gets escalated.
+
+That is a finding about the input, not the reviewer. A real pull request usually
+has a description; "(no description)" for all 63 cases is not realism, it is the
+opposite error from the leak. The fix is neither the summary nor emptiness but a
+written `body` per case — what an author would plausibly say, without narrating
+the defect. Two cases have one already.
+
+### What is comparable to what
+
+Nothing above this section shares a prompt with anything below it. The leak
+closed and the labels changed in the same window, so the old strict-precision
+figures are not comparable either. This run is the new zero.
