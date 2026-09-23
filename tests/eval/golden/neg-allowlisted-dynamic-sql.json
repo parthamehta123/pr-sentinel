@@ -12,10 +12,10 @@
       "status": "modified"
     },
     {
-      "additions": 13,
+      "additions": 18,
       "deletions": 0,
       "filename": "tests/test_invoices.py",
-      "patch": "@@ -1,3 +1,16 @@\n+import pytest\n+\n+\n def test_lists_newest_first():\n     rows = list_invoices(tenant_id=1, limit=2)\n     assert [r[\"id\"] for r in rows] == [20, 19]\n+\n+\n+def test_sorts_by_amount_ascending():\n+    rows = list_invoices(tenant_id=1, limit=2, sort=\"amount\", direction=\"asc\")\n+    assert [r[\"amount_cents\"] for r in rows] == [100, 250]\n+\n+\n+def test_rejects_an_unknown_sort_key():\n+    with pytest.raises(ValueError):\n+        list_invoices(tenant_id=1, limit=2, sort=\"; DROP TABLE invoices --\")",
+      "patch": "@@ -1,3 +1,21 @@\n+import pytest\n+\n+\n def test_lists_newest_first():\n     rows = list_invoices(tenant_id=1, limit=2)\n     assert [r[\"id\"] for r in rows] == [20, 19]\n+\n+\n+def test_sorts_by_amount_ascending():\n+    rows = list_invoices(tenant_id=1, limit=2, sort=\"amount\", direction=\"asc\")\n+    assert [r[\"amount_cents\"] for r in rows] == [100, 250]\n+\n+\n+def test_rejects_an_unknown_sort_key():\n+    with pytest.raises(ValueError):\n+        list_invoices(tenant_id=1, limit=2, sort=\"; DROP TABLE invoices --\")\n+\n+\n+def test_rejects_an_unknown_direction():\n+    with pytest.raises(ValueError):\n+        list_invoices(tenant_id=1, limit=2, direction=\"asc; DROP TABLE invoices --\")",
       "status": "modified"
     }
   ],

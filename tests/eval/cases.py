@@ -1343,7 +1343,7 @@ export function describe(event: Event): string {
 export function describe(event: Event): string {
   switch (event.kind) {
     case "click":
-      return `click at ${event.x}, ${event.y}`;
+      return `click at ${event.x}`;
     case "key":
       return `key ${event.code}`;
   }
@@ -1652,6 +1652,11 @@ def test_sorts_by_amount_ascending():
 def test_rejects_an_unknown_sort_key():
     with pytest.raises(ValueError):
         list_invoices(tenant_id=1, limit=2, sort="; DROP TABLE invoices --")
+
+
+def test_rejects_an_unknown_direction():
+    with pytest.raises(ValueError):
+        list_invoices(tenant_id=1, limit=2, direction="asc; DROP TABLE invoices --")
 """,
     },
 )

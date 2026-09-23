@@ -12,8 +12,11 @@ Rules, in precedence order, and the order is deliberate:
   2. An agent failed         -> escalate. Three quarters of a panel is not a panel.
   3. Critical security       -> escalate, never post. A comment describing a live
                                 vulnerability on a public PR is a disclosure.
-  4. Overall confidence low  -> escalate.
-  5. Otherwise               -> post, but only the findings that individually
+  4. Nothing worth posting   -> suppress. Checked before confidence, because
+                                escalation routes findings to a human and
+                                there are none to route.
+  5. Overall confidence low  -> escalate.
+  6. Otherwise               -> post, but only the findings that individually
                                 clear both the confidence and the severity floor.
 
 A finding has to clear two independent bars to be posted, because they answer
@@ -88,6 +91,32 @@ def evaluate(
             f"{where} to avoid disclosure. Route through the security channel.",
         )
 
+    floor = SEVERITY_ORDER.index(Severity(settings.post_min_severity))
+    postable = [
+        f
+        for f in findings
+        if f.confidence >= settings.finding_post_confidence and SEVERITY_ORDER.index(f.severity) >= floor
+    ]
+
+    # Before the confidence test, not after it. Escalation exists to route a
+    # finding to a human; with nothing that clears the posting bars there is
+    # nothing to route, and escalating says "look at this" about no content.
+    #
+    # The old order made that backwards in a way that only showed up under
+    # measurement: a *confident* trivial finding suppressed, while an *uncertain*
+    # trivial one escalated. Since low overall confidence is the normal state of
+    # a review that found only weak signals, the effect was to spend a human on
+    # exactly the pull requests with least to say — the noise failure this whole
+    # gate exists to prevent.
+    if not postable:
+        return GateResult(
+            Decision.SUPPRESS,
+            None,
+            [],
+            100,
+            "Nothing cleared the per-finding posting threshold. Staying quiet.",
+        )
+
     if overall_confidence < settings.auto_post_confidence:
         return GateResult(
             Decision.ESCALATE,
@@ -96,21 +125,6 @@ def evaluate(
             50,
             f"Overall confidence {overall_confidence:.2f} is below the "
             f"{settings.auto_post_confidence:.2f} auto-post threshold.",
-        )
-
-    floor = SEVERITY_ORDER.index(Severity(settings.post_min_severity))
-    postable = [
-        f
-        for f in findings
-        if f.confidence >= settings.finding_post_confidence and SEVERITY_ORDER.index(f.severity) >= floor
-    ]
-    if not postable:
-        return GateResult(
-            Decision.SUPPRESS,
-            None,
-            [],
-            100,
-            "Nothing cleared the per-finding posting threshold. Staying quiet.",
         )
 
     # Two bars, reported separately: an operator reading this should know which

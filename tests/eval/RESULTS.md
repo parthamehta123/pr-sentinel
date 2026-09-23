@@ -1497,3 +1497,75 @@ all overlap. Nothing there is demonstrated in either direction.
 **This three-run distribution is the reference baseline.** It is the first one
 measured with a prompt that is neither leaking the answer nor withholding the
 description a real pull request would carry.
+
+## Investigating the gate — two broken cases and one backwards rule
+
+The gate sat at a flat 0.900 across three runs. Twenty cases carry an
+`expected_decision`, so that is exactly two disagreements, and they were the same
+two every run:
+
+```
+  neg-allowlisted-dynamic-sql     expected suppress  got escalate    conf 0.65, 0.60, 0.55
+  neg-typescript-type-narrowing   expected suppress  got auto_post   conf 0.74, 0.88, 0.80
+```
+
+(An earlier note here said three cases were escalating. It was two, and only one
+of them escalates — the other auto-posts.)
+
+### The old 1.000 was the leak, and this is the proof
+
+Four case summaries — the pull request body until two commits ago — stated the
+verdict outright rather than describing the change:
+
+```
+  neg-allowlisted-dynamic-sql     "...and correct, because the only interpolated values are literals..."
+  neg-clean-extract-method        "Any finding here is a false positive..."
+  neg-typescript-type-narrowing   "Any finding here is a false positive."
+  trap-subprocess-list-args       "...and is in fact the fix for one."
+```
+
+Three of the four are `suppress` negative controls. The panel was being told "any
+finding here is a false positive" on the precise cases testing whether it would
+stay quiet. A flat gate of 1.000 under those conditions measured obedience. The
+drop to 0.900 is not a regression; it is the first honest reading.
+
+### Both remaining disagreements are the cases, not the gate
+
+**`neg-typescript-type-narrowing`** was labelled a types-only refactor and was
+not one. It changed `` `click at ${x}` `` to `` `click at ${x}, ${y}` `` — a real
+output change, which the panel reported at 0.88 confidence on every run, citing
+the body's "types only" claim. Sixth hand-written negative control found to
+contain a real defect. The `, ${y}` is removed; the diff now emits byte-identical
+strings and only the casts are gone.
+
+**`neg-allowlisted-dynamic-sql`** guards both `sort` and `direction` and tested
+only `sort`. "No test exercises rejection of an invalid `direction`" was simply
+true. The missing test is added, so the observation now has nothing to land on.
+
+Worth stating plainly: the gate metric was not measuring the gate. It was
+reporting two defective fixtures, and both defects were things the panel saw and
+I had not.
+
+### The rule that was genuinely backwards
+
+Rearranging the precedence does **not** fix either case — I checked by
+recomputing every recorded decision offline under four candidate orderings, which
+costs nothing and reproduces the live gate exactly. `neg-allowlisted-dynamic-sql`
+merely moves from `escalate` to `auto_post`; no defensible gate stays silent
+about a finding the set's own `PERMITTED_CONCERNS` policy declares legitimate.
+
+But the ordering was wrong anyway, and measurement is how it surfaced. "Nothing
+cleared the posting bars" was tested *after* "overall confidence is low", so:
+
+- a **confident** trivial finding suppressed, and
+- an **uncertain** trivial finding escalated.
+
+Low overall confidence is the normal state of a review that found only weak
+signals, so the effect was to spend a human on the pull requests with least to
+say — the exact noise failure this gate exists to prevent. Escalation routes
+findings to a person; with nothing that clears the bars there is nothing to
+route. Suppress is now checked first.
+
+This is adopted on the argument, not the number: across three recorded runs it
+changes one decision in one run. It is not demonstrated by the eval and is not
+claimed to be.

@@ -36,9 +36,33 @@ def test_confident_findings_are_posted():
 
 
 def test_low_overall_confidence_escalates_instead_of_posting():
-    result = evaluate([finding(confidence=0.5)], healthy_panel(), 0.5)
+    """Something worth saying, but the panel is unsure of it: that is a human's call.
+
+    The finding must itself clear the posting bar. This test used to pass a
+    finding below that bar, which made it assert two different things at once —
+    see the test below for the half it was accidentally covering.
+    """
+    s = get_settings()
+    result = evaluate([finding(confidence=s.finding_post_confidence + 0.05)], healthy_panel(), 0.5)
     assert result.decision is Decision.ESCALATE
     assert result.reason is EscalationReason.LOW_CONFIDENCE
+
+
+def test_nothing_worth_posting_suppresses_even_when_confidence_is_low():
+    """No content to route means no escalation, however unsure the panel is.
+
+    Low overall confidence is the normal state of a review that found only weak
+    signals, so escalating on it regardless of whether anything clears the
+    posting bars spends a human on precisely the pull requests with least to say.
+    Measured, this was `neg-allowlisted-dynamic-sql`: one coverage nit at 0.55,
+    nothing postable, and a human summoned to look at it.
+    """
+    s = get_settings()
+    weak = finding(confidence=s.finding_post_confidence - 0.1)
+    result = evaluate([weak], healthy_panel(), 0.4)
+    assert result.decision is Decision.SUPPRESS
+    assert result.reason is None
+    assert result.postable == []
 
 
 def test_individually_weak_findings_are_withheld_from_a_confident_review():

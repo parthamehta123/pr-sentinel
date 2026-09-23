@@ -8,7 +8,7 @@
       "additions": 5,
       "deletions": 3,
       "filename": "web/src/events.ts",
-      "patch": "@@ -3,8 +3,10 @@\n   | { kind: \"key\"; code: string };\n \n export function describe(event: Event): string {\n-  if (event.kind === \"click\") {\n-    return `click at ${(event as { x: number; y: number }).x}`;\n+  switch (event.kind) {\n+    case \"click\":\n+      return `click at ${event.x}, ${event.y}`;\n+    case \"key\":\n+      return `key ${event.code}`;\n   }\n-  return `key ${(event as { code: string }).code}`;\n }",
+      "patch": "@@ -3,8 +3,10 @@\n   | { kind: \"key\"; code: string };\n \n export function describe(event: Event): string {\n-  if (event.kind === \"click\") {\n-    return `click at ${(event as { x: number; y: number }).x}`;\n+  switch (event.kind) {\n+    case \"click\":\n+      return `click at ${event.x}`;\n+    case \"key\":\n+      return `key ${event.code}`;\n   }\n-  return `key ${(event as { code: string }).code}`;\n }",
       "status": "modified"
     }
   ],
