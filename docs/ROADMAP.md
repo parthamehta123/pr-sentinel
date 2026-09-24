@@ -122,8 +122,13 @@ why it is below the two items that have design questions.
 
 Currently a full re-index per repository. Should index only files changed since
 `repositories.indexed_sha`. The user-visible problem is not speed — it is that a
-stale index degrades retrieval quietly, and nothing currently surfaces the drift.
-Surface the drift first; the incremental path is an optimisation after that.
+stale index degrades retrieval quietly.
+
+Drift is now surfaced. When the stored commit is missing or is not the pull
+request's base, the review records `retrieval.index_drift` and the agents see
+that line in the repository context, so a stale chunk is no longer
+indistinguishable from the current tree. The incremental path is still the
+optimisation after that.
 
 ## 5. Semantic caching across similar diffs
 

@@ -12,6 +12,8 @@ Rules, in precedence order, and the order is deliberate:
   2. An agent failed         -> escalate. Three quarters of a panel is not a panel.
   3. Critical security       -> escalate, never post. A comment describing a live
                                 vulnerability on a public PR is a disclosure.
+                                Security includes a category any contributor
+                                named, not only the one that won the merge.
   4. Nothing worth posting   -> suppress. Checked before confidence, because
                                 escalation routes findings to a human and
                                 there are none to route.

@@ -1666,3 +1666,34 @@ this is the ordinary spread of a set that produces a handful of unlabelled
 findings per run.
 
 Nothing here is a baseline yet. One clean run is a reading, not a distribution.
+
+## Two more clean runs — the precision drop is inside the spread
+
+`baseline-63-gatefix-runs23.json`. Both runs finished with every agent call
+returning. Unlabelled per run: 8, 4. Cost $5.29 and $5.27.
+
+Together with the clean run above, that is three readings of the same
+configuration:
+
+| | clean 1 | clean 2 | clean 3 |
+|---|---|---|---|
+| recall | 0.986 | 0.986 | 0.986 |
+| precision, strict | 0.890 | 0.896 | 0.937 |
+| precision, lenient | 0.986 | 1.000 | 0.987 |
+| gate decision match | 1.000 | 1.000 | 0.950 |
+| false positives | 1 | 0 | 1 |
+| unlabelled | 8 | 8 | 4 |
+| failed agent calls | 0 | 0 | 0 |
+
+Strict precision across the three is 0.890–0.937, mean 0.908. The earlier
+three-run band was 0.920–0.934. The ranges overlap, and the gap between the
+means (0.017) is smaller than the spread of these three runs (0.047). Repairing
+the fixtures did not move strict precision by an amount this set can show.
+
+Recall is the same number on every clean run, and the same case is the miss
+each time: `doc-misleading-name`.
+
+The gate is 1.000 on two runs and 0.950 on the third. The single disagreement
+is `sec-terraform-public-bucket`: the invoices bucket was found, confidence
+0.99, and the review auto-posted where the label says escalate. The two earlier
+clean runs escalated it. One run in three, on a finding the panel did not miss.

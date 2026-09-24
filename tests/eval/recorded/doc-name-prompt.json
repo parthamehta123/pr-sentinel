@@ -1,0 +1,772 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 1,
+  "overall": {
+    "hits": 1,
+    "allowed": 2,
+    "labels_found": 1,
+    "concerns": 1,
+    "duplicate_rate": 1.0,
+    "false_positives": 0,
+    "unlabelled": 0,
+    "misses": 1,
+    "precision_strict": 1.0,
+    "precision_lenient": 1.0,
+    "recall": 0.5,
+    "f1": 0.667
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 1,
+      "allowed": 0,
+      "labels_found": 1,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "docs": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 1,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "security": {
+      "hits": 0,
+      "allowed": 1,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 1,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.78,
+        "observed_hit_rate": 1.0,
+        "gap": 0.22
+      }
+    ],
+    "expected_calibration_error": 0.22
+  },
+  "category_agreement": 1.0,
+  "agent_attribution": 1.0,
+  "decision_accuracy": null,
+  "cost": {
+    "total_usd": 0.1048,
+    "per_case_usd": 0.1048
+  },
+  "per_case": [
+    {
+      "id": "doc-misleading-name",
+      "hits": 1,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.679,
+      "cost_usd": 0.1048,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.78,
+          "where": "cache/lookup.py:9-13",
+          "title": "Eviction clears whole cache, discarding the entry just written",
+          "body": "`get_tenant_fresh` inserts `tenant` at line 10 and then, when the cache crosses 1000 entries, calls `_CACHE.clear()` at line 12. The clear happens *after* the insert, so the freshly fetched value is thrown away along with everything else: a caller that does `get_tenant_fresh(id)` followed by `get_tenant(id)` gets `None` on roughly every 1000th call, even though the fetch succeeded. Separately, flushing the entire cache rather than evicting a single entry means every subsequent `get_tenant` misses at once, pushing the full read load onto `_fetch` \u2014 a stampede against the backing store in a hot path.\n\nPrefer bounded eviction (e.g. `collections.OrderedDict` with `popitem(last=False)`, or `functools.lru_cache`) so only the oldest entry is dropped and the value just fetched survives. If a full flush really is intended, at minimum re-insert `tenant` after the clear.",
+          "agreeing": [
+            "correctness"
+          ],
+          "categories": [
+            "error_handling",
+            "logic"
+          ],
+          "matched_label": "cache/lookup.py:11",
+          "matched_labels": [
+            "cache/lookup.py:11"
+          ],
+          "cites": [
+            "cache/lookup.py:10",
+            "cache/lookup.py:4",
+            "cache/lookup.py:9",
+            "cache/lookup.py:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.6,
+          "where": "cache/lookup.py:8-13",
+          "title": "No test coverage for get_tenant_fresh",
+          "body": "get_tenant_fresh introduces new behavior: it fetches fresh data, writes it into the shared _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff. A bug in the eviction threshold, the clear-vs-evict-one logic, or the cache write would go unnoticed.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "cache/lookup.py:8"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "security",
+          "category": "input_validation",
+          "severity": "minor",
+          "confidence": 0.58,
+          "where": "cache/lookup.py:8-13",
+          "title": "Unvalidated tenant_id populates shared cache with full-flush eviction",
+          "body": "`get_tenant_fresh` inserts `tenant_id` into the module-level `_CACHE` unconditionally (line 10) and, once the cache passes 1000 entries, discards every entry with `_CACHE.clear()` (lines 11-12). If any request-facing caller reaches this helper with a caller-supplied tenant identifier, a client can repeatedly pass distinct ids to push the cache over the threshold and wipe cached state for every other tenant, converting a cheap request into a cache-miss storm plus one `_fetch` per victim lookup. It also caches whatever `_fetch` returns, including a `None`/error result for a non-existent id, which then becomes the answer `get_tenant` serves.\n\nSuggested changes: validate/authorise `tenant_id` before it becomes a cache key, and replace the all-or-nothing `clear()` with bounded eviction (e.g. an LRU such as `functools.lru_cache` or `collections.OrderedDict.popitem(last=False)`) so one caller cannot evict everyone else's entries. Avoid storing negative/failed fetch results, or store them with a short TTL.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "cache/lookup.py:11",
+          "matched_labels": [
+            "cache/lookup.py:11"
+          ],
+          "cites": [
+            "cache/lookup.py:9",
+            "cache/lookup.py:11"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "recall": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "calibration_error": [
+      0.32,
+      0.365,
+      0.22
+    ],
+    "cost_per_case_usd": [
+      0.1381,
+      0.0913,
+      0.1048
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 1,
+        "allowed": 2,
+        "labels_found": 1,
+        "concerns": 1,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 0.5,
+        "f1": 0.667
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.68,
+            "observed_hit_rate": 1.0,
+            "gap": 0.32
+          }
+        ],
+        "expected_calibration_error": 0.32
+      },
+      "category_agreement": 1.0,
+      "agent_attribution": 1.0,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.1381,
+        "per_case_usd": 0.1381
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.593,
+          "cost_usd": 0.1381,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "minor",
+              "confidence": 0.68,
+              "where": "cache/lookup.py:9-12",
+              "title": "Overflow flush discards the entry just fetched",
+              "body": "`get_tenant_fresh` stores `tenant` at line 10 and then, when the cache crosses 1000 entries, calls `_CACHE.clear()` at line 12. The clear also removes the entry written one line earlier, so a caller that does `get_tenant_fresh(t)` followed by `get_tenant(t)` gets `None` on exactly the requests that cross the threshold \u2014 and every concurrent reader loses its warm entry at the same moment, producing a refetch stampede. If a size bound is wanted, evict the oldest entries (e.g. an `OrderedDict`/LRU popitem loop) rather than flushing, or at minimum re-insert `tenant` after the clear. Note also that the `len(...)` check and the `clear()` are a check-then-act pair on module-level shared state, so with threads more than one caller can flush.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "error_handling",
+                "logic"
+              ],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:4",
+                "cache/lookup.py:9",
+                "cache/lookup.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "Attacker-chosen tenant_id can force backend fetches and wipe shared cache",
+              "body": "`get_tenant_fresh` performs an unconditional `_fetch(tenant_id)` for whatever id it is handed, stores the result in the process-wide `_CACHE`, and clears the *entire* cache once it exceeds 1000 entries. If any request-handling path passes a caller-supplied tenant id into this function, a client can (a) drive one backend `_fetch` per request with no cache shielding and no rate limit visible here, and (b) insert 1000+ distinct ids to flush every other tenant's cached entry, degrading latency for all tenants. Consider validating/authorising `tenant_id` against the caller before fetching, and evicting a single entry (e.g. LRU / `popitem`) instead of `clear()` so one caller cannot discard everyone else's data.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:9",
+                "cache/lookup.py:11"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "No test for get_tenant_fresh or its cache-clear behavior",
+              "body": "get_tenant_fresh fetches a fresh value, stores it in _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by a test in the diff: a bug where the function fails to update the cache, returns the wrong value, or clears the cache at the wrong threshold (or clears it destructively when it shouldn't) would not be caught. Add tests covering: (1) the returned value matches the fetch result, (2) the cache is updated with the new value, and (3) the clear-at-1000 behavior triggers correctly at and below the boundary.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 2,
+        "allowed": 2,
+        "labels_found": 1,
+        "concerns": 1,
+        "duplicate_rate": 2.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 0.5,
+        "f1": 0.667
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 2,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 1.0,
+            "gap": 0.45
+          },
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.72,
+            "observed_hit_rate": 1.0,
+            "gap": 0.28
+          }
+        ],
+        "expected_calibration_error": 0.365
+      },
+      "category_agreement": 0.5,
+      "agent_attribution": 1.0,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.0913,
+        "per_case_usd": 0.0913
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 2,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.613,
+          "cost_usd": 0.0913,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "cache/lookup.py:11-12",
+              "title": "Size-cap eviction clears the entire shared cache for all callers",
+              "body": "When the cache crosses 1000 entries, `_CACHE.clear()` discards every entry, not the one that overflowed. `get_tenant` (line 5) is a plain `_CACHE.get(tenant_id)` with no fallback to `_fetch`, so every existing caller starts receiving `None` for tenants that were previously resident \u2014 a silent behaviour change triggered purely by the new function's traffic. The entry just written on line 10 is also wiped, so even a repeat `get_tenant(tenant_id)` right after a `get_tenant_fresh(tenant_id)` misses. Evict a bounded subset (e.g. an LRU/FIFO pop of the oldest keys) instead of clearing, or move the size check before the insert so the freshly fetched entry survives.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:11",
+                "cache/lookup.py:4"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "Attacker-chosen tenant_id can flush the entire shared cache",
+              "body": "`get_tenant_fresh` writes `_CACHE[tenant_id] = tenant` for any id it is handed, including ids that do not resolve (the result of `_fetch` is stored unconditionally, so a `None`/miss is cached too). Once the map passes 1000 entries the whole cache \u2014 every other tenant's warm entry \u2014 is discarded with `_CACHE.clear()`.\n\nIf `tenant_id` originates from a request parameter, a caller can issue ~1000 requests with distinct bogus ids and force a full eviction on demand, repeatedly, pushing all traffic back onto `_fetch` (a thundering-herd / backend-load amplification, cost ~1000 cheap requests per flush).\n\nSuggested fixes: validate that `tenant_id` corresponds to a tenant the caller may read before inserting, skip caching unresolved lookups, and replace the all-or-nothing `clear()` with a bounded eviction policy (e.g. `collections.OrderedDict` LRU or `functools.lru_cache`) so one caller cannot evict everyone else's entries.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:9",
+                "cache/lookup.py:11"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:9-10",
+              "title": "A `None` result from `_fetch` is stored as a cache entry",
+              "body": "`_fetch(tenant_id)` is stored unconditionally. If it can return `None` for an unknown or transiently unavailable tenant, that `None` becomes a cache entry indistinguishable from a miss for `get_tenant`, and it counts toward the 1000-entry cap that triggers the full clear. Guard the write (`if tenant is not None:`) or make the negative-caching behaviour explicit with a sentinel and TTL.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:9"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "No test coverage for get_tenant_fresh's cache-eviction logic",
+              "body": "The new get_tenant_fresh function fetches a tenant, stores it in _CACHE, and clears the entire cache once it exceeds 1000 entries. No test exercises this function, so a bug in the eviction threshold (e.g. off-by-one, wrong comparison, clearing at the wrong size) or in the fetch/store logic would go undetected.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 1,
+      "overall": {
+        "hits": 1,
+        "allowed": 2,
+        "labels_found": 1,
+        "concerns": 1,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 0.5,
+        "f1": 0.667
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.78,
+            "observed_hit_rate": 1.0,
+            "gap": 0.22
+          }
+        ],
+        "expected_calibration_error": 0.22
+      },
+      "category_agreement": 1.0,
+      "agent_attribution": 1.0,
+      "decision_accuracy": null,
+      "cost": {
+        "total_usd": 0.1048,
+        "per_case_usd": 0.1048
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.679,
+          "cost_usd": 0.1048,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.78,
+              "where": "cache/lookup.py:9-13",
+              "title": "Eviction clears whole cache, discarding the entry just written",
+              "body": "`get_tenant_fresh` inserts `tenant` at line 10 and then, when the cache crosses 1000 entries, calls `_CACHE.clear()` at line 12. The clear happens *after* the insert, so the freshly fetched value is thrown away along with everything else: a caller that does `get_tenant_fresh(id)` followed by `get_tenant(id)` gets `None` on roughly every 1000th call, even though the fetch succeeded. Separately, flushing the entire cache rather than evicting a single entry means every subsequent `get_tenant` misses at once, pushing the full read load onto `_fetch` \u2014 a stampede against the backing store in a hot path.\n\nPrefer bounded eviction (e.g. `collections.OrderedDict` with `popitem(last=False)`, or `functools.lru_cache`) so only the oldest entry is dropped and the value just fetched survives. If a full flush really is intended, at minimum re-insert `tenant` after the clear.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "error_handling",
+                "logic"
+              ],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:4",
+                "cache/lookup.py:9",
+                "cache/lookup.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "cache/lookup.py:8-13",
+              "title": "No test coverage for get_tenant_fresh",
+              "body": "get_tenant_fresh introduces new behavior: it fetches fresh data, writes it into the shared _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff. A bug in the eviction threshold, the clear-vs-evict-one logic, or the cache write would go unnoticed.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "minor",
+              "confidence": 0.58,
+              "where": "cache/lookup.py:8-13",
+              "title": "Unvalidated tenant_id populates shared cache with full-flush eviction",
+              "body": "`get_tenant_fresh` inserts `tenant_id` into the module-level `_CACHE` unconditionally (line 10) and, once the cache passes 1000 entries, discards every entry with `_CACHE.clear()` (lines 11-12). If any request-facing caller reaches this helper with a caller-supplied tenant identifier, a client can repeatedly pass distinct ids to push the cache over the threshold and wipe cached state for every other tenant, converting a cheap request into a cache-miss storm plus one `_fetch` per victim lookup. It also caches whatever `_fetch` returns, including a `None`/error result for a non-existent id, which then becomes the answer `get_tenant` serves.\n\nSuggested changes: validate/authorise `tenant_id` before it becomes a cache key, and replace the all-or-nothing `clear()` with bounded eviction (e.g. an LRU such as `functools.lru_cache` or `collections.OrderedDict.popitem(last=False)`) so one caller cannot evict everyone else's entries. Avoid storing negative/failed fetch results, or store them with a short TTL.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:9",
+                "cache/lookup.py:11"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

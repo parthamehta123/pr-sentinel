@@ -122,3 +122,16 @@ not a broken gate.
 The unit test covering rule 5 was asserting two things at once, using a finding
 that was itself below the posting bar; it is now split into the two behaviours it
 was conflating.
+
+## Amendment, 2026-09-24 — a merged finding keeps every contributor's category
+
+Rule 3 used to read only the primary `category` and the primary agent. The
+aggregator keeps the most severe wording, so a security specialist's `authz`
+can lose the tie to a correctness specialist's `logic` while still being
+recorded on `categories`. Measured on `sec-terraform-public-bucket`: the
+invoices bucket was critical, confidence 0.99, `categories` contained `authz`,
+and the review auto-posted. That is the disclosure rule 3 exists to stop.
+
+`is_security` is now true when any contributor's category is a security
+category, not only the one that won the merge. A critical finding that is only
+logic, from only the correctness agent, still posts.

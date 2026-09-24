@@ -143,7 +143,17 @@ def _same_concern(finding: Finding, label: Label) -> bool:
     # A merged finding is about every concern its contributors named, not only
     # the one belonging to whichever of them happened to win the merge.
     found = finding.categories or [str(finding.category)]
-    return any(family_of(Category(c)) in families for c in found)
+    if any(family_of(Category(c)) in families for c in found):
+        return True
+    # A misleading name filed as `api_contract` is the docs concern said in the
+    # correctness family's vocabulary. The merge keeps whichever wording won, so
+    # the docs specialist can be present only in `agreeing`. Count that for a
+    # docs label. A correctness-only contract finding does not qualify — that
+    # really is a broken signature, and it must not satisfy a docs label.
+    if families == {"docs"} and "api_contract" in found:
+        contributors = set(finding.agreeing or []) | {str(finding.agent)}
+        return "docs" in contributors
+    return False
 
 
 def classify(

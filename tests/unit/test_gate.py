@@ -96,6 +96,21 @@ def test_a_critical_non_security_finding_is_still_posted():
     assert result.decision is Decision.AUTO_POST
 
 
+def test_a_merged_critical_keeps_the_security_category_the_primary_lost():
+    """The invoices bucket: correctness won the wording, security had called it authz.
+
+    The primary category is logic, so the old check posted a critical exposure
+    on the pull request. The merge already recorded authz on `categories`.
+    """
+    merged = finding(agent=AgentType.CORRECTNESS, severity="critical", category="logic", confidence=0.99)
+    merged.categories = ["authz", "logic"]
+    merged.agreeing = ["correctness", "security"]
+    result = evaluate([merged], healthy_panel(), 0.99)
+    assert result.decision is Decision.ESCALATE
+    assert result.reason is EscalationReason.CRITICAL_SECURITY
+    assert result.postable == []
+
+
 def test_a_failed_agent_outranks_high_confidence():
     panel = healthy_panel()
     panel[0] = AgentVerdict(agent=AgentType.SECURITY, status=VerdictStatus.TIMEOUT)

@@ -130,6 +130,11 @@ async def conventions_for(repo_id: int) -> list[str]:
     return [r["rule"] for r in rows]
 
 
+async def indexed_sha(repo_id: int) -> str | None:
+    """The commit the semantic index was built from, or None if never indexed."""
+    return await pool.fetchval("SELECT indexed_sha FROM repositories WHERE id = $1", repo_id)
+
+
 async def embedding_column_dim() -> int | None:
     """Read the declared vector width straight out of the catalog.
 

@@ -182,9 +182,24 @@ class Finding(BaseModel):
 
     @property
     def is_security(self) -> bool:
-        from .enums import SECURITY_CATEGORIES
+        """True when any contributor called this a security concern.
 
-        return self.agent is AgentType.SECURITY or self.category in SECURITY_CATEGORIES
+        The merge keeps one specialist's category as the primary. A critical
+        authz finding that lost the tie to a correctness/logic wording would
+        otherwise be posted, which is the disclosure the gate exists to prevent.
+        """
+        from .enums import SECURITY_CATEGORIES, Category
+
+        if self.agent is AgentType.SECURITY or self.category in SECURITY_CATEGORIES:
+            return True
+        for name in self.categories:
+            try:
+                category = Category(name)
+            except ValueError:
+                continue
+            if category in SECURITY_CATEGORIES:
+                return True
+        return False
 
     def dedupe_key(self) -> str:
         norm = "".join(ch for ch in self.title.lower() if ch.isalnum() or ch == " ")

@@ -454,6 +454,29 @@ def test_a_finding_about_another_concern_is_not_a_hit():
     assert classify([coverage], [injection], [])[0].kind == "unlabelled"
 
 
+def test_a_docs_specialist_who_called_a_misleading_name_a_contract_still_hits():
+    """The recorded miss on doc-misleading-name: docs spoke, the merge kept api_contract.
+
+    The title was the name. The category that won was the correctness family's,
+    so the readability label stayed a miss while the logic label took the credit.
+    """
+    name = label(line=8, agent="docs", category="readability", min_severity="minor")
+    merged = finding(line=8, agent=AgentType.DOCS, category="api_contract", severity="major")
+    merged.line_end = 13
+    merged.categories = ["api_contract", "logic"]
+    merged.agreeing = ["correctness", "docs"]
+    logic = label(line=11, agent="correctness", category="logic", min_severity="major")
+    matches = classify([merged], [name, logic], [])
+    assert matches[0].kind == "hit"
+    assert {lab.category for lab in matches[0].labels} == {"readability", "logic"}
+
+
+def test_a_correctness_only_contract_finding_does_not_satisfy_a_docs_label():
+    name = label(line=8, agent="docs", category="readability", min_severity="minor")
+    contract = finding(line=8, agent=AgentType.CORRECTNESS, category="api_contract", severity="major")
+    assert classify([contract], [name], [])[0].kind == "unlabelled"
+
+
 def test_a_different_agent_on_the_same_concern_is_still_a_hit():
     """Cross-agent agreement is the signal the aggregator is built on; keep it."""
     injection = label(line=10, agent="security", category="injection")

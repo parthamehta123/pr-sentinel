@@ -92,7 +92,7 @@ instead.
 
 ## Measuring it
 
-53 labelled pull requests live in [`tests/eval/`](tests/eval/): 63 required
+63 labelled pull requests live in [`tests/eval/`](tests/eval/): 73 required
 findings across Python, TypeScript, Go, SQL, Terraform and YAML, **21
 false-positive traps**, seven cases where the right answer is silence, thirteen
 whose defect is invisible without the retrieved repository context, **six

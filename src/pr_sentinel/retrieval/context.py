@@ -23,6 +23,38 @@ from ..logging import get_logger
 log = get_logger(__name__)
 
 
+def index_drift(indexed_sha: str | None, base_sha: str) -> str | None:
+    """Why the semantic index is not the tree this diff applies to.
+
+    ``None`` means the index is that base, or the base is unknown so a claim
+    of staleness would itself be a guess. ``unindexed`` and ``stale`` are the
+    two states that used to degrade retrieval with no trace.
+    """
+    if not base_sha:
+        return None
+    if not indexed_sha:
+        return "unindexed"
+    if indexed_sha != base_sha:
+        return "stale"
+    return None
+
+
+def index_drift_note(kind: str | None, indexed_sha: str | None, base_sha: str) -> str | None:
+    if kind == "unindexed":
+        return (
+            "This repository has no semantic index. "
+            "Anything not in the diff is unknown; do not invent callers or conventions."
+        )
+    if kind == "stale":
+        have = (indexed_sha or "")[:12]
+        want = base_sha[:12]
+        return (
+            f"The semantic index is commit {have}, not this pull request's base {want}. "
+            "Retrieved code may be stale. A disagreement between it and the diff is unresolved."
+        )
+    return None
+
+
 @dataclass
 class ReviewContext:
     pr: PullRequestContext
@@ -30,10 +62,14 @@ class ReviewContext:
     chunks: list[CodeChunk] = field(default_factory=list)
     conventions: list[str] = field(default_factory=list)
     truncated: bool = False
+    index_drift: str | None = None
+    indexed_sha: str | None = None
 
     def render_repository_context(self, max_chars: int = 24_000) -> str:
+        note = index_drift_note(self.index_drift, self.indexed_sha, self.pr.base_sha)
         if not self.chunks:
-            return "(no repository context retrieved — treat unseen code as unknown)"
+            base = "(no repository context retrieved — treat unseen code as unknown)"
+            return f"{note}\n\n{base}" if note else base
         out: list[str] = []
         used = 0
         for chunk in self.chunks:
@@ -42,7 +78,8 @@ class ReviewContext:
                 break
             out.append(block)
             used += len(block)
-        return "\n\n".join(out)
+        body = "\n\n".join(out)
+        return f"{note}\n\n{body}" if note else body
 
     def render_conventions(self) -> str:
         if not self.conventions:
@@ -57,6 +94,8 @@ async def build_context(pr: PullRequestContext, repo_id: int | None, spine: Even
 
     if repo_id is None:
         return ctx
+
+    await _note_index_drift(ctx, repo_id, spine)
 
     started = time.perf_counter()
     embedder = get_embedder()
@@ -111,5 +150,26 @@ async def build_context(pr: PullRequestContext, repo_id: int | None, spine: Even
         chunks=len(ctx.chunks),
         conventions=len(ctx.conventions),
         embedder=embedder.name,
+        index_drift=ctx.index_drift,
+        indexed_sha=ctx.indexed_sha,
     )
     return ctx
+
+
+async def _note_index_drift(ctx: ReviewContext, repo_id: int, spine: EventSpine) -> None:
+    try:
+        stored = await chunk_repo.indexed_sha(repo_id)
+    except Exception as exc:
+        await spine.error("retrieval.index_lookup_failed", exc)
+        return
+    kind = index_drift(stored, ctx.pr.base_sha)
+    ctx.indexed_sha = stored
+    ctx.index_drift = kind
+    if kind is None:
+        return
+    await spine.decision(
+        "retrieval.index_drift",
+        drift=kind,
+        indexed_sha=stored,
+        base_sha=ctx.pr.base_sha,
+    )
