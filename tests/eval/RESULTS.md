@@ -1990,3 +1990,60 @@ re-render. The panel is not wrong about MD5 being MD5; it is wrong about there
 being an attacker. Two of three is frequent enough to be worth a look at the
 security prompt's threat-model framing, and low-confidence enough that the gate
 suppresses it.
+
+## The security prompt learns to name the adversary
+
+`trap-md5-for-cache-key` was firing in two runs of three with *"MD5 digest as
+cache key allows collision-driven cache poisoning"*. The panel was right that MD5
+is MD5 and wrong that anyone was attacking it: the digest covers the template's
+own source and a canonical encoding of its context, nobody supplies a colliding
+input, and a collision costs one re-render.
+
+The prompt listed "cryptographic misuse" among the things to look for and never
+said what makes one a *finding*. Its own opening question — "could this change be
+exploited, **and by whom**?" — had no rule behind the second half. So a section
+now operationalises it: every finding must name **who** the attacker is, **what
+they control**, and **what they get**, with the discriminating pairs stated
+outright:
+
+- MD5 protecting a password **is** a finding — the adversary is anyone who
+  obtains the table, controls nothing, and still gets plaintext.
+- MD5 as a cache key over a template's own source is **not**.
+- `==` comparing a request signature **is**; `==` comparing two values the module
+  owns is **not**.
+
+The primitive is identical in each pair and the adversary is not. Reaching for
+the name of the algorithm instead of the name of the attacker is the failure
+being corrected.
+
+### Measured, 8 security-relevant cases, three runs
+
+| | before | after |
+|---|---|---|
+| false positives | 2 *(the MD5 trap, runs 1 and 3)* | **0** |
+| missed labels | 2 | 2 |
+
+**The false positive is gone in all three runs**, and the remaining findings on
+that case are the legitimate `correctness/api_contract` observation that
+`json.dumps` narrows accepted context values — which is an `ALLOW`, not a trap.
+
+The obvious worry with a change like this is that it teaches the agent to talk
+itself out of real crypto findings. It did not:
+
+- `sec-weak-password-hash` — `[security/crypto] unsalted MD5 instead of bcrypt`
+  found in **all three runs**, at 0.88 to 0.99.
+- `sec-hardcoded-credential` — `[security/secrets/critical] live key hardcoded`
+  found in **all three runs**, at 0.96 to 0.99.
+- `sec-command-injection`, `sec-sql-injection-fstring`,
+  `sec-timing-unsafe-compare` — every primary label found in every run.
+
+The two misses that remain are both **secondary correctness labels** on multi-label
+cases — the bcrypt-incompatible hash format, and the loss of environment-based key
+configuration — each present in two runs of three and absent in one. That flicker
+predates this change and matches `sec-command-injection`'s behaviour in the
+baseline. Read from the counts alone it looks like the change cost two security
+detections; read from the findings it cost none.
+
+n=3 and only the cases where this rule can bite. A full baseline would confirm the
+false positive stays gone across the set; on this evidence the prompt is better and
+nothing measurable was traded for it.

