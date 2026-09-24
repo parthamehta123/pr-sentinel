@@ -74,9 +74,20 @@ class DocsAgent(SpecialistAgent):
     def focus(self, ctx: ReviewContext) -> str:
         return (
             "Start with documentation this diff has made wrong — that outranks anything "
-            "missing. Be the quietest agent on the panel: if nothing is now untrue and "
-            "no public contract is undocumented, return zero findings."
+            "missing. Be the quietest agent on the panel: if nothing is now untrue, no "
+            "public contract is undocumented, and no name contradicts what its code "
+            "does, return zero findings."
         )
+        # The third clause is not emphasis, it is a correction. docs.md defines
+        # three kinds of finding — stale documentation, an undocumented public
+        # contract, and "a name that actively misleads: a get_* that mutates" —
+        # and this line used to offer an exit test naming only the first two. A
+        # misleading name satisfied both conditions, so the model was told to
+        # return nothing, correctly, by the narrower of two instructions it had
+        # been given. Measured: the docs agent named `get_tenant_fresh` in 9 of
+        # 22 recorded runs, silent in the rest. Two attempts to fix this by
+        # stating the rule more firmly failed, because emphasis was never the
+        # problem.
 
 
 AGENT_CLASSES: dict[AgentType, type[SpecialistAgent]] = {

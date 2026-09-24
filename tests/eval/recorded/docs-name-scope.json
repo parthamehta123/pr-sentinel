@@ -1,0 +1,1246 @@
+{
+  "provider": "anthropic",
+  "models": {
+    "security": "claude-opus-5",
+    "correctness": "claude-opus-5",
+    "tests": "claude-sonnet-5",
+    "docs": "claude-haiku-4-5"
+  },
+  "cases": 6,
+  "overall": {
+    "hits": 1,
+    "allowed": 4,
+    "labels_found": 1,
+    "concerns": 1,
+    "duplicate_rate": 1.0,
+    "false_positives": 1,
+    "unlabelled": 0,
+    "misses": 1,
+    "precision_strict": 0.5,
+    "precision_lenient": 0.5,
+    "recall": 0.5,
+    "f1": 0.5
+  },
+  "by_agent": {
+    "correctness": {
+      "hits": 1,
+      "allowed": 0,
+      "labels_found": 1,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.5,
+      "precision_lenient": 0.5,
+      "recall": 1.0,
+      "f1": 0.667
+    },
+    "docs": {
+      "hits": 0,
+      "allowed": 0,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 1,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "security": {
+      "hits": 0,
+      "allowed": 1,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "tests": {
+      "hits": 0,
+      "allowed": 3,
+      "labels_found": 0,
+      "concerns": 0,
+      "duplicate_rate": 0.0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "misses": 0,
+      "precision_strict": 0.0,
+      "precision_lenient": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "calibration": {
+    "bins": [
+      {
+        "range": "0.50-0.60",
+        "n": 1,
+        "mean_confidence": 0.55,
+        "observed_hit_rate": 0.0,
+        "gap": -0.55
+      },
+      {
+        "range": "0.70-0.80",
+        "n": 1,
+        "mean_confidence": 0.72,
+        "observed_hit_rate": 1.0,
+        "gap": 0.28
+      }
+    ],
+    "expected_calibration_error": 0.415
+  },
+  "category_agreement": 1.0,
+  "agent_attribution": 1.0,
+  "decision_accuracy": 1.0,
+  "cost": {
+    "total_usd": 0.277,
+    "per_case_usd": 0.0462
+  },
+  "per_case": [
+    {
+      "id": "doc-misleading-name",
+      "hits": 1,
+      "missed": 1,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "escalate",
+      "expected_decision": null,
+      "confidence": 0.636,
+      "cost_usd": 0.1061,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "hit",
+          "agent": "correctness",
+          "category": "logic",
+          "severity": "major",
+          "confidence": 0.72,
+          "where": "cache/lookup.py:9-12",
+          "title": "Cache flush discards the entry just written by get_tenant_fresh",
+          "body": "Line 10 writes the freshly fetched tenant into `_CACHE`, then lines 11-12 drop the entire cache whenever the size crosses 1000. The entry that was just fetched is one of the entries removed, so the call's caching side effect is undone and any immediately following `get_tenant(tenant_id)` returns `None` even though a live fetch just succeeded. It also evicts every other tenant at once, so one call over the threshold forces a full re-fetch storm for all callers rather than a bounded eviction. Either evict before inserting, or evict a bounded subset (e.g. pop the oldest N keys / use an LRU such as `collections.OrderedDict` or `functools.lru_cache`) so the just-fetched key survives. The size check is also a check-then-act on shared mutable state: with concurrent callers, one thread's `clear()` wipes entries another thread has just written and is about to read.",
+          "agreeing": [
+            "correctness"
+          ],
+          "categories": [
+            "error_handling",
+            "logic"
+          ],
+          "matched_label": "cache/lookup.py:11",
+          "matched_labels": [
+            "cache/lookup.py:11"
+          ],
+          "cites": [
+            "cache/lookup.py:10",
+            "cache/lookup.py:11",
+            "cache/lookup.py:9",
+            "cache/lookup.py:5"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "major",
+          "confidence": 0.6,
+          "where": "cache/lookup.py:8-13",
+          "title": "No test coverage for get_tenant_fresh's fetch/cache/eviction logic",
+          "body": "get_tenant_fresh introduces new behavior: it always calls _fetch (bypassing cache), writes the result into _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff. If _fetch were called with the wrong argument, if the cache write used the wrong key, or if the eviction threshold/logic were broken (e.g. off-by-one, clearing too eagerly or never), nothing would fail. Add tests asserting: (1) the returned value comes from _fetch and not just get_tenant, (2) _CACHE[tenant_id] is set after the call, and (3) the cache is cleared once size exceeds 1000.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "cache/lookup.py:8"
+          ]
+        },
+        {
+          "match": "allowed",
+          "agent": "security",
+          "category": "input_validation",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "cache/lookup.py:8-13",
+          "title": "Caller-supplied tenant_id writes to shared cache and can flush it",
+          "body": "`get_tenant_fresh` takes `tenant_id` straight from the caller, unconditionally stores the `_fetch` result under that key in the module-level `_CACHE`, and when the cache exceeds 1000 entries wipes it entirely for every tenant. Two consequences if `tenant_id` can be influenced from outside (e.g. a path/query parameter on an HTTP handler):\n\n1. Availability: ~1000 requests with distinct ids cost an attacker nothing but evict every other tenant's entry, forcing all traffic back to `_fetch`. Repeating that keeps the cache permanently cold.\n2. Poisoning: whatever `_fetch` returns for an unknown or malformed id \u2014 including `None` or an error placeholder \u2014 becomes the value that subsequent `get_tenant` calls (line 5) return for that key, since `get_tenant` does not distinguish \"absent\" from \"cached None\".\n\nSuggested fixes: validate/normalise `tenant_id` against a known tenant before writing, skip the write when `_fetch` returns a falsy/error result, and replace the wholesale `clear()` with bounded per-key eviction (e.g. an LRU) so one caller cannot evict everyone else.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "cache/lookup.py:11",
+          "matched_labels": [
+            "cache/lookup.py:11"
+          ],
+          "cites": [
+            "cache/lookup.py:8",
+            "cache/lookup.py:11",
+            "cache/lookup.py:4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neg-allowlisted-dynamic-sql",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 0.55,
+      "cost_usd": 0.0431,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "reports/invoices.py:3-17",
+          "title": "No test exercises sort=\"status\"",
+          "body": "SORTABLE defines three sortable columns (created_at, amount, status), but the tests only cover created_at (default) and amount. If the mapping for \"status\" were wrong (e.g. mapped to the wrong column, or the ORDER BY direction reversed for that column), nothing in the current test suite would fail.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "reports/invoices.py:3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neg-clean-extract-method",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 1,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 0.55,
+      "cost_usd": 0.054,
+      "failed_agents": [],
+      "error": null,
+      "findings": [
+        {
+          "match": "allowed",
+          "agent": "tests",
+          "category": "test_coverage",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "billing/totals.py:8-10",
+          "title": "order_total has no test after extraction",
+          "body": "The refactor changes order_total to call the new discount_for helper, but no test exercises order_total directly (e.g. summing multiple lines and subtracting the discount). A regression in how discount_for's return value is combined with subtotal (e.g. wrong sign, wrong variable) would not be caught by the existing tests, which only test discount_for in isolation.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": null,
+          "matched_labels": [],
+          "cites": [
+            "billing/totals.py:8"
+          ]
+        },
+        {
+          "match": "false_positive",
+          "agent": "correctness",
+          "category": "test_quality",
+          "severity": "minor",
+          "confidence": 0.55,
+          "where": "tests/test_totals.py:1-6",
+          "title": "New test file uses discount_for, Customer and Decimal without importing them",
+          "body": "The diff presents `tests/test_totals.py` as a complete new file (`@@ -0,0 +1,6 @@`, +6/-0), and none of the three names it references \u2014 `discount_for`, `Customer`, `Decimal` \u2014 are imported. As written the module raises `NameError` at test execution, so the new coverage for the extracted helper would not actually run. Add `from decimal import Decimal`, the import of `discount_for` from `billing.totals`, and whatever module provides `Customer` (or a stub/fixture, since `Customer(tier=...)` implies a keyword-constructible model). If the imports exist and were simply elided from the diff rendering, disregard.",
+          "agreeing": [],
+          "categories": [],
+          "matched_label": "tests/test_totals.py:1",
+          "matched_labels": [
+            "tests/test_totals.py:1"
+          ],
+          "cites": [
+            "tests/test_totals.py:1",
+            "tests/test_totals.py:5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neg-dependency-bump",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.02,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "neg-tests-only-addition",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0223,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    },
+    {
+      "id": "neg-typescript-type-narrowing",
+      "hits": 0,
+      "missed": 0,
+      "false_positives": 0,
+      "unlabelled": 0,
+      "decision": "suppress",
+      "expected_decision": "suppress",
+      "confidence": 1.0,
+      "cost_usd": 0.0315,
+      "failed_agents": [],
+      "error": null,
+      "findings": []
+    }
+  ],
+  "stability": {
+    "runs": 3,
+    "precision_strict": [
+      1.0,
+      0.75,
+      0.5
+    ],
+    "recall": [
+      0.5,
+      1.0,
+      0.5
+    ],
+    "calibration_error": [
+      0.18,
+      0.31,
+      0.415
+    ],
+    "cost_per_case_usd": [
+      0.0585,
+      0.0444,
+      0.0462
+    ]
+  },
+  "runs": [
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 6,
+      "overall": {
+        "hits": 1,
+        "allowed": 3,
+        "labels_found": 1,
+        "concerns": 1,
+        "duplicate_rate": 1.0,
+        "false_positives": 0,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 1.0,
+        "precision_lenient": 1.0,
+        "recall": 0.5,
+        "f1": 0.667
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 2,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.80-0.90",
+            "n": 1,
+            "mean_confidence": 0.82,
+            "observed_hit_rate": 1.0,
+            "gap": 0.18
+          }
+        ],
+        "expected_calibration_error": 0.18
+      },
+      "category_agreement": 1.0,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.3507,
+        "per_case_usd": 0.0585
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.689,
+          "cost_usd": 0.1267,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.82,
+              "where": "cache/lookup.py:9-13",
+              "title": "Size guard clears the whole cache, discarding the value just written",
+              "body": "After inserting `tenant`, the guard `if len(_CACHE) > 1000: _CACHE.clear()` empties the entire shared cache, so the entry written on line 10 is thrown away too. A caller that does `get_tenant_fresh(x)` followed by `get_tenant(x)` gets `None` back whenever the threshold is crossed, and every other tenant cached for unrelated callers is evicted at the same time \u2014 one call can trigger a full re-fetch storm against `_fetch`. If a size bound is wanted, evict a single entry (e.g. oldest/FIFO via an `OrderedDict`, or `popitem`) rather than clearing, and evict before or excluding the entry just stored.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "error_handling",
+                "logic"
+              ],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:4",
+                "cache/lookup.py:9",
+                "cache/lookup.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "cache/lookup.py:8-13",
+              "title": "No test covers get_tenant_fresh's caching/eviction behaviour",
+              "body": "get_tenant_fresh introduces new logic: it fetches a tenant, writes it into the shared _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff, so a bug (e.g. wrong cache key, eviction threshold off, or clearing the wrong structure) would go unnoticed.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "Unvalidated tenant_id keys a shared cache; flush is all-or-nothing",
+              "body": "`get_tenant_fresh` inserts `tenant` under the caller-supplied `tenant_id` into the module-level `_CACHE` (line 10) with no validation of the id and no check that `_fetch` returned a real tenant. Two consequences worth a look:\n\n1. If `tenant_id` can be influenced by a request parameter anywhere upstream, a caller can add arbitrary keys and, once the count crosses 1000, force `_CACHE.clear()` (lines 11-12) which evicts every other tenant's entry. That is a cheap way to keep the cache permanently cold for everyone \\u2014 a denial-of-service amplifier against whatever backend `_fetch` talks to, since every subsequent `get_tenant` miss becomes a live fetch.\n2. If `_fetch` returns `None`/a sentinel for an unknown id, that value is still cached, so bogus ids consume slots and are served back by `get_tenant`.\n\nSuggested fix: only store when `_fetch` returned a tenant, and evict by policy (LRU / drop-oldest, e.g. `collections.OrderedDict` or `functools.lru_cache`) instead of clearing the whole map.\n\nI could not see the entry point: no caller of `get_tenant_fresh` and no definition of `_fetch` were retrieved, so whether `tenant_id` is attacker-controlled is unverified \\u2014 hence the low confidence and `minor` rating.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:11",
+                "cache/lookup.py:9"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.4,
+          "cost_usd": 0.0827,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.4,
+              "where": "reports/invoices.py:3-15",
+              "title": "\"status\" sort key never exercised by a test",
+              "body": "SORTABLE maps three keys (created_at, amount, status) to columns, but only created_at (default) and amount are covered by tests. If the status mapping were wrong (e.g. mismatched column name or ordering bug), nothing would catch it.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "reports/invoices.py:3"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-clean-extract-method",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0673,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-dependency-bump",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0201,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-tests-only-addition",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0218,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0322,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 6,
+      "overall": {
+        "hits": 3,
+        "allowed": 2,
+        "labels_found": 2,
+        "concerns": 2,
+        "duplicate_rate": 1.5,
+        "false_positives": 0,
+        "unlabelled": 1,
+        "misses": 0,
+        "precision_strict": 0.75,
+        "precision_lenient": 1.0,
+        "recall": 1.0,
+        "f1": 0.857
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 2,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "docs": {
+          "hits": 1,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 1.0,
+          "precision_lenient": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 2,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 1.0,
+            "gap": 0.45
+          },
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.72,
+            "observed_hit_rate": 1.0,
+            "gap": 0.28
+          },
+          {
+            "range": "0.80-0.90",
+            "n": 1,
+            "mean_confidence": 0.8,
+            "observed_hit_rate": 1.0,
+            "gap": 0.2
+          }
+        ],
+        "expected_calibration_error": 0.31
+      },
+      "category_agreement": 0.667,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 0.8,
+      "cost": {
+        "total_usd": 0.2662,
+        "per_case_usd": 0.0444
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 3,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 1,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.657,
+          "cost_usd": 0.1141,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.8,
+              "where": "cache/lookup.py:10-12",
+              "title": "Size guard clears the whole cache, discarding the just-fetched entry",
+              "body": "When `_CACHE` crosses 1000 entries, `_CACHE.clear()` drops every entry, including the tenant written on line 10 one statement earlier. The caller of `get_tenant_fresh` still gets its value back, but an immediately following `get_tenant(tenant_id)` returns `None`, and every other cached tenant is lost too. Past the threshold this degenerates into a thrash cycle: the cache refills to 1001 and is wiped again, so the hit rate for `get_tenant` collapses to roughly zero rather than degrading gracefully. Evict a bounded number of entries instead (e.g. pop the oldest key, or back the cache with `collections.OrderedDict`/`functools.lru_cache` semantics) so the freshly inserted entry survives.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "concurrency",
+                "logic"
+              ],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:4"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "cache/lookup.py:8-13",
+              "title": "get_tenant_fresh has no tests covering fetch/cache/eviction behavior",
+              "body": "get_tenant_fresh introduces new behavior: it always calls _fetch (bypassing cache), writes the result into _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff. If _fetch were called with the wrong argument, if the cache write were skipped, or if the eviction threshold/logic were wrong (e.g. off-by-one, wrong clear condition, or clearing on every call), nothing would fail today.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "docs",
+              "category": "readability",
+              "severity": "minor",
+              "confidence": 0.72,
+              "where": "cache/lookup.py:8-13",
+              "title": "Function name `get_tenant_fresh` misleads about cache side effects",
+              "body": "The name suggests a simple fetch-and-cache operation, but the function has a significant side effect: it clears the entire cache when size exceeds 1000. A caller using `get_tenant_fresh` expecting to refresh a single tenant's cached entry may not anticipate that the call could evict all other cached data. This aggressive cache-clearing behavior should be documented in the function's docstring, or the function should be renamed to reflect its actual contract (e.g., `get_tenant_with_cache_eviction` or `get_tenant_and_refresh_cache`).",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:8",
+              "matched_labels": [
+                "cache/lookup.py:8"
+              ],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            },
+            {
+              "match": "unlabelled",
+              "agent": "security",
+              "category": "other",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "Arbitrary tenant IDs can force a full cache flush (load amplification)",
+              "body": "`get_tenant_fresh` unconditionally inserts the result of `_fetch(tenant_id)` into the shared `_CACHE` for whatever `tenant_id` it is handed, and when the map exceeds 1000 entries it calls `_CACHE.clear()`, discarding every cached tenant rather than evicting one. If any reachable endpoint passes a caller-supplied identifier into this helper, a caller can loop over throwaway IDs to push the map past the threshold repeatedly, wiping the warm cache each time and sending all subsequent `get_tenant` misses back to `_fetch` \\u2014 a cheap way to amplify load on the backing store. Prefer a bounded eviction policy (LRU / evict-one) over `clear()`, and avoid caching results for IDs that did not resolve to a real tenant.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:9",
+                "cache/lookup.py:11"
+              ]
+            },
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "error_handling",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:9-10",
+              "title": "A None result from _fetch is written into the shared cache",
+              "body": "`_fetch(tenant_id)` is stored unconditionally. If `_fetch` can return `None` (unknown/deleted tenant) rather than raising, that `None` is persisted into `_CACHE` and counts toward the 1000-entry threshold, while `get_tenant` cannot distinguish the poisoned entry from a plain miss. Guard the write with `if tenant is not None:` unless `_fetch` is contractually non-optional.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:9"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0418,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-clean-extract-method",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0285,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-dependency-bump",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.02,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-tests-only-addition",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0221,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": "suppress",
+          "confidence": 0.6,
+          "cost_usd": 0.0397,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.6,
+              "where": "web/src/events.ts:6-9",
+              "title": "describe() has no visible test coverage",
+              "body": "The refactor relies on TypeScript's discriminated-union narrowing to safely drop the casts, but there is no test file in this diff (or referenced) exercising describe() for both 'click' and 'key' event kinds. If the narrowing were subtly wrong (e.g. the Event union shape changes elsewhere), nothing here would fail at runtime since TS types are erased.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "web/src/events.ts:6"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "models": {
+        "security": "claude-opus-5",
+        "correctness": "claude-opus-5",
+        "tests": "claude-sonnet-5",
+        "docs": "claude-haiku-4-5"
+      },
+      "cases": 6,
+      "overall": {
+        "hits": 1,
+        "allowed": 4,
+        "labels_found": 1,
+        "concerns": 1,
+        "duplicate_rate": 1.0,
+        "false_positives": 1,
+        "unlabelled": 0,
+        "misses": 1,
+        "precision_strict": 0.5,
+        "precision_lenient": 0.5,
+        "recall": 0.5,
+        "f1": 0.5
+      },
+      "by_agent": {
+        "correctness": {
+          "hits": 1,
+          "allowed": 0,
+          "labels_found": 1,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.5,
+          "precision_lenient": 0.5,
+          "recall": 1.0,
+          "f1": 0.667
+        },
+        "docs": {
+          "hits": 0,
+          "allowed": 0,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 1,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "security": {
+          "hits": 0,
+          "allowed": 1,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "tests": {
+          "hits": 0,
+          "allowed": 3,
+          "labels_found": 0,
+          "concerns": 0,
+          "duplicate_rate": 0.0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "misses": 0,
+          "precision_strict": 0.0,
+          "precision_lenient": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "calibration": {
+        "bins": [
+          {
+            "range": "0.50-0.60",
+            "n": 1,
+            "mean_confidence": 0.55,
+            "observed_hit_rate": 0.0,
+            "gap": -0.55
+          },
+          {
+            "range": "0.70-0.80",
+            "n": 1,
+            "mean_confidence": 0.72,
+            "observed_hit_rate": 1.0,
+            "gap": 0.28
+          }
+        ],
+        "expected_calibration_error": 0.415
+      },
+      "category_agreement": 1.0,
+      "agent_attribution": 1.0,
+      "decision_accuracy": 1.0,
+      "cost": {
+        "total_usd": 0.277,
+        "per_case_usd": 0.0462
+      },
+      "per_case": [
+        {
+          "id": "doc-misleading-name",
+          "hits": 1,
+          "missed": 1,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "escalate",
+          "expected_decision": null,
+          "confidence": 0.636,
+          "cost_usd": 0.1061,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "hit",
+              "agent": "correctness",
+              "category": "logic",
+              "severity": "major",
+              "confidence": 0.72,
+              "where": "cache/lookup.py:9-12",
+              "title": "Cache flush discards the entry just written by get_tenant_fresh",
+              "body": "Line 10 writes the freshly fetched tenant into `_CACHE`, then lines 11-12 drop the entire cache whenever the size crosses 1000. The entry that was just fetched is one of the entries removed, so the call's caching side effect is undone and any immediately following `get_tenant(tenant_id)` returns `None` even though a live fetch just succeeded. It also evicts every other tenant at once, so one call over the threshold forces a full re-fetch storm for all callers rather than a bounded eviction. Either evict before inserting, or evict a bounded subset (e.g. pop the oldest N keys / use an LRU such as `collections.OrderedDict` or `functools.lru_cache`) so the just-fetched key survives. The size check is also a check-then-act on shared mutable state: with concurrent callers, one thread's `clear()` wipes entries another thread has just written and is about to read.",
+              "agreeing": [
+                "correctness"
+              ],
+              "categories": [
+                "error_handling",
+                "logic"
+              ],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:10",
+                "cache/lookup.py:11",
+                "cache/lookup.py:9",
+                "cache/lookup.py:5"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "major",
+              "confidence": 0.6,
+              "where": "cache/lookup.py:8-13",
+              "title": "No test coverage for get_tenant_fresh's fetch/cache/eviction logic",
+              "body": "get_tenant_fresh introduces new behavior: it always calls _fetch (bypassing cache), writes the result into _CACHE, and clears the entire cache once it exceeds 1000 entries. None of this is exercised by any test in the diff. If _fetch were called with the wrong argument, if the cache write used the wrong key, or if the eviction threshold/logic were broken (e.g. off-by-one, clearing too eagerly or never), nothing would fail. Add tests asserting: (1) the returned value comes from _fetch and not just get_tenant, (2) _CACHE[tenant_id] is set after the call, and (3) the cache is cleared once size exceeds 1000.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "cache/lookup.py:8"
+              ]
+            },
+            {
+              "match": "allowed",
+              "agent": "security",
+              "category": "input_validation",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "cache/lookup.py:8-13",
+              "title": "Caller-supplied tenant_id writes to shared cache and can flush it",
+              "body": "`get_tenant_fresh` takes `tenant_id` straight from the caller, unconditionally stores the `_fetch` result under that key in the module-level `_CACHE`, and when the cache exceeds 1000 entries wipes it entirely for every tenant. Two consequences if `tenant_id` can be influenced from outside (e.g. a path/query parameter on an HTTP handler):\n\n1. Availability: ~1000 requests with distinct ids cost an attacker nothing but evict every other tenant's entry, forcing all traffic back to `_fetch`. Repeating that keeps the cache permanently cold.\n2. Poisoning: whatever `_fetch` returns for an unknown or malformed id \u2014 including `None` or an error placeholder \u2014 becomes the value that subsequent `get_tenant` calls (line 5) return for that key, since `get_tenant` does not distinguish \"absent\" from \"cached None\".\n\nSuggested fixes: validate/normalise `tenant_id` against a known tenant before writing, skip the write when `_fetch` returns a falsy/error result, and replace the wholesale `clear()` with bounded per-key eviction (e.g. an LRU) so one caller cannot evict everyone else.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "cache/lookup.py:11",
+              "matched_labels": [
+                "cache/lookup.py:11"
+              ],
+              "cites": [
+                "cache/lookup.py:8",
+                "cache/lookup.py:11",
+                "cache/lookup.py:4"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-allowlisted-dynamic-sql",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.0431,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "reports/invoices.py:3-17",
+              "title": "No test exercises sort=\"status\"",
+              "body": "SORTABLE defines three sortable columns (created_at, amount, status), but the tests only cover created_at (default) and amount. If the mapping for \"status\" were wrong (e.g. mapped to the wrong column, or the ORDER BY direction reversed for that column), nothing in the current test suite would fail.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "reports/invoices.py:3"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-clean-extract-method",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 1,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 0.55,
+          "cost_usd": 0.054,
+          "failed_agents": [],
+          "error": null,
+          "findings": [
+            {
+              "match": "allowed",
+              "agent": "tests",
+              "category": "test_coverage",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "billing/totals.py:8-10",
+              "title": "order_total has no test after extraction",
+              "body": "The refactor changes order_total to call the new discount_for helper, but no test exercises order_total directly (e.g. summing multiple lines and subtracting the discount). A regression in how discount_for's return value is combined with subtotal (e.g. wrong sign, wrong variable) would not be caught by the existing tests, which only test discount_for in isolation.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": null,
+              "matched_labels": [],
+              "cites": [
+                "billing/totals.py:8"
+              ]
+            },
+            {
+              "match": "false_positive",
+              "agent": "correctness",
+              "category": "test_quality",
+              "severity": "minor",
+              "confidence": 0.55,
+              "where": "tests/test_totals.py:1-6",
+              "title": "New test file uses discount_for, Customer and Decimal without importing them",
+              "body": "The diff presents `tests/test_totals.py` as a complete new file (`@@ -0,0 +1,6 @@`, +6/-0), and none of the three names it references \u2014 `discount_for`, `Customer`, `Decimal` \u2014 are imported. As written the module raises `NameError` at test execution, so the new coverage for the extracted helper would not actually run. Add `from decimal import Decimal`, the import of `discount_for` from `billing.totals`, and whatever module provides `Customer` (or a stub/fixture, since `Customer(tier=...)` implies a keyword-constructible model). If the imports exist and were simply elided from the diff rendering, disregard.",
+              "agreeing": [],
+              "categories": [],
+              "matched_label": "tests/test_totals.py:1",
+              "matched_labels": [
+                "tests/test_totals.py:1"
+              ],
+              "cites": [
+                "tests/test_totals.py:1",
+                "tests/test_totals.py:5"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neg-dependency-bump",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.02,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-tests-only-addition",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0223,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        },
+        {
+          "id": "neg-typescript-type-narrowing",
+          "hits": 0,
+          "missed": 0,
+          "false_positives": 0,
+          "unlabelled": 0,
+          "decision": "suppress",
+          "expected_decision": "suppress",
+          "confidence": 1.0,
+          "cost_usd": 0.0315,
+          "failed_agents": [],
+          "error": null,
+          "findings": []
+        }
+      ]
+    }
+  ]
+}

@@ -1697,3 +1697,50 @@ The gate is 1.000 on two runs and 0.950 on the third. The single disagreement
 is `sec-terraform-public-bucket`: the invoices bucket was found, confidence
 0.99, and the review auto-posted where the label says escalate. The two earlier
 clean runs escalated it. One run in three, on a finding the panel did not miss.
+
+## `doc-misleading-name` — three prompt attempts, and what it actually is
+
+I described this as "never caught, a standing capability gap". **That was wrong**,
+and reading the recorded runs rather than the summary of them says so: across 22
+recorded runs the docs agent names `get_tenant_fresh` in **9 of them**, as
+`readability`, `documentation` or `api_contract`. It is intermittent at roughly
+40%, not absent.
+
+Two separate things were going on.
+
+**A scoring loss, now fixed.** In one of the three clean gatefix runs the docs
+agent *did* name it, filed as `api_contract`, and it scored as a miss because the
+label is `docs/readability` and the merge had left the docs specialist visible
+only in `agreeing`. Rescoring that run under the current matcher turns it into a
+hit (`missed` 1 → 0). That fix is narrow on purpose: an `api_contract` finding
+satisfies a docs label only when docs is among the contributors, so a
+correctness-only contract finding — a genuinely broken signature — still cannot.
+
+**A prompt inconsistency, fixed, and it did not help.** `docs.md` defines three
+kinds of finding: stale documentation, an undocumented public contract, and "a
+name that actively misleads: a `get_*` that mutates" — which is this case,
+verbatim. But the per-run `focus()` line offered an exit test naming only the
+first two: *"if nothing is now untrue and no public contract is undocumented,
+return zero findings."* A misleading name satisfies both, so the model was being
+told to stay silent, correctly, by the narrower of two instructions it had been
+given. That is why two earlier attempts to state the rule more firmly failed:
+emphasis was never the problem.
+
+The exit test now names all three. Measured over three runs on the case plus every
+negative control: the case was found **1 of 3**, against a prior rate of about 4 in
+10 — no improvement that three runs can see. No noise was added; the one negative
+control that escalated did so on a `tests` coverage finding at 0.6 that has
+hovered at the threshold on that case for several rounds, with no docs finding
+involved.
+
+The change is kept anyway, on the same standard applied to the gate reorder: the
+two instructions genuinely contradicted each other, and an exit test that omits a
+category its own system prompt defines is wrong whether or not fixing it moves a
+number. It is recorded here as not having moved one.
+
+**Three attempts have now failed, so this is recorded as a measured limit rather
+than fought further.** The label stays `EXPECT`. The cache wipe on line 11 is
+caught every run; the misleading name on line 8 is caught about four times in ten.
+Recall of 0.986 — one label of 73, the same one each time — is the honest ceiling
+of this panel on this set, and moving the label to make the number go away would
+only cost us the one place the set still says something uncomfortable.
