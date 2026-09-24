@@ -1806,3 +1806,67 @@ a truncated history and got 14 cases where the first got 21. Two arms of a
 comparison silently running on different cases is exactly the shape of a result.
 Sampling now reads the remote's default branch explicitly, and both arms above ran
 on identical case sets, which is why the per-repo `n` matches.
+
+## What was actually capping retrieval recall
+
+Three candidates were plausible: chunking, the embedder, or the retrieval
+settings. Measured over **177 needed definitions**, asking of each miss whether
+the definition was never a candidate or was a candidate that ranked too low:
+
+| | |
+|---|---|
+| never indexed at all | **0 (0.0%)** |
+| retrieved in the top 12 | 23.2% |
+| ranked 13–50 | **31.6%** |
+| ranked below 50 | 45.2% |
+| cut by the per-file `top_k` split | 7.9% |
+
+**Chunking is not the problem** — every needed file had chunks in the index. And
+the embedder was not either: a semantic model moved recall by +0.019 while moving
+MRR by +0.130. Nearly a third of the misses were findable and sitting just outside
+the window.
+
+### The window was smaller than the budget that pays for it
+
+`render_repository_context` caps the prompt at 24,000 characters. At a mean 1,658
+characters per chunk that holds about **15 chunks** — but `retrieval_top_k` was
+**12**, so only ~20k of the 24k was ever used. The system was paying for context
+it did not fetch.
+
+`top_k` is now 20, deliberately above what the budget holds, so the budget is the
+binding constraint and is never under-filled. Anything beyond it is discarded at
+render time, so the extra candidates cost ranking work and **no tokens**.
+
+| arm | recall | MRR |
+|---|---|---|
+| hash, top_k 12 | 0.360 | 0.218 |
+| **hash, top_k 20** | **0.459** | 0.213 |
+| local, top_k 12 | 0.378 | 0.347 |
+| local, top_k 20 | 0.423 | 0.365 |
+
+**Recall 0.360 → 0.459, a 27% relative gain for nothing.** Best recall is the
+hashing embedder at the wider window; best ranking is still the semantic one. The
+default stays `hash`.
+
+### What is left is priced, not free
+
+Beyond filling the existing budget, recall is bought with context tokens:
+
+| prompt budget | chunks that fit | recall |
+|---|---|---|
+| 24k chars *(default)* | 15.1 | 0.356 |
+| 48k | 31.0 | 0.416 |
+| 96k | 68.9 | 0.657 |
+
+Reaching 0.657 costs roughly four times the repository context in **every agent of
+every review**, four agents deep. That is a real bill against the resource this
+system exists to protect, so the budget is now `RETRIEVAL_CONTEXT_CHARS` with the
+curve recorded beside it, and the default is unchanged. It is a decision for
+whoever is paying, made with numbers instead of a shrug.
+
+### One measurement that surprised me
+
+Global ranking at k=12 scores **worse** than the per-file split at k=12 (0.348
+against 0.378). The split looks like a premature truncation and is partly doing
+something useful: guaranteeing every changed file contributes candidates, rather
+than letting one file's neighbourhood monopolise a small window. It is kept.

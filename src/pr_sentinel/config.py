@@ -74,7 +74,17 @@ class Settings(BaseSettings):
     db_timeout_s: float = 15.0
 
     # --- Retrieval ---
-    retrieval_top_k: int = 12
+    # Candidates the ranker returns. This is NOT what reaches the model: the
+    # prompt budget below decides that, and it fits about 15 chunks. Kept a
+    # little above the budget so the budget is the binding constraint and never
+    # under-filled — measured, top_k=12 used ~20k of the 24k budget.
+    retrieval_top_k: int = 20
+    # What actually caps retrieval. Measured over 22 real diffs, recall of the
+    # definitions a diff calls: 0.356 at 24k, 0.416 at 48k, 0.657 at 96k, at a
+    # mean 1,658 chars per chunk. Recall here is bought with context tokens, in
+    # every agent of every review, so the default stays where it is and this is
+    # the knob to turn when a repository justifies it.
+    retrieval_context_chars: int = 24_000
     max_diff_bytes: int = 400_000
 
     @model_validator(mode="after")
