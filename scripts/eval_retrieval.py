@@ -159,12 +159,24 @@ async def measure(repo: str, shas: list[str], top_k: int) -> None:
         relevant = {p for paths in truth.values() for p in paths}
 
         # Query exactly as build_context does: per changed file.
-        from pr_sentinel.domain.models import DiffFile
+        from pr_sentinel.forge.diff import build_diff_file
 
-        files = [
-            DiffFile(path=p, status="modified", additions=1, deletions=0, patch=added[:4000], binary=False)
-            for p in changed
-        ]
+        # Per-file patches with hunks PARSED. Both halves of the query walk
+        # `DiffFile.hunks`; an unparsed DiffFile yields a query built from the
+        # file path alone. Every retrieval number recorded before this was
+        # measured that way, with the whole content side of the query missing.
+        files = []
+        for path in changed:
+            patch = git("diff", parent, sha, "--", path, cwd=work)
+            files.append(
+                build_diff_file(
+                    {
+                        "filename": path,
+                        "status": "modified",
+                        "patch": "\n".join(patch.splitlines()[4:]),
+                    }
+                )
+            )
         vectors = await embedder.embed([diff_query_text([f], limit=1200) for f in files])
         got: list[str] = []
         for f, vec in zip(files, vectors, strict=True):

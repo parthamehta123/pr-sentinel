@@ -1870,3 +1870,71 @@ Global ranking at k=12 scores **worse** than the per-file split at k=12 (0.348
 against 0.378). The split looks like a premature truncation and is partly doing
 something useful: guaranteeing every changed file contributes candidates, rather
 than letting one file's neighbourhood monopolise a small window. It is kept.
+
+## Retraction: every retrieval number before this was measured on a broken query
+
+Chasing the "ranking problem" — 45% of needed definitions ranking below 50 — found
+the cause, and it was in my measurement harness, not the system.
+
+`scripts/eval_retrieval.py` built its `DiffFile` objects as
+`DiffFile(path=..., patch=...)` and never parsed hunks. **Both halves of the
+retrieval query walk `DiffFile.hunks`**, so with none the query was the file path
+and nothing else:
+
+```
+fts_query -> 'tornado or http1connection or httpclient or simple'
+```
+
+The content side of the query — the identifiers in the added lines, which is the
+entire point — was absent from every retrieval measurement ever recorded here. The
+tell was a number too clean to be real: **0 of 104** identifiers whose definitions
+were needed appeared in the full-text query. Not a low rate. Zero. A heuristic
+that bad does not happen; a missing input does.
+
+Production was never affected. It builds `DiffFile` through `build_diff_file`,
+which calls `parse_patch`. Only the harness was wrong.
+
+### Re-measured with hunks parsed
+
+| arm | recall | MRR |
+|---|---|---|
+| hash, top_k 12 | **0.665** | 0.369 |
+| hash, top_k 20 | **0.717** | 0.367 |
+| local, top_k 12 | 0.676 | **0.528** |
+| local, top_k 20 | 0.683 | 0.530 |
+
+*Previously reported, path-only query:* hash@12 recall 0.360, hash@20 recall 0.459.
+
+**Retrieval recall is about 0.72, not 0.34.** Every conclusion drawn from the old
+figure is withdrawn:
+
+- *"Retrieval is the weakest component in the system"* — it is not. At 0.717 it is
+  comparable to the rest.
+- *"The vector half is not semantic, and that is the largest confound"* — the
+  embedder choice moves recall by 0.05 and MRR by 0.16. The semantic model buys
+  ranking, which still holds, but the framing that hashing was crippling retrieval
+  does not.
+- *"Chunking is not the cap, the embedder is not the cap, the prompt budget is"* —
+  the diagnostic behind that (0% unindexed, 31.6% ranked 13–50, 45.2% below 50)
+  was computed on path-only queries and says nothing about the real system.
+- *The 24k / 48k / 96k budget curve* — measured the same way. Withdrawn.
+
+The one change that survives is `retrieval_top_k` 12 → 20, which still helps
+(0.665 → 0.717) and still costs no tokens, because the prompt budget discards the
+surplus. It was adopted for a reason that turned out to be wrong and is kept for a
+reason that is measured.
+
+### What this cost, and the rule it earns
+
+Four rounds of work — a semantic embedder, a `top_k` change, a budget setting, a
+177-definition diagnostic — were all steered by a broken measurement, and each
+produced a confident write-up in this file. The write-ups were internally honest
+about noise and about what was and was not demonstrated. None of that helps when
+the instrument is wrong.
+
+The tell was available from the first run and I did not look: **a query is an
+input, and no measurement of a search system is trustworthy until its query has
+been printed once and read.** The same applies to the panel eval, where the prompt
+is the input — which is how the body leak was found, by printing what the model
+actually received. That lesson was already paid for once here, and applied to
+retrieval only after a second bill.
