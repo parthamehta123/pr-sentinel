@@ -6,7 +6,13 @@ clearly worse than a trained model — it captures lexical overlap, not meaning 
 but it makes the whole system runnable and testable without a second vendor, and
 it keeps the dimension contract honest in CI.
 
-Switch to `openai` when retrieval quality starts to matter.
+`local` is a trained static embedding model that runs on CPU with no key and no
+network after the first download. It exists because "hybrid vector + FTS" was, as
+deployed here, two *lexical* signals fused together — reciprocal-rank fusion over
+two correlated signals buys much less than over independent ones, and measuring
+retrieval at recall@12 0.337 is what made that visible.
+
+Switch to `openai` when a hosted model is wanted instead.
 """
 
 from __future__ import annotations
@@ -90,6 +96,54 @@ class OpenAIEmbedder(Embedder):
         return out
 
 
+class LocalEmbedder(Embedder):
+    """A trained static embedding model, on CPU, with no vendor.
+
+    Static embeddings are a distilled sentence transformer: one vector per token,
+    pooled, with no forward pass at query time. That makes them a few hundred
+    times faster than the model they come from and meaningfully worse at nuance —
+    and still categorically different from feature hashing, which has no notion
+    that two spellings of the same idea are related at all.
+
+    Dimension. The model's width is fixed, and the `code_chunks.embedding` column
+    is `vector(EMBEDDING_DIM)`. Short vectors are zero-padded to that width, which
+    is exact rather than approximate: appending zeros changes neither a dot
+    product nor a norm, so cosine ranking is identical to ranking on the
+    unpadded vectors. It wastes storage in proportion to the gap, which a
+    migration narrowing the column would recover. Padding is allowed; truncating
+    is not, because dropping components does change the ranking.
+    """
+
+    name = "local"
+
+    def __init__(self, dim: int, model: str) -> None:
+        super().__init__(dim)
+        try:
+            from model2vec import StaticModel
+        except ImportError as exc:  # pragma: no cover - depends on the extra
+            raise RuntimeError(
+                "EMBEDDING_PROVIDER=local needs the optional dependency: "
+                "pip install 'pr-sentinel[local-embeddings]'"
+            ) from exc
+
+        self._model = StaticModel.from_pretrained(model)
+        self._native = int(self._model.dim)
+        if self._native > dim:
+            raise ValueError(
+                f"{model} produces {self._native}-dimensional vectors but EMBEDDING_DIM "
+                f"is {dim}. Truncating would change the ranking, so this is refused. "
+                f"Set EMBEDDING_DIM={self._native} and re-run the migrations."
+            )
+        log.info("embeddings.local", model=model, native_dim=self._native, padded_to=dim)
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        vectors = self._model.encode(texts)
+        pad = [0.0] * (self.dim - self._native)
+        return [[float(x) for x in v] + pad for v in vectors]
+
+
 _embedder: Embedder | None = None
 
 
@@ -99,6 +153,8 @@ def get_embedder() -> Embedder:
         s = get_settings()
         if s.embedding_provider == "openai":
             _embedder = OpenAIEmbedder(s.embedding_dim, s.embedding_model, s.openai_api_key)
+        elif s.embedding_provider == "local":
+            _embedder = LocalEmbedder(s.embedding_dim, s.local_embedding_model)
         else:
             _embedder = HashingEmbedder(s.embedding_dim)
         log.info("embeddings.provider", provider=_embedder.name, dim=_embedder.dim)

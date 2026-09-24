@@ -1744,3 +1744,65 @@ caught every run; the misleading name on line 8 is caught about four times in te
 Recall of 0.986 — one label of 73, the same one each time — is the honest ceiling
 of this panel on this set, and moving the label to make the number go away would
 only cost us the one place the set still says something uncomfortable.
+
+## A real embedder — and it was not the recall bottleneck
+
+Retrieval's "hybrid vector kNN + full-text search" was, as deployed, **two lexical
+signals**: with no OpenAI key, `get_embedder()` returned the feature-hashing
+embedder, and reciprocal-rank fusion over two correlated signals buys much less
+than over independent ones. The fix needed no vendor: a trained static embedding
+model (`minishlab/potion-base-8M`, 256-dimensional, ~30MB, CPU, offline after one
+download) is now a third provider, `EMBEDDING_PROVIDER=local`.
+
+It is genuinely semantic in a way hashing cannot be — a function against a prose
+description of itself scores 0.749, against unrelated code 0.155.
+
+### Measured, same 22 diffs, both arms
+
+| repo | n | recall@12 hash → local | MRR hash → local |
+|---|---|---|---|
+| tornadoweb/tornado | 6 | 0.397 → 0.313 | 0.339 → 0.417 |
+| urllib3/urllib3 | 6 | 0.517 → 0.450 | 0.208 → 0.140 |
+| psf/requests | 5 | 0.342 → **0.602** | 0.165 → **0.600** |
+| scrapy/scrapy | 5 | 0.144 → 0.147 | 0.137 → 0.260 |
+| **all** | **22** | **0.360 → 0.378** *(+0.019)* | **0.218 → 0.347** *(+0.130)* |
+
+**Recall barely moved; ranking improved substantially.** The first useful result
+goes from about rank 4.6 to rank 2.9 — a 60% relative gain in MRR — while the set
+of definitions retrieved at all is essentially unchanged, and is *worse* on two
+repositories out of four.
+
+So the prediction implied by "two lexical signals" was wrong. A semantic embedder
+does not find more of the definitions a diff calls; it orders the ones it finds
+much better. **Whatever caps recall at ~0.37 is not the embedder** — the
+candidates are chosen before ranking, by chunk boundaries, the `exclude_paths`
+rule and the per-file `top_k` split, and that is where the next look belongs.
+
+Unlike every other measurement in this file, this one has **no run-to-run noise**:
+both embedders are deterministic, so the numbers are exact for these 22 cases. The
+uncertainty is entirely in whether 22 cases across four repositories generalise,
+not in the measurement.
+
+### Not made the default
+
+`hash` stays the default and CI never downloads a model. Recall did not improve,
+the dependency is optional (`pip install 'pr-sentinel[local-embeddings]'`), and a
+better ranking is worth having where retrieval is actually used but is not worth
+making the service heavier by default on this evidence.
+
+The column contract is handled by padding, which is exact rather than
+approximate: appending zeros changes neither a dot product nor a norm, so cosine
+ranking on a 256-dimensional vector padded to `vector(1536)` is identical to
+ranking on the unpadded one. It wastes storage in proportion to the gap, which a
+migration narrowing the column would recover. Truncation is refused outright,
+because dropping components does change the ranking.
+
+### A reproducibility bug this exposed, in my own harness
+
+The first comparison was invalid and nearly reported. `scripts/eval_retrieval.py`
+sampled commits from the clone's current HEAD, and `measure()` leaves the clone
+checked out at whichever commit it last examined — so the second arm sampled from
+a truncated history and got 14 cases where the first got 21. Two arms of a
+comparison silently running on different cases is exactly the shape of a result.
+Sampling now reads the remote's default branch explicitly, and both arms above ran
+on identical case sets, which is why the per-repo `n` matches.

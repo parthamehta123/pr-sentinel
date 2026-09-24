@@ -219,7 +219,15 @@ def sample_commits(work: Path, n: int) -> list[str]:
     chosen by whoever reads the result. Taking every Nth Python-touching commit
     is arbitrary in a way that cannot be steered.
     """
-    shas = git("log", "--format=%H", "--", "*.py", cwd=work).split()
+    # From the remote's default branch, never from current HEAD. `measure` leaves
+    # the clone checked out at whichever commit it looked at last, so sampling
+    # from HEAD makes the case set depend on the previous run — two arms of a
+    # comparison silently get different commits, and the numbers look like a
+    # result. Found exactly that way: 21 cases in one arm, 14 in the next.
+    ref = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=work).strip()
+    if not ref:
+        ref = "origin/HEAD"
+    shas = git("log", "--format=%H", ref, "--", "*.py", cwd=work).split()
     if not shas:
         return []
     step = max(len(shas) // max(n, 1), 1)

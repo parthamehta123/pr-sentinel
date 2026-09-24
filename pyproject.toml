@@ -20,6 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+local-embeddings = ["model2vec>=0.9"]
 langgraph = ["langgraph>=0.2.50"]
 openai = ["openai>=1.55"]
 dev = [

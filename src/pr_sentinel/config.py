@@ -42,8 +42,11 @@ class Settings(BaseSettings):
     max_output_tokens: int = 16000
 
     # --- Embeddings ---
-    embedding_provider: Literal["hash", "openai"] = "hash"
+    embedding_provider: Literal["hash", "openai", "local"] = "hash"
     embedding_model: str = "text-embedding-3-small"
+    # Used when embedding_provider is "local". 256-dimensional, ~30MB,
+    # downloaded once and cached; see LocalEmbedder on padding.
+    local_embedding_model: str = "minishlab/potion-base-8M"
     embedding_dim: int = 1536
     openai_api_key: str = ""
 

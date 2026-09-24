@@ -125,3 +125,64 @@ async def test_hash_embeddings_rank_related_code_above_unrelated():
 
 async def test_the_empty_string_does_not_blow_up():
     assert len(await HashingEmbedder(dim=64).embed_one("")) == 64
+
+
+def _fake_model2vec(native_dim: int, vectors=None):
+    """Stand in for model2vec so these tests need no download and no extra."""
+
+    class FakeModel:
+        dim = native_dim
+
+        @staticmethod
+        def encode(texts):
+            return (vectors or [[1.0] * native_dim])[: len(texts)]
+
+    class FakeStatic:
+        @staticmethod
+        def from_pretrained(_name):
+            return FakeModel()
+
+    return type("m2v", (), {"StaticModel": FakeStatic})
+
+
+def test_local_embedder_refuses_to_truncate():
+    """Padding preserves cosine ranking exactly; truncating would not.
+
+    Appending zeros changes neither a dot product nor a norm, so a short vector
+    padded to the column width ranks identically to the unpadded one. Dropping
+    components does change the ranking, so a model wider than EMBEDDING_DIM is
+    refused rather than silently degraded.
+    """
+    import sys
+
+    from pr_sentinel.llm.embeddings import LocalEmbedder
+
+    sys.modules["model2vec"] = _fake_model2vec(512)
+    try:
+        with pytest.raises(ValueError, match="Truncating would change the ranking"):
+            LocalEmbedder(256, "fake/model")
+        assert LocalEmbedder(1536, "fake/model").dim == 1536
+    finally:
+        del sys.modules["model2vec"]
+
+
+@pytest.mark.asyncio
+async def test_local_embedder_padding_does_not_change_cosine():
+    import sys
+
+    from pr_sentinel.llm.embeddings import LocalEmbedder
+
+    raw = [[3.0, 4.0, 0.0, 0.0], [0.0, 5.0, 0.0, 0.0]]
+    sys.modules["model2vec"] = _fake_model2vec(4, raw)
+    try:
+        out = await LocalEmbedder(16, "fake/model").embed(["a", "b"])
+    finally:
+        del sys.modules["model2vec"]
+
+    assert all(len(v) == 16 for v in out)
+
+    def cos(a, b):
+        dot = sum(x * y for x, y in zip(a, b, strict=True))
+        return dot / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))
+
+    assert cos(out[0], out[1]) == pytest.approx(cos(raw[0], raw[1]))
