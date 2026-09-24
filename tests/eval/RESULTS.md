@@ -1938,3 +1938,55 @@ been printed once and read.** The same applies to the panel eval, where the prom
 is the input — which is how the body leak was found, by printing what the model
 actually received. That lesson was already paid for once here, and applied to
 retrieval only after a second bill.
+
+## Baseline after the security-category fix
+
+Three clean runs, zero failed agent calls, $15.47. Unlabelled per run: 3, 3, 5.
+
+| metric | mean | range | previous 3-run |
+|---|---|---|---|
+| **gate decision match** | **1.000** | [1.000–1.000] | 0.900 |
+| recall | 0.982 | [0.973–0.986] | 0.986 |
+| precision, strict | 0.939 | [0.923–0.959] | 0.925 |
+| precision, lenient | 0.986 | [0.973–1.000] | 0.986 |
+| category agreement | 0.944 | [0.931–0.957] | 0.924 |
+| agent attribution | 0.958 | [0.944–0.971] | 0.962 |
+| false positives / run | 1.0 | [0–2] | 1.0 |
+
+**The gate reaches 1.000 on all three runs with no disagreements**, against a
+previous distribution pinned at 0.900. The ranges do not overlap, and this is the
+first confirmation on fresh samples rather than a replay: the world-readable
+invoices bucket escalates instead of auto-posting, because `authz` was among the
+finding's contributors even though `logic` won the merge.
+
+Everything else overlaps the prior distribution and is not demonstrated. Strict
+precision at 0.939 against 0.925 looks like a gain and the ranges
+[0.923–0.959] and [0.920–0.934] overlap, so it is not one yet.
+
+**This run does not measure retrieval.** `run_case` builds its context from each
+case's hand-authored `context_files` and never calls `build_context`. The
+retrieval work of the last few rounds — the harness query fix, `top_k`, the
+embedder — is invisible here by construction.
+
+### Two misses that read worse than they are
+
+`sec-command-injection` records two misses across three runs and **the injection
+is found every run**: all three produce `[security/injection/critical] Command
+injection via shell=True`. The case carries two labels, and it is the secondary
+correctness reading — the unquoted f-string breaking on spaces and metacharacters
+— that appears only in run 1. Counting labels rather than defects is right for
+recall and misleading to read without the findings beside it.
+
+`doc-misleading-name` was found 1 of 3, the same ~40% it has always had. The
+`focus()` correction did not move it, as recorded when that change was made.
+
+### What still costs lenient precision
+
+`trap-md5-for-cache-key` fires in two runs of three: *"MD5 digest as cache key
+allows collision-driven cache poisoning"* at 0.55–0.60. The trap declares that
+clean because the digest is over the template's own source and a canonical
+encoding of its context — no secret, no adversary, and a collision costs one
+re-render. The panel is not wrong about MD5 being MD5; it is wrong about there
+being an attacker. Two of three is frequent enough to be worth a look at the
+security prompt's threat-model framing, and low-confidence enough that the gate
+suppresses it.
