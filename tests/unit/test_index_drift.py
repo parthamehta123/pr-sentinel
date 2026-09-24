@@ -74,3 +74,41 @@ async def test_build_context_records_drift_without_retrieving(pr_context, monkey
         )
     ]
     assert "not this pull request's base" in ctx.render_repository_context()
+
+
+def test_render_repository_context_works_with_default_arguments():
+    """The default must resolve to a number before it is compared against one.
+
+    `max_chars` was changed to default to None so the budget could come from
+    settings, and the line that resolves it was lost to a silent no-op edit. The
+    signature type-checked, every existing test passed because none called this
+    with default arguments and chunks present, and the whole panel crashed on the
+    first real case with `'>' not supported between instances of 'int' and
+    'NoneType'` — 20 of 63 cases lost all four agents.
+    """
+    from pr_sentinel.domain.models import CodeChunk, PullRequestContext
+    from pr_sentinel.retrieval.context import ReviewContext
+
+    pr = PullRequestContext(
+        repo_full_name="eval/x",
+        repo_github_id=0,
+        is_private=True,
+        number=1,
+        title="t",
+        body="",
+        author="a",
+        head_sha="h" * 40,
+        base_sha="b" * 40,
+        files=[],
+    )
+    ctx = ReviewContext(
+        pr=pr,
+        diff_text="",
+        chunks=[
+            CodeChunk(file_path="a.py", start_line=1, end_line=3, content="def f():\n    pass\n", score=1.0)
+        ],
+    )
+    out = ctx.render_repository_context()
+    assert "a.py" in out
+
+    assert ctx.render_repository_context(max_chars=1) == ""

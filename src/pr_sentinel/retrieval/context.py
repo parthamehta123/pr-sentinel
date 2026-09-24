@@ -66,6 +66,8 @@ class ReviewContext:
     indexed_sha: str | None = None
 
     def render_repository_context(self, max_chars: int | None = None) -> str:
+        if max_chars is None:
+            max_chars = get_settings().retrieval_context_chars
         note = index_drift_note(self.index_drift, self.indexed_sha, self.pr.base_sha)
         if not self.chunks:
             base = "(no repository context retrieved — treat unseen code as unknown)"
