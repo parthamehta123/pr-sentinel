@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Feedback &amp; Learning</h1>
+<p class="sub"><a href="/">← queue</a> · Showing disputes and approvals from the last 90 days</p>
+
+<h2>Recent feedback</h2>
+{% if feedback %}
+<table>
+  <tr><th>date</th><th>repo</th><th>PR</th><th>verdict</th><th>category</th><th>severity</th><th>finding</th><th>actor</th><th>note</th></tr>
+  {% for fb in feedback %}
+  <tr>
+    <td>{{ fb.created_at.strftime('%Y-%m-%d %H:%M') if fb.created_at else '—' }}</td>
+    <td>{{ fb.repo or '—' }}</td>
+    <td>{{ fb.pr_number or '—' }}</td>
+    <td><code class="{% if fb.verdict == 'disputed' %}sev-critical{% else %}sev-info{% endif %}">{{ fb.verdict }}</code></td>
+    <td>{{ fb.category or '—' }}</td>
+    <td>{{ fb.severity or '—' }}</td>
+    <td>{{ fb.finding_title or '—' }}</td>
+    <td>{{ fb.actor or '—' }}</td>
+    <td>{{ fb.note or '' }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No feedback recorded yet. Disputes and approvals from the HITL queue appear here.</div>{% endif %}
+
+<h2>How feedback works</h2>
+<div class="card" style="max-width:600px;padding:16px">
+  <p><strong>Minimum evidence rule:</strong> A single dispute doesn't change anything. After {{ 3 }} disputes with the same pattern, the reviewer learns to weight those findings lower.</p>
+  <p><strong>Decay:</strong> Old feedback loses weight over 90 days. A convention that changed 6 months ago won't suppress current findings.</p>
+  <p><strong>Injection:</strong> Active preferences are injected into agent prompts as "team conventions" — the reviewer adapts without manual prompt editing.</p>
+</div>
+{% endblock %}

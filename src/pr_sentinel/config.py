@@ -23,12 +23,24 @@ class Settings(BaseSettings):
     github_api_url: str = "https://api.github.com"
 
     # --- Datastore ---
+    # Local Docker Compose by default. For TigerData cloud, set DATABASE_URL to
+    # the connection string from console.cloud.timescale.com. The system works
+    # with any Postgres that has pgvector + TimescaleDB extensions enabled.
     database_url: str = "postgresql://sentinel:sentinel@localhost:5433/sentinel"
+    # Set to "tigerdata" to enable TigerData-specific optimizations:
+    # pgvectorscale DiskANN indexes, real-time continuous aggregates.
+    database_provider: Literal["local", "tigerdata"] = "local"
     db_pool_min: int = 2
     db_pool_max: int = 10
+    # TigerData cloud uses SSL by default
+    db_ssl: bool = False
 
     # --- Queue ---
     redis_url: str = "redis://localhost:6380/0"
+
+    # --- Orchestration ---
+    # "langgraph" (default), "local" (plain asyncio), or "temporal"
+    orchestration_engine: Literal["langgraph", "local", "temporal"] = "langgraph"
 
     # --- LLM ---
     llm_provider: Literal["anthropic", "echo"] = "anthropic"

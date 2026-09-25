@@ -32,17 +32,23 @@ class WorkflowEngine(ABC):
 
 
 def get_engine(preferred: str | None = None) -> WorkflowEngine:
-    """LangGraph when it is installed, plain asyncio otherwise.
+    """Three engines, one interface. LangGraph is the default, plain asyncio is
+    the fallback, Temporal is the enterprise option.
 
     The fallback is not a degraded mode — for a single fan-out/fan-in step
     `asyncio.gather` is the whole of what the graph does. It exists so the system
     has no hard dependency on a fast-moving framework, and so CI proves the seam
-    holds by running the same tests through both.
+    holds by running the same tests through both. Temporal is available when
+    durability guarantees and cross-worker fan-out matter.
     """
     if preferred == "local":
         from .local_engine import LocalEngine
 
         return LocalEngine()
+    if preferred == "temporal":
+        from .temporal_engine import TemporalEngine
+
+        return TemporalEngine()
     try:
         from .langgraph_engine import LangGraphEngine
 

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Cost Dashboard</h1>
+<p class="sub"><a href="/">← queue</a> · Daily cap: ${{ '%.0f'|format(caps.daily_cost_cap_usd) }} · Per-review cap: ${{ '%.2f'|format(caps.review_cost_cap_usd) }}</p>
+
+<h2>Daily spend — last 30 days</h2>
+{% if daily %}
+<table>
+  <tr><th>date</th><th>cost</th><th>budget</th></tr>
+  {% for row in daily %}
+  <tr>
+    <td>{{ row.day.strftime('%Y-%m-%d') }}</td>
+    <td>${{ '%.2f'|format(row.cost|float) }}</td>
+    <td>
+      <div style="background:{% if row.cost|float > caps.daily_cost_cap_usd %}var(--critical){% else %}var(--accent){% endif %};width:{{ [(row.cost|float / caps.daily_cost_cap_usd * 100)|int, 100]|min }}%;height:16px;border-radius:4px"></div>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No cost data yet.</div>{% endif %}
+
+<h2>Hourly breakdown by agent — last 7 days</h2>
+{% if hourly %}
+<table>
+  <tr><th>time</th><th>agent</th><th>calls</th><th>input</th><th>output</th><th>cost</th></tr>
+  {% for row in hourly %}
+  <tr>
+    <td>{{ row.bucket.strftime('%m-%d %H:%M') }}</td>
+    <td>{{ row.agent }}</td>
+    <td>{{ row.total_calls }}</td>
+    <td>{{ row.total_input_tokens }}</td>
+    <td>{{ row.total_output_tokens }}</td>
+    <td>${{ '%.4f'|format(row.total_cost_usd|float) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<div class="empty">No hourly data yet.</div>{% endif %}
+{% endblock %}

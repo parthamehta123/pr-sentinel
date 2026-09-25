@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Trace Viewer</h1>
+{% if review %}
+<p class="sub">
+  Review {{ review_id }} ·
+  {{ review.status }} · decision <code>{{ review.decision or '—' }}</code>
+  {% if review.decision_reason %}(<code>{{ review.decision_reason }}</code>){% endif %}
+  · confidence {{ '%.3f'|format(review.overall_confidence or 0) }}
+  · ${{ '%.4f'|format(review.total_cost_usd|float) }}
+  · prompts <code>{{ review.prompt_bundle }}</code>
+  · engine <code>{{ review.engine or '—' }}</code>
+</p>
+{% endif %}
+<p class="sub"><a href="/review/{{ review_id }}">← findings</a> · <a href="/">← queue</a></p>
+
+<h2>Event timeline</h2>
+<div style="font-family:monospace;font-size:13px;line-height:1.6">
+{% for e in trace %}
+<div style="display:flex;gap:12px;{% if e.status == 'error' %}color:var(--critical){% endif %}">
+  <span style="min-width:90px">{{ e.timestamp.strftime('%H:%M:%S.') }}{{ '%03d'|format(e.timestamp.microsecond // 1000) }}</span>
+  <span style="min-width:100px">{{ e.kind }}</span>
+  <span style="min-width:180px">{{ e.name }}</span>
+  <span style="min-width:100px">{{ e.agent or '' }}</span>
+  <span style="min-width:60px">{% if e.duration_ms %}{{ e.duration_ms }}ms{% endif %}</span>
+  <span style="min-width:70px">{% if e.cost_usd %}${{ '%.4f'|format(e.cost_usd|float) }}{% endif %}</span>
+  <span>{{ e.status or '' }}</span>
+</div>
+{% endfor %}
+</div>
+
+{% if not trace %}
+<div class="empty">No trace events recorded for this review.</div>
+{% endif %}
+{% endblock %}

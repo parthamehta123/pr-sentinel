@@ -93,3 +93,79 @@ async def decide(
         # from retraining the reviewer.
         await review_repo.record_feedback(row["review_id"], None, "hitl_gate", verdict, actor, note or None)
     return RedirectResponse("/", status_code=303)
+
+
+@app.get("/costs", response_class=HTMLResponse)
+async def cost_dashboard(request: Request) -> HTMLResponse:
+    """Cost trend dashboard — hourly spend over the last 7 days."""
+    costs_hourly = await pool.fetch(
+        """
+        SELECT bucket, agent, total_cost_usd, total_calls, total_input_tokens, total_output_tokens
+        FROM agent_costs_hourly
+        WHERE bucket > now() - interval '7 days'
+        ORDER BY bucket
+        """
+    )
+    daily_totals = await pool.fetch(
+        """
+        SELECT date_trunc('day', bucket) as day, SUM(total_cost_usd) as cost
+        FROM agent_costs_hourly
+        WHERE bucket > now() - interval '30 days'
+        GROUP BY 1 ORDER BY 1
+        """
+    )
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="costs.html",
+        context={
+            "hourly": [dict(r) for r in costs_hourly],
+            "daily": [dict(r) for r in daily_totals],
+            "caps": get_settings(),
+        },
+    )
+
+
+@app.get("/trace/{review_id}", response_class=HTMLResponse)
+async def trace_viewer(request: Request, review_id: uuid.UUID) -> HTMLResponse:
+    """Full trace viewer for a single review — every span, LLM call, tool call."""
+    trace = await metrics.trace(review_id)
+    review = await pool.fetchrow("SELECT * FROM reviews WHERE id = $1", review_id)
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="trace.html",
+        context={
+            "review": dict(review) if review else None,
+            "trace": trace,
+            "review_id": review_id,
+        },
+    )
+
+
+@app.get("/feedback", response_class=HTMLResponse)
+async def feedback_view(request: Request) -> HTMLResponse:
+    """View team preferences learned from feedback."""
+    recent_feedback = await pool.fetch(
+        """
+        SELECT fb.*, f.title as finding_title, f.category, f.severity,
+               r.repo, r.pr_number
+        FROM feedback fb
+        LEFT JOIN findings f ON f.id = fb.finding_id
+        LEFT JOIN reviews r ON r.id = fb.review_id
+        WHERE fb.created_at > now() - interval '90 days'
+        ORDER BY fb.created_at DESC
+        LIMIT 50
+        """
+    )
+    return TEMPLATES.TemplateResponse(
+        request=request,
+        name="feedback.html",
+        context={
+            "feedback": [dict(r) for r in recent_feedback],
+        },
+    )
+
+
+@app.get("/health")
+async def health() -> dict:
+    """Health check for Railway/load balancers."""
+    return {"status": "ok", "service": "dashboard"}
