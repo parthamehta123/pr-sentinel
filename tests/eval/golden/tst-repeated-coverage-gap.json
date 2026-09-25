@@ -32,28 +32,12 @@
       "note": "new public function with no test in this change"
     },
     {
-      "agent": "correctness",
-      "category": "logic",
-      "file_path": "reports/csv_export.py",
-      "line": 10,
-      "min_severity": "minor",
-      "note": "csv_escape does not quote values containing newlines, corrupting output for line-by-line consumers"
-    },
-    {
       "agent": "tests",
       "category": "test_coverage",
       "file_path": "reports/json_export.py",
       "line": 8,
       "min_severity": "minor",
       "note": "new public function with no test in this change"
-    },
-    {
-      "agent": "correctness",
-      "category": "logic",
-      "file_path": "reports/json_export.py",
-      "line": 8,
-      "min_severity": "minor",
-      "note": "dump_streaming requires a sized sequence and breaks on chunk_size<=0"
     },
     {
       "agent": "tests",
@@ -105,7 +89,22 @@
     }
   ],
   "id": "tst-repeated-coverage-gap",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "reports/csv_export.py",
+      "line": 10,
+      "note": "csv_escape does not quote values containing newlines, corrupting output for line-by-line consumers"
+    },
+    {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "reports/json_export.py",
+      "line": 8,
+      "note": "dump_streaming requires a sized sequence and breaks on chunk_size<=0"
+    }
+  ],
   "must_not_find": [],
   "permitted_concerns": [
     {

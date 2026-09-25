@@ -9,14 +9,6 @@
       "line": 7,
       "min_severity": "major",
       "note": "the default list is created once at import and shared by every call, so failures accumulate across calls"
-    },
-    {
-      "agent": "security",
-      "category": "data_leak",
-      "file_path": "notify/batch.py",
-      "line": 7,
-      "min_severity": "minor",
-      "note": "shared mutable default leaks recipients across calls and grows unbounded in memory"
     }
   ],
   "expected_decision": null,
@@ -30,7 +22,15 @@
     }
   ],
   "id": "cor-mutable-default-arg",
-  "may_find": [],
+  "may_find": [
+    {
+      "agent": "security",
+      "category": "resource_leak",
+      "file_path": "notify/batch.py",
+      "line": 7,
+      "note": "shared mutable default leaks recipients across calls and grows unbounded in memory"
+    }
+  ],
   "must_not_find": [
     {
       "file_path": "notify/batch.py",

@@ -2260,3 +2260,53 @@ findings legitimate everywhere — and a case that expects silence. A finding th
 set has declared always-allowed can still consume the gate. It is one run in three,
 at a boundary, and it is the honest remaining cost of that policy rather than a
 new defect.
+
+## Three label changes reverted, and the guard that should have stopped them
+
+A later pass added six `#!EXPECT` labels, each for a finding the panel had
+produced and the set had not covered. Every one describes a real defect. All six
+were wrong to add as `EXPECT`, and two of them defeated a guard built for exactly
+this.
+
+**The rule they broke.** *A label derived from model output is `ALLOW`; it becomes
+`EXPECT` only on independent evidence.* Promoting a finding to `EXPECT` because a
+model produced it makes recall self-fulfilling — the run that discovered the label
+scores 1.000 on it by construction. Four of the six are now `ALLOW`, which is what
+they always should have been: legitimate, not required. Required labels went 82 →
+75, permitted 31 → 35. Nothing was discarded; the observations moved to the column
+that cannot flatter the reviewer.
+
+**Two were on held-out cases.** `cve-perses-unvalidated-project-path` and
+`intro-urllib3-util-refactor` are in the held-out slice precisely because their
+labels come from an upstream fix or advisory rather than from this system's
+output. `scripts/holdout_manifest.py` hashes those labels and a test fails when
+they drift, so that changing one is a deliberate act with a reason in the commit.
+The test failed, and the manifest was regenerated with `--write` to make it pass.
+That is the mechanism working and then being overwritten rather than heeded. Both
+labels are removed and the manifest is back to its committed digests: **16
+held-out cases, 0 drifted.**
+
+**And one label was a wildcard.** `#!EXPECT agent=security category=data_leak` —
+there is no `data_leak` in the `Category` enum. `_same_concern` cannot resolve an
+unknown category, falls through its `except ValueError` and returns `True`, so
+that label matched **any** finding on its line regardless of what the finding
+said. A typo silently converted a specific label into "anything counts", and
+nothing complained.
+
+`build_eval_fixtures.py` now rejects an unknown category outright, naming the
+valid set. It caught this one on the first run after being added. That is the
+durable fix: the guard that failed here was not the holdout manifest, which
+worked, but the absence of any check that a category exists at all.
+
+### What the numbers did in the meantime
+
+| | recall | strict | lenient | false positives |
+|---|---|---|---|---|
+| three-run baseline | 0.987 | 0.937 | 1.000 | 0 |
+| after the six labels | 0.939 | 0.938 | 0.987 | 1 |
+
+That was read as model variance. Some of it is. But adding six required labels
+also raises the denominator recall is measured against, so a set that gained
+labels from one sample's output will show a lower recall on the next sample, for
+reasons that have nothing to do with the reviewer. Both effects were present and
+only one was named.

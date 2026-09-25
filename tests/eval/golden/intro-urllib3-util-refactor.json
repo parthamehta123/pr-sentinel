@@ -4,27 +4,11 @@
   "expected": [
     {
       "agent": "correctness",
-      "category": "logic",
-      "file_path": "urllib3/util.py",
-      "line": 52,
-      "min_severity": "minor",
-      "note": "under Python 2 a unicode accept_encoding matches neither str nor list, silently falling through to the default"
-    },
-    {
-      "agent": "correctness",
       "category": "error_handling|logic",
       "file_path": "urllib3/util.py",
       "line": 100,
       "min_severity": "minor",
       "note": "the %s is never substituted, so the error reports a literal \"%s\" instead of the url that failed"
-    },
-    {
-      "agent": "correctness",
-      "category": "logic",
-      "file_path": "urllib3/util.py",
-      "line": 109,
-      "min_severity": "minor",
-      "note": "is_connection_dropped returns a list from select() on the no-poll branch, not the documented boolean"
     }
   ],
   "expected_decision": null,

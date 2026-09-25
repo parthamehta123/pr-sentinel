@@ -82,6 +82,26 @@ def _parse_marker(m: re.Match) -> dict:
     if kind == "CLEAN" and ("agent" in label or "category" in label):
         # A scoped trap: only this reading of the line is a false positive.
         pass
+    # A category the enum does not contain is not a near miss, it is a wildcard.
+    # `_same_concern` cannot resolve it, falls through its `except ValueError`
+    # and returns True — so the label matches any finding on that line, whatever
+    # it says. A typo silently turns a specific label into "anything counts".
+    # Found when `category=data_leak` was written for a security label; the enum
+    # has `resource_leak` and `secrets` and nothing called `data_leak`.
+    if "category" in label:
+        from pr_sentinel.domain.enums import Category
+
+        for name in str(label["category"]).split("|"):
+            try:
+                Category(name)
+            except ValueError as exc:
+                valid = ", ".join(c.value for c in Category)
+                raise ValueError(
+                    f"unknown category {name!r} in marker {m.group(0)!r}. "
+                    f"An unknown category matches every finding on the line rather "
+                    f"than failing. Valid: {valid}"
+                ) from exc
+
     if kind == "EXPECT":
         if "agent" not in label:
             raise ValueError(f"EXPECT marker needs agent=: {m.group(0)!r}")
