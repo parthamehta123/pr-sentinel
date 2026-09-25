@@ -2219,6 +2219,7 @@ Three clean runs, zero failed agent calls, $15.86.
 | gate decision match | 0.983 | [0.950–1.000] |
 | category agreement | 0.936 | [0.919–0.958] |
 | agent attribution | 0.945 | [0.944–0.946] |
+| unlabelled / run | 6.3 | 8, 6, 5 |
 
 **Held out (independent labels): strict precision 0.900**, 54 hits, 6 unlabelled,
 **0 false positives**. Hand-authored: 0.922, 166 hits, 13 unlabelled, 1 false
