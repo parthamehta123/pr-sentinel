@@ -56,7 +56,7 @@ class TemporalEngine(WorkflowEngine):
 
         verdicts: list[AgentVerdict] = []
         for agent, result in zip(agents, results, strict=True):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 verdicts.append(
                     AgentVerdict(
                         agent=agent,
@@ -66,7 +66,7 @@ class TemporalEngine(WorkflowEngine):
                         duration_ms=0,
                     )
                 )
-            else:
+            elif isinstance(result, AgentVerdict):
                 verdicts.append(result)
 
         return verdicts
