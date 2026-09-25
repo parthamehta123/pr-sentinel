@@ -57,6 +57,7 @@ filterwarnings = ["ignore::DeprecationWarning"]
 [tool.ruff]
 line-length = 110
 src = ["src", "tests"]
+exclude = ["tests/eval/sources"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "ASYNC", "S", "RUF"]
@@ -66,6 +67,6 @@ ignore = ["S101", "B008"]
 "tests/*" = ["S", "E501"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 packages = ["pr_sentinel"]
 ignore_missing_imports = true
