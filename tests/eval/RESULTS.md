@@ -2157,3 +2157,52 @@ detect a retrieval difference at all, so "nothing is lost" mostly means "there w
 little to lose". The machinery is no longer the limitation; the case set is. That
 is the same conclusion the `--no-context` ablation reached, now with the
 retrieval path actually in the loop rather than bypassed.
+
+## Context dependence was measurable all along — recall was the wrong instrument
+
+Two more attempts at a context-dependent case both "failed" the same way: found
+3 of 3 with the context file and 3 of 3 without it. That is six attempts. The
+sixth showed why, in its own words, with the docstring withheld:
+
+> *"priority=9 **may** demote reset mail **if** the scale is ascending"*
+
+The panel does not know the convention. It flags the **uncertainty** — which is
+correct reviewer behaviour — and the finding lands on the labelled line with the
+labelled concern, so recall scores it as a hit. **Recall cannot distinguish
+knowing from suspecting.**
+
+Measured on what does distinguish them:
+
+| case | | mean confidence | hedged titles | gate outcome |
+|---|---|---|---|---|
+| `ctx-inverted-priority-scale` | with context | **0.99** | 0/3 | auto_post ×3 |
+| | no context | **0.57** | **3/3** | escalate, suppress, suppress |
+| `ctx-unnormalised-argument` | with context | 0.91 | 0/3 | auto_post ×3 |
+| | no context | 0.59 | 0/4 | escalate ×3 |
+
+**Both cases are context-dependent**, and severely so. Context nearly doubles
+confidence, removes the hedging entirely, and changes what the system *does*: with
+it the author is told; without it the finding either sits below the 0.60 posting
+threshold and is suppressed, or a human is pulled in to resolve something the
+repository already answers.
+
+That last column is the one that matters. A review that says "this may be wrong
+if the scale is ascending" at 0.57 is not a cheaper version of "this is wrong" at
+0.99 — it is a different product. One closes the question; the other hands it back.
+
+### What this changes
+
+- **The set has three context-dependent cases, not one.**
+  `ctx-changed-default-breaks-caller` was only ever recognised as one because its
+  no-context finding happened to fall below the matcher's bar; the other two were
+  doing the same thing and being counted as hits.
+- **The `--no-context` ablation's "nothing moves" result was an artefact of
+  reading recall.** Re-read on confidence and decision, context moves a great
+  deal. That conclusion is withdrawn.
+- **Six attempts were not six failures.** Four were genuine — a defect that is a
+  smell on its own gets found without context, and `title.split()` feeding a
+  search index is a smell. Two were successes misread by the instrument.
+
+The rule worth keeping: **measuring whether context helps by asking whether the
+finding appears is measuring the wrong thing.** Ask whether the finding is
+*certain*, and whether it survives the gate.

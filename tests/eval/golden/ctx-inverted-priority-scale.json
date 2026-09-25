@@ -1,0 +1,45 @@
+{
+  "body": "Password resets were queueing behind the nightly digest batch. Bumps them up the queue.",
+  "context_files": [
+    {
+      "content": "def enqueue(job, priority=5):\n    \"\"\"Put `job` on the shared worker queue.\n\n    `priority` runs 0 to 9 and is an ordering index, not a score: **0 is drained\n    first and 9 is drained last.** The convention is inherited from the original\n    cron weights and is the opposite of what the name suggests, which has caught\n    people before. A job at 9 waits behind every other job on the queue.\n    \"\"\"\n    _QUEUE.append((priority, job))\n",
+      "path": "queue/priority.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract|logic",
+      "file_path": "notify/reset.py",
+      "line": 5,
+      "min_severity": "major",
+      "note": "enqueue treats 0 as highest priority and 9 as lowest, so this puts password-reset mail behind every other job instead of ahead of the digests"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 1,
+      "filename": "notify/reset.py",
+      "patch": "@@ -2,4 +2,4 @@\n \n \n def send_reset_email(user, token):\n-    enqueue(ResetEmail(user, token))\n+    enqueue(ResetEmail(user, token), priority=9)",
+      "status": "modified"
+    }
+  ],
+  "id": "ctx-inverted-priority-scale",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": null,
+  "summary": "Passes priority=9 meaning 'urgent' to a queue whose unchanged docstring says 0 is highest and 9 is lowest. The number is plausible, the intent is stated in the body, and nothing in the diff hints that the scale is inverted. Same shape as ctx-changed-default-breaks-caller, which is the only shape that has worked: a correct-looking value against an arbitrary convention that cannot be inferred from the call site.",
+  "title": "Queue password-reset mail ahead of digests"
+}

@@ -1,0 +1,45 @@
+{
+  "body": "Indexes articles as they are published so they show up in search.",
+  "context_files": [
+    {
+      "content": "_POSTINGS: dict[str, set[str]] = {}\n\n\ndef upsert(doc_id, terms):\n    \"\"\"Add or replace a document in the search index.\n\n    `terms` must already be lower-cased and de-duplicated. upsert does not\n    normalise them: a term differing only by case creates a second posting\n    list, and queries \u2014 which do lower-case \u2014 will never match it. The\n    document then indexes successfully and is silently unfindable by that\n    term.\n    \"\"\"\n    for term in terms:\n        _POSTINGS.setdefault(term, set()).add(doc_id)\n",
+      "path": "search/index.py"
+    }
+  ],
+  "expected": [
+    {
+      "agent": "correctness",
+      "category": "api_contract|logic",
+      "file_path": "publish/articles.py",
+      "line": 7,
+      "min_severity": "major",
+      "note": "upsert requires terms already lower-cased and de-duplicated, and title.split() is neither, so any capitalised word is indexed under a posting list no query can reach"
+    }
+  ],
+  "expected_decision": null,
+  "files": [
+    {
+      "additions": 1,
+      "deletions": 0,
+      "filename": "publish/articles.py",
+      "patch": "@@ -4,3 +4,4 @@\n def publish(article):\n     article.published = True\n     _store.save(article)\n+    upsert(article.id, article.title.split())",
+      "status": "modified"
+    }
+  ],
+  "id": "ctx-unnormalised-argument",
+  "may_find": [],
+  "must_not_find": [],
+  "permitted_concerns": [
+    {
+      "agent": "tests",
+      "category": "test_coverage"
+    },
+    {
+      "agent": "docs",
+      "category": "documentation"
+    }
+  ],
+  "provenance": null,
+  "summary": "Passes `title.split()` to a helper whose unchanged docstring requires already-normalised terms. Written as a context-dependent case and it is not one: measured, the panel flags the raw tokenisation 3 of 3 with the docstring withheld, because `title.split()` feeding a search index is a smell on its own. Kept as an ordinary case \u2014 the defect is real \u2014 and recorded as the fifth failed attempt at a second context case.",
+  "title": "Index new articles for search"
+}

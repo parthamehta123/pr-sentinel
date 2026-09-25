@@ -2774,3 +2774,99 @@ case(
     expected_decision=None,
     source_dir="intro-tornado-cookies-move",
 )
+
+case(
+    id="ctx-unnormalised-argument",
+    title="Index new articles for search",
+    summary=(
+        "Passes `title.split()` to a helper whose unchanged docstring requires "
+        "already-normalised terms. Written as a context-dependent case and it is "
+        "not one: measured, the panel flags the raw tokenisation 3 of 3 with the "
+        "docstring withheld, because `title.split()` feeding a search index is a "
+        "smell on its own. Kept as an ordinary case — the defect is real — and "
+        "recorded as the fifth failed attempt at a second context case."
+    ),
+    body="Indexes articles as they are published so they show up in search.",
+    expected_decision=None,
+    context={
+        "search/index.py": '''_POSTINGS: dict[str, set[str]] = {}
+
+
+def upsert(doc_id, terms):
+    """Add or replace a document in the search index.
+
+    `terms` must already be lower-cased and de-duplicated. upsert does not
+    normalise them: a term differing only by case creates a second posting
+    list, and queries — which do lower-case — will never match it. The
+    document then indexes successfully and is silently unfindable by that
+    term.
+    """
+    for term in terms:
+        _POSTINGS.setdefault(term, set()).add(doc_id)
+''',
+    },
+    before={
+        "publish/articles.py": """from search.index import upsert
+
+
+def publish(article):
+    article.published = True
+    _store.save(article)
+""",
+    },
+    after={
+        "publish/articles.py": """from search.index import upsert
+
+
+def publish(article):
+    article.published = True
+    _store.save(article)
+    #!EXPECT agent=correctness category=api_contract|logic severity>=major :: upsert requires terms already lower-cased and de-duplicated, and title.split() is neither, so any capitalised word is indexed under a posting list no query can reach
+    upsert(article.id, article.title.split())
+""",
+    },
+)
+
+case(
+    id="ctx-inverted-priority-scale",
+    title="Queue password-reset mail ahead of digests",
+    summary=(
+        "Passes priority=9 meaning 'urgent' to a queue whose unchanged docstring "
+        "says 0 is highest and 9 is lowest. The number is plausible, the intent is "
+        "stated in the body, and nothing in the diff hints that the scale is "
+        "inverted. Same shape as ctx-changed-default-breaks-caller, which is the "
+        "only shape that has worked: a correct-looking value against an arbitrary "
+        "convention that cannot be inferred from the call site."
+    ),
+    body="Password resets were queueing behind the nightly digest batch. Bumps them up the queue.",
+    expected_decision=None,
+    context={
+        "queue/priority.py": '''def enqueue(job, priority=5):
+    """Put `job` on the shared worker queue.
+
+    `priority` runs 0 to 9 and is an ordering index, not a score: **0 is drained
+    first and 9 is drained last.** The convention is inherited from the original
+    cron weights and is the opposite of what the name suggests, which has caught
+    people before. A job at 9 waits behind every other job on the queue.
+    """
+    _QUEUE.append((priority, job))
+''',
+    },
+    before={
+        "notify/reset.py": """from queue.priority import enqueue
+
+
+def send_reset_email(user, token):
+    enqueue(ResetEmail(user, token))
+""",
+    },
+    after={
+        "notify/reset.py": """from queue.priority import enqueue
+
+
+def send_reset_email(user, token):
+    #!EXPECT agent=correctness category=api_contract|logic severity>=major :: enqueue treats 0 as highest priority and 9 as lowest, so this puts password-reset mail behind every other job instead of ahead of the digests
+    enqueue(ResetEmail(user, token), priority=9)
+""",
+    },
+)
