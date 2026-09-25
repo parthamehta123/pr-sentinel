@@ -8,8 +8,8 @@ pr-sentinel eval --provider anthropic --repeat 3 --save arm.json
 python scripts/compare_arms.py baseline.json arm.json  # which differences are real
 ```
 
-Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests),
-`claude-haiku-4-5` (docs). 63 cases, 73 required findings, 31 permitted, 21 traps.
+Models: `claude-opus-5` (security, correctness), `claude-sonnet-5` (tests, docs).
+65 cases, 75 required findings, 35 permitted, 21 traps.
 Twelve are mined from merged fix commits, six from published security advisories,
 four from the introducing commits of defects the inverted fixes had already
 covered.
