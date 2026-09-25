@@ -38,6 +38,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,8 +112,6 @@ def definitions_in(root: Path, names: set[str], skip: set[str]) -> dict[str, set
 
 async def measure(repo: str, shas: list[str], top_k: int) -> None:
     from pr_sentinel.db import pool
-    from pr_sentinel.db.repositories import chunks as chunk_repo
-    from pr_sentinel.forge.diff import diff_query_text, fts_query
     from pr_sentinel.llm.embeddings import get_embedder
     from pr_sentinel.retrieval.indexer import index_repository
 
@@ -159,7 +158,10 @@ async def measure(repo: str, shas: list[str], top_k: int) -> None:
         relevant = {p for paths in truth.values() for p in paths}
 
         # Query exactly as build_context does: per changed file.
+        from pr_sentinel.domain.models import PullRequestContext
+        from pr_sentinel.events.spine import NullSpine
         from pr_sentinel.forge.diff import build_diff_file
+        from pr_sentinel.retrieval.context import build_context
 
         # Per-file patches with hunks PARSED. Both halves of the query walk
         # `DiffFile.hunks`; an unparsed DiffFile yields a query built from the
@@ -177,13 +179,24 @@ async def measure(repo: str, shas: list[str], top_k: int) -> None:
                     }
                 )
             )
-        vectors = await embedder.embed([diff_query_text([f], limit=1200) for f in files])
-        got: list[str] = []
-        for f, vec in zip(files, vectors, strict=True):
-            hits = await chunk_repo.hybrid_search(
-                repo_id, vec, fts_query([f]), top_k=top_k, exclude_paths=changed
-            )
-            got.extend(h.file_path for h in hits)
+        # Call the real thing. Earlier versions of this script re-implemented
+        # build_context's query loop, and drifted from it three separate times:
+        # DiffFiles with no hunks parsed (queries were the file path alone), no
+        # per-file quota (production gives each file `top_k // n_files`, as few
+        # as two), and no cap at the first twelve changed files. Every number
+        # from those versions overstated production and had to be withdrawn.
+        # A harness that re-implements what it measures will drift again; one
+        # that calls it cannot.
+        pr = PullRequestContext(
+            repo_full_name=repo,
+            repo_github_id=0,
+            number=1,
+            head_sha=sha,
+            base_sha=parent,
+            files=files,
+        )
+        ctx = await build_context(pr, repo_id, NullSpine(review_id=uuid.uuid4()))
+        got = [c.file_path for c in ctx.chunks]
 
         seen: list[str] = []
         for p in got:

@@ -2047,3 +2047,48 @@ detections; read from the findings it cost none.
 n=3 and only the cases where this rule can bite. A full baseline would confirm the
 false positive stays gone across the set; on this evidence the prompt is better and
 nothing measurable was traded for it.
+
+## The retrieval harness now calls production, and the merge is round-robin
+
+Re-running the diagnostic with a correct query found a **third** way the harness
+had drifted from what it measured. It re-implemented `build_context`'s query loop,
+and differed from it three times over:
+
+1. `DiffFile`s with no hunks parsed — every query was the file path alone.
+2. No per-file quota. Production gives each changed file `top_k // n_files`
+   candidates, as few as two; the harness gave every file the full `top_k`.
+3. No cap at the first twelve changed files, which production applies.
+
+**True production recall is 0.481, not the 0.717 reported after fixing only the
+first.** A harness that re-implements what it measures will drift again, so
+`eval_retrieval.py` now calls `build_context` directly. That closes the class.
+
+### The merge, measured three ways
+
+The diagnostic said 16.4% of the definitions a diff calls ranked inside the final
+top-k on score and were dropped by the per-file quota before the sort. Removing
+the quota is the obvious fix and it is wrong:
+
+| arrangement | recall |
+|---|---|
+| fixed quota, `top_k // n_files`, then sort | 0.481 |
+| no quota, pure global score sort | 0.457 |
+| **wide pool per file, merged round-robin by rank** | **0.496** |
+
+Pure global ranking is worse because one file's neighbourhood monopolises the
+window — the quota was buying diversity, not just cutting. Round-robin keeps that
+diversity without capping a file that genuinely has more to contribute: each
+file's best, then each file's second, with the better score first inside a round.
+
+Both embedders are deterministic, so these are exact for these 22 diffs rather
+than samples from a distribution. The gain over the quota is small (+0.015) and
+the gain over pure ranking is not (+0.039); the case for round-robin is that it
+is the best of three arrangements measured, and the largest single improvement is
+on scrapy, the repository with the widest diffs (0.222 → 0.322), which is what a
+diversity argument predicts.
+
+### Still unexplained
+
+40.1% of needed definitions rank below 50 even with a correct query and a wide
+pool. That is a ranking failure rather than a window problem, and nothing here
+addresses it. It is the honest remaining gap in retrieval.
