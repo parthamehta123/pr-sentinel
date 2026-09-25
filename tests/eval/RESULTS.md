@@ -2359,3 +2359,56 @@ Two single-run evals were recorded against a label set that has since been
 reverted (six model-derived `EXPECT` labels, two of them on held-out cases). Those
 numbers describe neither the current labels nor the current config and are not
 comparable to anything here. This three-run file is the reference.
+
+## Baseline on the committed config — and an outage charged to the reviewer
+
+Three runs with docs on `claude-sonnet-5`, $15.41. Unlabelled per run: 5, 5, 4.
+
+| metric | mean | range |
+|---|---|---|
+| recall *(as reported)* | 0.978 | [0.933–1.000] |
+| **recall (full panels only)** | **0.995** | [0.986–1.000] |
+| precision, strict | 0.938 | [0.927–0.946] |
+| precision, lenient | 0.996 | [0.987–1.000] |
+| **gate decision match** | **1.000** | [1.000–1.000] |
+| held out / hand-authored (strict) | 0.934 / 0.938 | held-out: 0 false positives |
+
+**The Sonnet routing is confirmed.** `doc-misleading-name` is missed 0 of 3 here,
+against 2 of 3 on the same label set with Haiku. That is the fix working on the
+case it was made for, on the config the repository actually ships.
+
+### Run 3's recall was an outage, not variance
+
+Run 3 reported 0.933 and it was read as model non-determinism. It was not. That
+run lost **10 agent calls across 4 cases**, and four of its five misses were on
+cases where agents had failed:
+
+```
+  tst-untested-error-branch      missed 2   all four agents failed
+  tst-repeated-coverage-gap      missed 1   3 of 4 failed
+  tst-mock-patches-wrong-target  missed 1   2 of 4 failed
+  sec-command-injection          missed 1   no failures — the known secondary label
+```
+
+One case lost its **whole panel** and its labels were still counted against
+recall. Excluding the degraded cases, run 3's recall is **0.986**, and the single
+remaining miss is the secondary correctness label on `sec-command-injection` that
+has been flickering for several baselines.
+
+Both outage guards passed it, correctly by their own rules: 1 case of 65 losing a
+whole panel is 1.5% against a 25% threshold, and 10 calls of 260 is 3.8% against
+10%. The guards exist to refuse a run that is mostly outage. They were never meant
+to make a mostly-good run report honestly.
+
+So the report now does that itself. Alongside recall it prints **recall over
+full-panel cases only** and a `DEGRADED` line naming how many cases lost how many
+agent calls. A case whose agents did not answer cannot find anything; scoring its
+labels as misses attributes an infrastructure failure to review quality, and the
+difference here was 0.933 against 0.986 — large enough to have been read as a
+regression.
+
+This is the third time in this file that a plausible number turned out to be
+measuring something other than the reviewer: the path-only retrieval query, the
+`.env` pinning docs to Haiku, and now failed agent calls scored as misses. The
+common thread is that none of them failed loudly. Each produced a number that
+looked like a result.

@@ -42,6 +42,27 @@ def render(report: EvalReport, verbose: bool = False) -> str:
     add(f"  precision (strict)  : {b.precision_strict:.3f}   unlabelled findings count against")
     add(f"  precision (lenient) : {b.precision_lenient:.3f}   only labelled traps count against")
     add(f"  recall              : {b.recall:.3f}   over distinct labels, not matches")
+
+    # A case whose agents failed cannot find anything, and its labels score as
+    # misses. That is an outage attributed to the reviewer. Measured once: a run
+    # reported recall 0.933, and four of its five misses were on cases where two,
+    # three or all four agents had failed — one case lost its whole panel and was
+    # still counted against recall. Both outage guards passed it, because 1 case
+    # in 65 and 10 calls in 260 are below their thresholds.
+    degraded = [c for c in report.cases if c.failed_agents]
+    if degraded:
+        whole = sum(1 for c in degraded if len(c.failed_agents) >= 4)
+        lost = sum(len(c.failed_agents) for c in degraded)
+        intact = [c for c in report.cases if not c.failed_agents]
+        hits = sum(len(c.hits) for c in intact)
+        missed = sum(len(c.missed) for c in intact)
+        clean_recall = hits / (hits + missed) if (hits + missed) else 0.0
+        add(f"  recall (full panels): {clean_recall:.3f}   excluding {len(degraded)} degraded case(s)")
+        add(
+            f"  DEGRADED            : {len(degraded)} case(s) lost {lost} agent call(s)"
+            + (f", {whole} lost the whole panel" if whole else "")
+            + " — their labels score as misses"
+        )
     add(f"  f1                  : {b.f1:.3f}")
     add(
         f"  {b.labels_found} of {b.labels_found + b.misses} defects found by "
