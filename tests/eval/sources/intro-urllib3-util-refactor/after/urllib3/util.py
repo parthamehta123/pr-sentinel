@@ -49,6 +49,7 @@ def make_headers(keep_alive=None, accept_encoding=None, user_agent=None,
     """
     headers = {}
     if accept_encoding:
+        #!EXPECT agent=correctness category=logic severity>=minor :: under Python 2 a unicode accept_encoding matches neither str nor list, silently falling through to the default
         if isinstance(accept_encoding, str):
             pass
         elif isinstance(accept_encoding, list):
@@ -108,6 +109,7 @@ def get_host(url):
 
 
 
+#!EXPECT agent=correctness category=logic severity>=minor :: is_connection_dropped returns a list from select() on the no-poll branch, not the documented boolean
 def is_connection_dropped(conn):
     """
     Returns True if the connection is dropped and should be closed.

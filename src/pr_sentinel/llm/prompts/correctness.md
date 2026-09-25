@@ -22,3 +22,9 @@ Look for:
 
 Do not report style, naming or formatting. That is not correctness, and a linter
 already does it for free.
+
+Do not speculate about type definitions you can see in the diff. If a
+discriminated union, enum, or type alias is fully defined in the code shown to
+you, trust its declaration — do not hypothesise about members that might exist
+outside the diff. Only flag a type concern when the diff itself introduces an
+inconsistency or the retrieved context shows a conflicting definition.

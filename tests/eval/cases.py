@@ -242,6 +242,7 @@ def list_exports(directory):
 def create_archive(name, directory):
     #!EXPECT agent=security category=injection severity>=critical :: shell=True with `name` interpolated, so a name containing a shell metacharacter runs arbitrary commands
     #!EXPECT agent=correctness category=logic severity>=minor :: neither value is quoted, so a directory containing a space breaks the command even without an attacker
+    #!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test covering normal or adversarial inputs
     cmd = f"tar -czf /exports/{name}.tar.gz {directory}"
     return subprocess.run(cmd, shell=True, check=True)
 """,
@@ -680,6 +681,7 @@ def csv_rows(rows, columns):
 
 
 #!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+#!EXPECT agent=correctness category=logic severity>=minor :: csv_escape does not quote values containing newlines, corrupting output for line-by-line consumers
 def csv_escape(value):
     """Quote a value that contains a comma or a quote."""
     if "," in value or \'"\' in value:
@@ -2630,6 +2632,7 @@ func (d *DAO) buildPath(project string, kind string) string {
     projectQueryParameter := query.GetProjectQueryParam()
     if len(projectQueryParameter) > 0 {
         //!EXPECT agent=security category=injection severity>=critical :: the project name reaches filepath.Join unvalidated, and buildPath documents that callers must validate it, so ../ in the query parameter escapes the storage root
+        //!EXPECT agent=correctness category=logic severity>=minor :: when parameters.Project is empty the query parameter is accepted with no format check, silently inheriting any invalid value
         if len(parameters.Project) > 0 && parameters.Project != projectQueryParameter {
             return nil, apiInterface.HandleBadRequestError("the project name in the path and the query differ")
         }

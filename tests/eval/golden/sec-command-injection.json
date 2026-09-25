@@ -17,6 +17,14 @@
       "line": 9,
       "min_severity": "minor",
       "note": "neither value is quoted, so a directory containing a space breaks the command even without an attacker"
+    },
+    {
+      "agent": "tests",
+      "category": "test_coverage",
+      "file_path": "export/archive.py",
+      "line": 9,
+      "min_severity": "minor",
+      "note": "new public function with no test covering normal or adversarial inputs"
     }
   ],
   "expected_decision": "escalate",

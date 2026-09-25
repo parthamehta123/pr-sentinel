@@ -32,6 +32,14 @@
       "note": "new public function with no test in this change"
     },
     {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "reports/csv_export.py",
+      "line": 10,
+      "min_severity": "minor",
+      "note": "csv_escape does not quote values containing newlines, corrupting output for line-by-line consumers"
+    },
+    {
       "agent": "tests",
       "category": "test_coverage",
       "file_path": "reports/json_export.py",
