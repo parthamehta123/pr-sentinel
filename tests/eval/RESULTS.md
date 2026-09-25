@@ -2206,3 +2206,56 @@ if the scale is ascending" at 0.57 is not a cheaper version of "this is wrong" a
 The rule worth keeping: **measuring whether context helps by asking whether the
 finding appears is measuring the wrong thing.** Ask whether the finding is
 *certain*, and whether it survives the gate.
+
+## Baseline with every fix in — 65 cases
+
+Three clean runs, zero failed agent calls, $15.86.
+
+| metric | mean | range |
+|---|---|---|
+| recall | 0.982 | [0.973–0.987] |
+| precision, strict | 0.917 | [0.889–0.937] |
+| **precision, lenient** | **0.995** | [0.986–1.000] |
+| gate decision match | 0.983 | [0.950–1.000] |
+| category agreement | 0.936 | [0.919–0.958] |
+| agent attribution | 0.945 | [0.944–0.946] |
+
+**Held out (independent labels): strict precision 0.900**, 54 hits, 6 unlabelled,
+**0 false positives**. Hand-authored: 0.922, 166 hits, 13 unlabelled, 1 false
+positive. Still within 0.022 of each other, and the held-out slice still carries
+no false positives at all.
+
+Not comparable to the 63-case baseline on strict precision — the set grew by two
+cases which brought their own unlabelled findings. Lenient precision at 0.995 is
+the best recorded, and it is the figure only advance-written traps can move.
+
+### `doc-misleading-name` is gone from the miss list
+
+It was missed in every run of every baseline before this one. Routing the docs
+agent from Haiku to Sonnet removed it entirely. That is the fix that "recorded as
+a measured capability limit" was standing in front of.
+
+### The remaining misses are both secondary labels
+
+`sec-command-injection` misses one label in all three runs and **the injection is
+found in all three** — `injection/critical`, every time. The missed label is the
+secondary correctness reading, that the unquoted f-string also breaks on spaces.
+`sec-hardcoded-credential` is the same shape: `security/secrets/critical` in all
+three runs, one secondary correctness label absent from one of them.
+
+Read from the counts, four misses. Read from the findings, no security defect was
+missed in 195 case-runs.
+
+### The one gate disagreement is a threshold boundary
+
+`neg-allowlisted-dynamic-sql` escalated in run 3 on a single `tests/test_coverage`
+finding at confidence **0.60** — exactly `FINDING_POST_CONFIDENCE`. At 0.55, which
+is what the same finding scored in run 2, it falls below the bar and the case
+suppresses. The reorder that put "nothing worth posting" ahead of the confidence
+test only helps when nothing clears the bar; here something clears it by rounding.
+
+This is the known tension between `PERMITTED_CONCERNS` — which declares coverage
+findings legitimate everywhere — and a case that expects silence. A finding the
+set has declared always-allowed can still consume the gate. It is one run in three,
+at a boundary, and it is the honest remaining cost of that policy rather than a
+new defect.
