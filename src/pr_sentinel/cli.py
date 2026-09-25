@@ -383,6 +383,11 @@ def eval(
     no_context: bool = typer.Option(
         False, "--no-context", help="ablation: run the panel with no repository context"
     ),
+    with_retrieval: bool = typer.Option(
+        False,
+        "--with-retrieval",
+        help="index each case's context files and retrieve them, instead of injecting them",
+    ),
     as_json: bool = typer.Option(False, "--json", help="print JSON instead of the report"),
 ) -> None:
     """Score the panel against the golden set.
@@ -414,6 +419,7 @@ def eval(
             budget_cap_usd=budget or None,
             repeat=repeat,
             no_context=no_context,
+            with_retrieval=with_retrieval,
         )
         report = reports[-1]
         payload = report.as_dict()

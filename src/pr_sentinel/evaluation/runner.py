@@ -28,11 +28,47 @@ from .metrics import EvalReport, score, score_case
 log = get_logger(__name__)
 
 
+async def _retrieve_for(case: EvalCase, pr) -> list:
+    """Index the case's context files, then retrieve against them for real."""
+    import tempfile
+    import uuid as _uuid
+    from pathlib import Path
+
+    from ..db import pool
+    from ..events.spine import NullSpine
+    from ..retrieval.context import build_context
+    from ..retrieval.indexer import index_repository
+
+    if not case.context_chunks:
+        return []
+
+    await pool.get_pool()
+    repo_id = await pool.fetchval(
+        """INSERT INTO repositories (github_repo_id, full_name, default_branch)
+           VALUES ($1, $2, 'main')
+           ON CONFLICT (github_repo_id) DO UPDATE SET full_name = EXCLUDED.full_name
+           RETURNING id""",
+        -(abs(hash(case.id)) % 1_000_000) - 1000,
+        f"eval-retrieval/{case.id}",
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for chunk in case.context_chunks:
+            dest = root / chunk.file_path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(chunk.content)
+        await index_repository(repo_id, root, case.id[:40])
+
+    ctx = await build_context(pr, repo_id, NullSpine(review_id=_uuid.uuid4()))
+    return ctx.chunks
+
+
 async def run_case(
     case: EvalCase,
     engine_name: str | None,
     budget_cap_usd: float | None,
     no_context: bool = False,
+    with_retrieval: bool = False,
 ):
     settings = get_settings()
     pr = case.pull_request()
@@ -42,7 +78,19 @@ async def run_case(
     # perfect retrieval. `no_context` is the other end of that bracket: what
     # the panel scores with no repository context at all. Real retrieval sits
     # between the two, and at recall@12 0.337 it sits nearer this end.
-    chunks = [] if no_context else case.context_chunks
+    if no_context:
+        chunks = []
+    elif with_retrieval:
+        # Index this case's context files and let build_context find them, rather
+        # than handing the panel the answer. Everything measured before this
+        # assumed retrieval was perfect: the hand-authored context is exactly the
+        # relevant files, in full, every run — which is not a property any
+        # retriever has. Opt-in because it needs the database, and because the
+        # two are different questions: "can the panel use context it is given"
+        # and "does the panel get the context it needs".
+        chunks = await _retrieve_for(case, pr)
+    else:
+        chunks = case.context_chunks
     ctx = ReviewContext(pr=pr, diff_text=diff_text, chunks=chunks, truncated=truncated)
 
     review_id = uuid.uuid4()
@@ -72,6 +120,7 @@ async def run_eval(
     budget_cap_usd: float | None = None,
     repeat: int = 1,
     no_context: bool = False,
+    with_retrieval: bool = False,
 ) -> list[EvalReport]:
     """Run the set `repeat` times and return one report per run.
 
@@ -87,7 +136,13 @@ async def run_eval(
     async def guarded(case: EvalCase):
         async with semaphore:
             log.info("eval.case", id=case.id)
-            return await run_case(case, engine_name, budget_cap_usd, no_context=no_context)
+            return await run_case(
+                case,
+                engine_name,
+                budget_cap_usd,
+                no_context=no_context,
+                with_retrieval=with_retrieval,
+            )
 
     reports: list[EvalReport] = []
 

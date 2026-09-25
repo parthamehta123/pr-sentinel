@@ -2128,3 +2128,32 @@ labels could not have been written to produce it.
 This does not make strict precision on the whole set falsifiable. It makes the
 held-out column falsifiable, and that is the column to quote when the question is
 whether the reviewer is good rather than whether the labels are complete.
+
+## The panel eval can exercise retrieval now
+
+`run_case` built its context from each case's hand-authored `context_files` and
+never called `build_context`, so every panel number assumed perfect retrieval:
+exactly the relevant files, in full, every run — which is not a property any
+retriever has. `--with-retrieval` indexes each case's context files and retrieves
+against them instead. Opt-in, because it needs the database, and because the two
+arms answer different questions: *can the panel use context it is given*, and
+*does the panel get the context it needs*.
+
+The 20 cases with context, three runs each:
+
+| | recall | hits/run | unlabelled/run | fp/run |
+|---|---|---|---|---|
+| injected (hand-authored) | 1.000 | 22.3 | 1.7 | 0.0 |
+| retrieved (real `build_context`) | 1.000 | 21.7 | 1.7 | 0.3 |
+
+**Nothing is lost.** No label missed in either arm, including
+`ctx-changed-default-breaks-caller` — the one case that genuinely needs context,
+where the unit is stated only in an unchanged helper's docstring. Real retrieval
+surfaces that docstring in all three runs, which is the first direct evidence that
+the retrieval path works on a case that depends on it.
+
+**This is weak evidence and the weakness is the set's.** Only one case of 63 can
+detect a retrieval difference at all, so "nothing is lost" mostly means "there was
+little to lose". The machinery is no longer the limitation; the case set is. That
+is the same conclusion the `--no-context` ablation reached, now with the
+retrieval path actually in the loop rather than bypassed.
