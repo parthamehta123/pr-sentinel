@@ -2367,7 +2367,7 @@ Three runs with docs on `claude-sonnet-5`, $15.41. Unlabelled per run: 5, 5, 4.
 | metric | mean | range |
 |---|---|---|
 | recall *(as reported)* | 0.978 | [0.933–1.000] |
-| **recall (full panels only)** | **0.995** | [0.986–1.000] |
+| **recall (full panels only)** | **0.995** | [0.984–1.000] *(recomputed over distinct labels — see the correction below; the figures first published here were [0.986–1.000], counting matches)* |
 | precision, strict | 0.938 | [0.927–0.946] |
 | precision, lenient | 0.996 | [0.987–1.000] |
 | **gate decision match** | **1.000** | [1.000–1.000] |
@@ -2454,3 +2454,10 @@ The fifth point in that review — that the document header still says 63 cases 
 73 labels — does not hold: the header reads 65 cases and 75 required findings. The
 "63 cases" occurrences are in dated sections describing the set as it was then,
 which is what they should say.
+
+The mean is unchanged at 0.995 because two of the three runs had no degraded
+cases at all, so only run 3 moved — 0.986 to 0.984. A headline that survives its
+own correction is luck, not evidence that the correction was unnecessary: the two
+counts diverge exactly when a run produces several findings per label, and this
+one did not.
+
