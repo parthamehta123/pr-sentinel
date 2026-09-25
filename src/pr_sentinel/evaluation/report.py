@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..domain.enums import family_of
+from ..domain.enums import ALL_AGENTS, family_of
 from .metrics import EvalReport
 
 
@@ -49,19 +49,40 @@ def render(report: EvalReport, verbose: bool = False) -> str:
     # three or all four agents had failed — one case lost its whole panel and was
     # still counted against recall. Both outage guards passed it, because 1 case
     # in 65 and 10 calls in 260 are below their thresholds.
+    #
+    # Two numbers, because they answer different questions. Availability is what
+    # the deployment did. Conditional recall is what the reviewer did when it was
+    # actually asked. Neither substitutes for the headline, which stays the
+    # end-to-end figure a user would experience.
     degraded = [c for c in report.cases if c.failed_agents]
     if degraded:
-        whole = sum(1 for c in degraded if len(c.failed_agents) >= 4)
+        whole = sum(1 for c in degraded if len(c.failed_agents) >= len(ALL_AGENTS))
         lost = sum(len(c.failed_agents) for c in degraded)
+        total_calls = len(report.cases) * len(ALL_AGENTS)
         intact = [c for c in report.cases if not c.failed_agents]
-        hits = sum(len(c.hits) for c in intact)
+
+        # Distinct labels, exactly as Bucket.recall counts them. Several findings
+        # routinely match one label — the same defect described four ways — so
+        # counting matches here would inflate this against the headline it sits
+        # next to. An earlier version of this block did precisely that.
+        seen: set[int] = set()
+        found = 0
+        for case in intact:
+            for match in case.hits:
+                for label in match.labels:
+                    if id(label) not in seen:
+                        seen.add(id(label))
+                        found += 1
         missed = sum(len(c.missed) for c in intact)
-        clean_recall = hits / (hits + missed) if (hits + missed) else 0.0
-        add(f"  recall (full panels): {clean_recall:.3f}   excluding {len(degraded)} degraded case(s)")
+        conditional = found / (found + missed) if (found + missed) else 0.0
+
         add(
-            f"  DEGRADED            : {len(degraded)} case(s) lost {lost} agent call(s)"
-            + (f", {whole} lost the whole panel" if whole else "")
-            + " — their labels score as misses"
+            f"  recall (full panels): {conditional:.3f}   over {len(intact)} case(s) whose panel was complete"
+        )
+        add(
+            f"  availability        : {len(intact)}/{len(report.cases)} complete panels, "
+            f"{total_calls - lost}/{total_calls} agent calls"
+            + (f" — {whole} case(s) lost the whole panel" if whole else "")
         )
     add(f"  f1                  : {b.f1:.3f}")
     add(

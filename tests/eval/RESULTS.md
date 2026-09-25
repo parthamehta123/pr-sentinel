@@ -1017,7 +1017,7 @@ already handled, one does not apply, and two were real:
 | Self-grading — the builder judges its own work | **real, and previously identified.** Labels are written in response to model output, which is why strict precision became unfalsifiable. The `ALLOW`-only rule limits the damage to precision; recall stays honest. There is still no independent check on a label's reasoning — the audit that found three overstated notes was done by the same agent that wrote them |
 | Duplication — rebuilding what exists | does not apply to this codebase |
 | Narration over execution | **real, now partly fixed.** RESULTS.md is prose around hand-transcribed tables, where a mistyped digit is indistinguishable from a measurement. A test now recomputes the per-run counts from every recorded run and fails if the document does not state them |
-| Untiered model use | already handled: `claude-opus-5` for security and correctness, `claude-sonnet-5` for tests, `claude-haiku-4-5` for docs |
+| Untiered model use | already handled: `claude-opus-5` for security and correctness, `claude-sonnet-5` for tests, `claude-haiku-4-5` for docs *(docs moved to `claude-sonnet-5` later — see ADR-0005's amendment; this row records the configuration as it was at this audit)* |
 
 Genesis Kit itself is a Node.js framework for driving agents over a repository,
 not a library this service would depend on; adopting it wholesale is not the
@@ -2412,3 +2412,45 @@ measuring something other than the reviewer: the path-only retrieval query, the
 `.env` pinning docs to Haiku, and now failed agent calls scored as misses. The
 common thread is that none of them failed loudly. Each produced a number that
 looked like a result.
+
+### Correction: the full-panel figure was counting matches, not labels
+
+The `recall (full panels)` line added in the previous section computed
+`len(case.hits) / (len(case.hits) + len(case.missed))`. `hits` is the list of
+*findings that matched*, and several findings routinely match one label — the same
+defect described four ways. The headline recall counts **distinct labels** for
+exactly that reason, and this figure, which sits next to it to qualify it, was
+counting on a different basis.
+
+Flagged in review and correct. It is now computed the way `Bucket.recall` is:
+distinct label identities across the hits of intact cases.
+
+| run | reported | full panels *(matches — wrong)* | full panels *(distinct labels)* |
+|---|---|---|---|
+| 1 | 1.000 | 1.000 | 1.000 |
+| 2 | 1.000 | 1.000 | 1.000 |
+| 3 | 0.933 | 0.986 | **0.984** |
+
+**The effect on this data was 0.002**, because most cases here produce one finding
+per label. That is luck, not vindication — a duplicate-happy run is precisely when
+the two diverge, and it is also precisely when the qualifying figure would be
+quoted. A unit test now builds four findings against one label and asserts 0.500
+rather than 0.800; reintroducing the old expression makes it fail.
+
+Two other points from the same review, both taken:
+
+- **Availability and conditional recall are separate numbers.** The report now
+  prints `availability: 61/65 complete panels, 250/260 agent calls` beside the
+  recall it qualifies. End-to-end recall stays the headline, because that is what
+  a user experiences; the conditional figure says what the reviewer did when it
+  was actually asked. Neither replaces the other.
+- **A stale row.** The Genesis audit table described docs as running on Haiku,
+  true when written and misleading now. Annotated rather than rewritten — the
+  historical sections of this file record what was measured at the time, and
+  editing them to match the present would destroy the only record of how the
+  numbers moved.
+
+The fifth point in that review — that the document header still says 63 cases and
+73 labels — does not hold: the header reads 65 cases and 75 required findings. The
+"63 cases" occurrences are in dated sections describing the set as it was then,
+which is what they should say.

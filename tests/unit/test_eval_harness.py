@@ -1111,3 +1111,77 @@ def test_the_held_out_slice_is_big_enough_to_mean_something():
     total = len(list((root / "tests" / "eval" / "golden").glob("*.json")))
     assert len(manifest) >= 12, f"only {len(manifest)} held-out cases"
     assert len(manifest) / total >= 0.15, "held-out slice is under 15% of the set"
+
+
+def _match(kind, labels, agent="correctness"):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        kind=kind,
+        labels=labels,
+        finding=SimpleNamespace(
+            agent=agent,
+            category="logic",
+            file_path="a.py",
+            line_start=1,
+            title="t",
+            confidence=0.9,
+        ),
+    )
+
+
+def _case(case_id, matches, missed, failed_agents=()):
+    from pr_sentinel.evaluation.metrics import CaseResult
+
+    return CaseResult(
+        case_id=case_id,
+        matches=list(matches),
+        missed=list(missed),
+        decision="post",
+        expected_decision=None,
+        confidence=0.9,
+        cost_usd=0.0,
+        duration_ms=0,
+        failed_agents=list(failed_agents),
+    )
+
+
+def test_full_panel_recall_counts_distinct_labels_not_matches():
+    """Four findings describing one defect are one label found, not four.
+
+    The headline recall counts distinct labels for exactly this reason — agents
+    routinely report the same defect several ways. The full-panel figure sits
+    next to it and must count the same way, or it reads higher than the number
+    it is meant to qualify. The first version of this block used `len(c.hits)`
+    and did inflate.
+    """
+    from pr_sentinel.evaluation.report import render
+
+    def _label():
+        from types import SimpleNamespace
+
+        return SimpleNamespace(
+            file_path="a.py",
+            line=1,
+            agent="correctness",
+            category="logic",
+            note="n",
+        )
+
+    label = _label()
+    intact = _case("intact", [_match("hit", [label]) for _ in range(4)], missed=[_label()])
+    broken = _case("broken", [], missed=[_label()], failed_agents=["security"])
+
+    out = render(_minimal_report_for([intact, broken]))
+    # One distinct label found, one missed, on the single intact case -> 0.500.
+    assert "recall (full panels): 0.500" in out, out
+    assert "availability        : 1/2 complete panels" in out, out
+
+
+def _minimal_report_for(cases):
+    """An EvalReport carrying just enough for `render` to run."""
+    from pr_sentinel.evaluation.metrics import score
+
+    report = score([], provider="test", models={})
+    report.cases = list(cases)
+    return report
