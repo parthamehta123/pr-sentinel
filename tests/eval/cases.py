@@ -696,6 +696,7 @@ def dump(rows):
 
 
 #!EXPECT agent=tests category=test_coverage severity>=minor :: new public function with no test in this change
+#!EXPECT agent=correctness category=logic severity>=minor :: dump_streaming requires a sized sequence and breaks on chunk_size<=0
 def dump_streaming(rows, chunk_size=100):
     """Yield `rows` as JSON arrays of at most `chunk_size` elements."""
     for i in range(0, len(rows), chunk_size):
@@ -1013,6 +1014,7 @@ case(
 
 
 #!EXPECT agent=correctness category=logic severity>=major :: the default list is created once at import and shared by every call, so failures accumulate across calls
+#!EXPECT agent=security category=data_leak severity>=minor :: shared mutable default leaks recipients across calls and grows unbounded in memory
 def send_with_retries(recipients, attempted=[]):
     for recipient in recipients:
         if not _dispatch([recipient], {}):

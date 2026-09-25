@@ -48,6 +48,14 @@
       "note": "new public function with no test in this change"
     },
     {
+      "agent": "correctness",
+      "category": "logic",
+      "file_path": "reports/json_export.py",
+      "line": 8,
+      "min_severity": "minor",
+      "note": "dump_streaming requires a sized sequence and breaks on chunk_size<=0"
+    },
+    {
       "agent": "tests",
       "category": "test_coverage",
       "file_path": "reports/json_export.py",
