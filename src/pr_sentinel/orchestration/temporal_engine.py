@@ -31,9 +31,7 @@ class TemporalEngine(WorkflowEngine):
 
     def __init__(self, target_host: str = "localhost:7233", task_queue: str = "pr-sentinel"):
         if not TEMPORAL_AVAILABLE:
-            raise ImportError(
-                "temporalio is not installed. Install with: pip install temporalio"
-            )
+            raise ImportError("temporalio is not installed. Install with: pip install temporalio")
         self._target_host = target_host
         self._task_queue = task_queue
 
