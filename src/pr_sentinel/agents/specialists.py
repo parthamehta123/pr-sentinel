@@ -66,8 +66,10 @@ class TestsAgent(SpecialistAgent):
 class DocsAgent(SpecialistAgent):
     agent = AgentType.DOCS
     prompt_name = "docs"
-    # Haiku 4.5 rejects output_config.effort, and the effort knob buys little on a
-    # task this mechanical. The router picks the model; this keeps the call legal.
+    # Left off deliberately. It was originally off because Haiku 4.5 rejects
+    # output_config.effort; the model has since changed and this has not, because
+    # the measured gap was in the model's judgement rather than in how long it
+    # was allowed to think about it.
     effort = None
     thinking = False
 

@@ -37,7 +37,12 @@ class Settings(BaseSettings):
     model_security: str = "claude-opus-5"
     model_correctness: str = "claude-opus-5"
     model_tests: str = "claude-sonnet-5"
-    model_docs: str = "claude-haiku-4-5"
+    # Was claude-haiku-4-5, on the reasoning that documentation review is the
+    # most mechanical job on the panel. Measured, it is not: on the one case
+    # that turns on judgement rather than pattern — a `get_*` that mutates —
+    # haiku found it in 3 of 10 runs and sonnet in 10 of 10, for 8% more cost
+    # and no added noise (zero docs findings across every negative control).
+    model_docs: str = "claude-sonnet-5"
 
     max_output_tokens: int = 16000
 
