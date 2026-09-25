@@ -2310,3 +2310,52 @@ also raises the denominator recall is measured against, so a set that gained
 labels from one sample's output will show a lower recall on the next sample, for
 reasons that have nothing to do with the reviewer. Both effects were present and
 only one was named.
+
+## Baseline on the corrected label set — and a config that never took effect
+
+Three runs, zero failed agent calls, $16.27. Unlabelled per run: 4, 6, 0.
+
+| metric | mean | range |
+|---|---|---|
+| recall | 0.987 | [0.973–1.000] |
+| precision, strict | 0.949 | [0.925–0.987] |
+| precision, lenient | 0.991 | [0.986–1.000] |
+| **gate decision match** | **1.000** | [1.000–1.000] |
+
+| slice | strict precision | hits | unlabelled | false positives |
+|---|---|---|---|---|
+| held out — independent labels | 0.931 | 54 | 4 | **0** |
+| hand-authored | 0.955 | 168 | 6 | 2 |
+
+The two slices stay within 0.024 and the held-out one still carries no false
+positives, on a label set that has now been corrected twice since that guard was
+built.
+
+### The docs model routing never took effect on this machine
+
+Every one of these runs reports `docs model = claude-haiku-4-5`. The committed
+default is `claude-sonnet-5`, changed after measuring 3 of 10 against 10 of 10 on
+`doc-misleading-name`. **`.env` carried `MODEL_DOCS=claude-haiku-4-5` from before
+that change and silently won.**
+
+So `doc-misleading-name` missing 2 of 3 here is not a regression and not variance
+— it is Haiku's measured rate of roughly 3 in 10, reproduced. The baseline above
+measures a configuration that is not the one in the repository, and it understates
+what the committed default does on that case.
+
+Caught only because the eval records which model each agent used. A run that
+reports its own configuration is the difference between noticing this and
+attributing two misses to non-determinism. `.env` and `.env.example` now match the
+committed default.
+
+The general shape is familiar from the retrieval work: **a local override quietly
+replacing the thing under test.** There the harness re-implemented
+`build_context`; here an untracked file outranked the source. Neither shows up as
+a failure — both show up as numbers that look plausible.
+
+### A note on the earlier single runs
+
+Two single-run evals were recorded against a label set that has since been
+reverted (six model-derived `EXPECT` labels, two of them on held-out cases). Those
+numbers describe neither the current labels nor the current config and are not
+comparable to anything here. This three-run file is the reference.
