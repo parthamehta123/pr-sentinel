@@ -2092,3 +2092,39 @@ diversity argument predicts.
 40.1% of needed definitions rank below 50 even with a correct query and a wide
 pool. That is a ranking failure rather than a window problem, and nothing here
 addresses it. It is the honest remaining gap in retrieval.
+
+## A held-out slice, so strict precision can fall again
+
+Strict precision on this set has not been falsifiable. The loop that produces it
+is "measure, take whatever came back unlabelled, verify it, mark it `ALLOW`" —
+after which precision is 1.000 by construction, because a finding can only stay
+unlabelled if nobody has looked at it yet. The `ALLOW`-only rule keeps *recall*
+honest and does nothing for precision.
+
+The held-out slice is **16 of the 63 cases: every case whose labels came from
+somewhere other than this system's output** — an upstream fix, or a published
+advisory. Those labels were written before any finding existed, so they cannot
+have been shaped to accommodate one. `scripts/holdout_manifest.py` records a hash
+of each one's labels, ignoring note wording and covering line, agent, category and
+severity. A test fails if any drifts, so changing one is a deliberate act with a
+reason in the commit rather than something that happens quietly mid-pass. A second
+test refuses a holdout that shrinks below 12 cases or 15% of the set, since a
+holdout of two would satisfy the first test and measure nothing.
+
+### What it says about the labels already written
+
+| slice | strict precision | hits | unlabelled | false positives |
+|---|---|---|---|---|
+| held out — independent labels | **0.930** | 53 | 4 | 0 |
+| hand-authored | 0.942 | 161 | 7 | 3 |
+
+**0.930 against 0.942.** If the labelling passes had been inflating precision, the
+hand-authored slice would sit well above the held-out one; it is 0.012 above, and
+the held-out slice carries no false positives at all. That is the first evidence
+in this file that the labelling loop has not been quietly buying the number it
+reports — and it is evidence rather than an argument only because the held-out
+labels could not have been written to produce it.
+
+This does not make strict precision on the whole set falsifiable. It makes the
+held-out column falsifiable, and that is the column to quote when the question is
+whether the reviewer is good rather than whether the labels are complete.

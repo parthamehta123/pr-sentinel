@@ -1073,3 +1073,41 @@ def test_a_few_stray_agent_failures_still_score():
 
     results = [R([str(ALL_AGENTS[0])]) if i < 4 else R([]) for i in range(63)]
     _refuse_if_everything_failed(results)  # 4 of 252 calls: ~1.6%, scores normally
+
+
+def test_held_out_labels_have_not_drifted():
+    """Labels sourced from upstream must not move to accommodate a finding.
+
+    Strict precision on this set is not falsifiable on its own: the loop that
+    produces it examines whatever came back unlabelled and labels it, after
+    which precision is 1.000 by construction. The held-out slice is the cases
+    whose labels came from an upstream fix or a published advisory — written
+    before any finding existed, so they cannot have been shaped by one.
+
+    Changing one is allowed and must be deliberate: edit the case, re-run
+    `scripts/holdout_manifest.py --write`, and say in the commit why an
+    independently-sourced label moved.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    out = subprocess.run(
+        [sys.executable, str(root / "scripts" / "holdout_manifest.py")],
+        capture_output=True,
+        text=True,
+    )
+    assert out.returncode == 0, f"held-out labels drifted:\n{out.stdout}{out.stderr}"
+
+
+def test_the_held_out_slice_is_big_enough_to_mean_something():
+    """A holdout of two cases would satisfy the guard and measure nothing."""
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    manifest = json.loads((root / "tests" / "eval" / "holdout.json").read_text())
+    total = len(list((root / "tests" / "eval" / "golden").glob("*.json")))
+    assert len(manifest) >= 12, f"only {len(manifest)} held-out cases"
+    assert len(manifest) / total >= 0.15, "held-out slice is under 15% of the set"
