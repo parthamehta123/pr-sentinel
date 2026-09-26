@@ -5,7 +5,7 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 COPY pyproject.toml ./
 COPY src/ src/
-RUN pip install --no-cache-dir --prefix=/install .
+RUN pip install --no-cache-dir --prefix=/install ".[openai,langgraph]"
 
 # Stage 2: runtime
 FROM python:3.12-slim AS runtime
