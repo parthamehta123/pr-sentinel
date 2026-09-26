@@ -18,7 +18,10 @@ COPY --from=builder /install /usr/local
 # Copy application code and assets
 COPY src/ src/
 COPY migrations/ migrations/
+COPY entrypoint.sh ./
 COPY pyproject.toml ./
+
+RUN chmod +x entrypoint.sh
 
 # Non-root user
 RUN useradd --create-home sentinel
@@ -26,5 +29,5 @@ USER sentinel
 
 EXPOSE 8000 8001
 
-# Default: run the webhook ingress (Railway sets $PORT dynamically)
-CMD ["sh", "-c", "uvicorn pr_sentinel.ingress.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# SERVICE_TYPE env var selects: webhook | worker | dashboard
+ENTRYPOINT ["./entrypoint.sh"]
