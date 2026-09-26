@@ -30,4 +30,4 @@ USER sentinel
 EXPOSE 8000 8001
 
 # Default: run the webhook ingress
-CMD ["uvicorn", "pr_sentinel.webhook.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "pr_sentinel.ingress.app:app", "--host", "0.0.0.0", "--port", "8000"]
