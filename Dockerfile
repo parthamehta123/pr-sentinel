@@ -26,5 +26,5 @@ USER sentinel
 
 EXPOSE 8000 8001
 
-# Default: run the webhook ingress
-CMD ["uvicorn", "pr_sentinel.ingress.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default: run the webhook ingress (Railway sets $PORT dynamically)
+CMD ["sh", "-c", "uvicorn pr_sentinel.ingress.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
